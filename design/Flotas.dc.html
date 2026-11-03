@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Flotas móviles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:10px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .r{text-align:right}
+table.t .nw{white-space:nowrap}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Flotas móviles · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Gestión de flotas</h1>
+<span style="font-size: 14px; color: {{th.muted}}">Líneas, SIM, asignaciones, planes de datos y cambiazos · Precios mensuales en RD$ · Corte 31 oct 2026</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos ilustrativos</span>
+<button style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Nueva solicitud</button>
+</div>
+</header>
+
+<section aria-label="Indicadores de flota" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+<div style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 26px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-labelledby="h-area" style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-area" style="margin: 0; font-size: 17px; font-weight: 600">Costo mensual por área</h2><span style="font-size: 13px; color: {{th.muted}}">RD$ miles · líneas asignadas</span></div>
+<sc-for list="{{areaBars}}" as="a" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px"><span>{{a.name}} <span style="color: {{th.muted}}">· {{a.lines}} líneas</span></span><span class="mono" style="font-weight: 600">{{a.cost}}</span></div>
+<div style="height: 10px; background: {{th.track}}; border-radius: 5px; overflow: hidden"><div style="width: {{a.w}}%; height: 100%; background: {{th.primary}}"></div></div>
+</div>
+</sc-for>
+</section>
+<section aria-labelledby="h-des" style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-des" style="margin: 0; font-size: 17px; font-weight: 600">Líneas por plan de datos</h2><span style="font-size: 13px; color: {{th.muted}}">Datos SI / NO y cantidad contratada</span></div>
+<div style="display: flex; height: 28px; border-radius: 6px; overflow: hidden">
+<sc-for list="{{split}}" as="s" hint-placeholder-count="4"><div title="{{s.name}}" style="width: {{s.w}}%; background: {{s.color}}"></div></sc-for>
+</div>
+<sc-for list="{{split}}" as="s" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; background: {{s.color}}; border-radius: 2px"></span>{{s.name}}</span><span class="mono">{{s.value}}</span></div>
+</sc-for>
+</section>
+</div>
+
+<section aria-labelledby="h-dash" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-dash" style="margin: 0; font-size: 17px; font-weight: 600">Dashboard por área y departamento</h2><span style="font-size: 13px; color: {{th.muted}}">Expanda un área para ver sus departamentos y un departamento para ver sus líneas</span></div>
+<div style="display: flex; gap: 8px">
+<button onClick="{{expandAll}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Expandir áreas</button>
+<button onClick="{{collapseAll}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Contraer</button>
+</div>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 920px; display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 32px minmax(200px, 2fr) 110px 70px 120px 110px 90px 90px 110px; gap: 8px; padding: 10px 12px; font-size: 12px; font-weight: 600; color: {{th.muted}}; border-bottom: 1px solid {{th.border}}">
+<span></span><span>Área / departamento</span><span>Empresa</span><span style="text-align: right">Líneas</span><span style="text-align: right">Costo mensual</span><span style="text-align: right">Prom. / línea</span><span style="text-align: right">Sin uso</span><span style="text-align: right">Cambiazo</span><span>Peso</span>
+</div>
+<sc-for list="{{areas}}" as="a" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; border-bottom: 1px solid {{th.track}}">
+<button onClick="{{a.toggle}}" aria-expanded="{{a.open}}" style="display: grid; grid-template-columns: 32px minmax(200px, 2fr) 110px 70px 120px 110px 90px 90px 110px; gap: 8px; align-items: center; padding: 12px; min-height: 48px; border: none; background: {{a.rowBg}}; color: {{th.ink}}; font-size: 14px; text-align: left; width: 100%">
+<span class="mono" aria-hidden="true" style="color: {{th.muted}}">{{a.chev}}</span>
+<span style="font-weight: 700">{{a.name}} <span style="font-weight: 400; font-size: 12px; color: {{th.muted}}">· {{a.nd}} departamentos</span></span>
+<span style="font-size: 13px; color: {{th.muted}}">{{a.coName}}</span>
+<span class="mono" style="text-align: right">{{a.lines}}</span>
+<span class="mono" style="text-align: right; font-weight: 600">{{a.cost}}</span>
+<span class="mono" style="text-align: right">{{a.avg}}</span>
+<span class="mono" style="text-align: right; color: {{a.idleColor}}">{{a.idle}}</span>
+<span class="mono" style="text-align: right">{{a.swap}}</span>
+<span style="display: block; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; height: 100%; width: {{a.w}}%; background: {{a.barColor}}"></span></span>
+</button>
+<sc-if value="{{a.open}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; background: {{th.soft}}">
+<sc-for list="{{a.depts}}" as="d" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; border-top: 1px solid {{th.track}}">
+<button onClick="{{d.toggle}}" aria-expanded="{{d.open}}" style="display: grid; grid-template-columns: 32px minmax(200px, 2fr) 110px 70px 120px 110px 90px 90px 110px; gap: 8px; align-items: center; padding: 10px 12px 10px 36px; min-height: 44px; border: none; background: transparent; color: {{th.ink}}; font-size: 14px; text-align: left; width: 100%">
+<span class="mono" aria-hidden="true" style="color: {{th.muted}}">{{d.chev}}</span>
+<span>{{d.name}}</span>
+<span></span>
+<span class="mono" style="text-align: right">{{d.lines}}</span>
+<span class="mono" style="text-align: right">{{d.cost}}</span>
+<span class="mono" style="text-align: right">{{d.avg}}</span>
+<span class="mono" style="text-align: right; color: {{d.idleColor}}">{{d.idle}}</span>
+<span class="mono" style="text-align: right">{{d.swap}}</span>
+<span style="font-size: 12px; color: {{th.muted}}">{{d.plan}}</span>
+</button>
+<sc-if value="{{d.open}}" hint-placeholder-val="{{false}}">
+<div style="padding: 4px 12px 14px 68px; display: flex; flex-direction: column; gap: 8px">
+<div style="overflow-x: auto">
+<table class="t" style="background: #FFFFFF; border: 1px solid {{th.track}}; min-width: 1420px">
+<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th></tr></thead>
+<tbody>
+<sc-for list="{{d.preview}}" as="l" hint-placeholder-count="5">
+<tr>
+<td class="mono nw">{{l.acct}} <span style="font-size: 11px; color: {{th.muted}}">{{l.prov}}</span></td>
+<td class="mono nw">{{l.num}}</td>
+<td class="mono nw">{{l.created}}</td>
+<td class="mono nw">{{l.sim}}</td>
+<td><span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 7px; border-radius: 4px; background: {{l.psBg}}; color: {{l.psFg}}">{{l.provStatus}}</span></td>
+<td class="nw" style="font-weight: 500">{{l.who}}</td>
+<td class="nw">{{l.areaU}}</td>
+<td class="nw">{{l.deptU}}</td>
+<td class="mono">{{l.datos}}</td>
+<td class="mono">{{l.qty}}</td>
+<td class="r mono nw">{{l.priceF}}</td>
+<td class="mono nw">{{l.swapDate}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button onClick="{{d.filter}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: none; background: transparent; color: {{th.link}}; font-size: 13px; font-weight: 600">{{d.more}}</button>
+<a href="Gastos.dc.html" onClick="{{d.toGasto}}" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600; text-decoration: none">Registrar gasto o línea nueva →</a>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-all" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-all" style="margin: 0; font-size: 17px; font-weight: 600">Todas las líneas de flota</h2>
+<span class="mono" style="font-size: 13px; color: {{th.muted}}">{{listInfo}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{f.q}}" onChange="{{setQ}}" placeholder="Número, nombre, SIM, cuenta…" style="height: 40px; width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Área<select value="{{f.area}}" onChange="{{setArea}}" style="height: 40px; min-width: 150px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.area}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Departamento<select value="{{f.dept}}" onChange="{{setDept}}" style="height: 40px; min-width: 180px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.dept}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Datos<select value="{{f.datos}}" onChange="{{setDatos}}" style="height: 40px; min-width: 100px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.datos}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Proveedor<select value="{{f.prov}}" onChange="{{setProv}}" style="height: 40px; min-width: 120px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.prov}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Status<select value="{{f.ps}}" onChange="{{setPs}}" style="height: 40px; min-width: 130px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.ps}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Alerta SIGI<select value="{{f.status}}" onChange="{{setStatus}}" style="height: 40px; min-width: 170px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.status}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<button onClick="{{clear}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Limpiar filtros</button>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1560px">
+<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="l" hint-placeholder-count="12">
+<tr>
+<td class="mono nw">{{l.acct}} <span style="font-size: 11px; color: {{th.muted}}">{{l.prov}}{{l.coShort}}</span></td>
+<td class="mono nw">{{l.num}}</td>
+<td class="mono nw">{{l.created}}</td>
+<td class="mono nw">{{l.sim}}</td>
+<td><span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 7px; border-radius: 4px; background: {{l.psBg}}; color: {{l.psFg}}">{{l.provStatus}}</span></td>
+<td class="nw" style="font-weight: 500">{{l.who}}</td>
+<td class="nw">{{l.areaU}}</td>
+<td class="nw">{{l.deptU}}</td>
+<td class="mono">{{l.datos}}</td>
+<td class="mono">{{l.qty}}</td>
+<td class="r mono nw">{{l.priceF}}</td>
+<td class="mono nw">{{l.swapDate}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 16px; text-align: center; color: {{th.muted}}; font-size: 14px">Ninguna línea coincide con los filtros.</p></sc-if>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<span class="mono" style="font-size: 13px; color: {{th.muted}}">{{pageInfo}}</span>
+<div style="display: flex; gap: 8px">
+<button onClick="{{prev}}" disabled="{{noPrev}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px">← Anterior</button>
+<button onClick="{{next}}" disabled="{{noNext}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px">Siguiente →</button>
+</div>
+</div>
+<span style="font-size: 12px; color: {{th.muted}}">Status es el estado reportado por el proveedor; Alerta SIGI se calcula (consumo de 90 días y antigüedad desde el último cambiazo o la creación). El número no es clave primaria: línea, SIM y asignación tienen identificador interno e historial. Nombres de ejemplo ficticios; número y SIM enmascarados.</span>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { co: null, openA: {}, openD: {}, f: this.noFilter(), page: 0 };
+  }
+  // Deja el gasto prellenado para la pantalla Gastos y evidencias.
+  draft(d) {
+    try { window.localStorage.setItem('sigi.gastos.draft', JSON.stringify(d)); } catch (err) { /* sin almacenamiento */ }
+  }
+  noFilter() {
+    return { q: '', area: '', dept: '', datos: '', prov: '', ps: '', status: '' };
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  fleetData() {
+    if (this._fleet) return this._fleet;
+    // [datos, cantidad, precio base]
+    const PLANS = { E: ['SI', '30GB', 4350], C: ['SI', '15GB', 2180], D: ['SI', '5GB', 1240], V: ['NO', '—', 690] };
+    const ORG = [
+      ['cat', 'Comercial', [['Ventas Santo Domingo', 96, 'C'], ['Ventas Norte', 64, 'C'], ['Ventas Este', 38, 'C'], ['Trade Marketing', 22, 'C']]],
+      ['cat', 'Logística', [['Distribución', 84, 'D'], ['Almacén', 26, 'DV']]],
+      ['cat', 'Administración', [['Finanzas', 18, 'C'], ['Recursos Humanos', 12, 'C'], ['Compras', 8, 'C']]],
+      ['cat', 'Tecnología', [['Infraestructura', 10, 'EC'], ['Aplicaciones', 8, 'C']]],
+      ['cat', 'Dirección', [['Gerencia general', 6, 'E'], ['Gerencias de área', 10, 'E']]],
+      ['bona', 'Comercial', [['Ventas', 74, 'C'], ['Mercadeo', 16, 'C']]],
+      ['bona', 'Operaciones', [['Producción', 38, 'DV'], ['Distribución', 42, 'D'], ['Compras', 0, 'C']]],
+      ['bona', 'Administración', [['Finanzas', 12, 'C'], ['Recursos Humanos', 8, 'C']]],
+      ['bona', 'Tecnología', [['TI', 8, 'EC']]],
+      ['bona', 'Dirección', [['Gerencia', 12, 'E']]]
+    ];
+    const FIRST = ['MARÍA', 'JOSÉ', 'ANA', 'LUIS', 'CARMEN', 'PEDRO', 'ROSA', 'JUAN', 'LAURA', 'CARLOS', 'ELENA', 'MIGUEL', 'SOFÍA', 'RAFAEL', 'PATRICIA', 'ANDRÉS', 'YOLANDA', 'RAMÓN', 'TERESA', 'VÍCTOR'];
+    const LAST = ['PÉREZ', 'RODRÍGUEZ', 'MARTÍNEZ', 'GÓMEZ', 'DÍAZ', 'REYES', 'SANTOS', 'CASTILLO', 'NÚÑEZ', 'HERRERA', 'PEÑA', 'JIMÉNEZ', 'MEJÍA', 'ROSARIO', 'BATISTA', 'CRUZ'];
+    const ACCT = { cat: { CLARO: 'G702214590', ALTICE: 'A118403277' }, bona: { CLARO: 'G705518832', ALTICE: 'A118920641' } };
+    const CUT = 2026 * 12 + 9; // octubre 2026, meses desde el año 0
+    const ymd = (mi, day) => Math.floor(mi / 12) + '-' + String((mi % 12) + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    const lines = [];
+    let n = 0;
+    ORG.forEach(([co, area, depts], ai) => depts.forEach(([dept, count, mix], di) => {
+      for (let i = 0; i < count; i++) {
+        n++;
+        const pk = mix.length === 1 ? mix : mix[i % 4 === 3 ? 1 : 0];
+        const [datos, qty, base] = PLANS[pk];
+        const age = 1 + ((n * 13 + di * 5) % 36);
+        const idle = (n * 17 + ai * 3) % 26 === 0;
+        const dataAdd = idle ? 0 : ((n * 29) % 7 === 0 ? 420 : 0);
+        const roam = idle ? 0 : ((n * 31) % 41 === 0 ? 1850 : 0);
+        const quota = age <= 18 && pk !== 'V' ? 310 : 0;
+        const suspended = n % 97 === 0;
+        const status = idle ? 'Sin uso 90 días' : (age >= 33 ? 'Cambiazo elegible' : 'Sin alerta');
+        const prov = co === 'cat' ? (n % 5 === 0 ? 'ALTICE' : 'CLARO') : (n % 4 === 0 ? 'CLARO' : 'ALTICE');
+        const swapMi = CUT - age;
+        const extra = (n * 7) % 48;
+        const day = 1 + (n * 3) % 28;
+        lines.push({
+          id: (co === 'cat' ? 'FC-' : 'FB-') + String(n).padStart(4, '0'), co, area, dept, datos, qty, prov,
+          acct: ACCT[co][prov],
+          num: (['809', '829', '849'][n % 3]) + '-•••-' + String(1000 + (n * 7919) % 9000),
+          sim: '8901 02•• •••• ' + String(1000 + (n * 2713) % 9000),
+          who: n % 23 === 0 ? 'VACANTE · ' + dept.toUpperCase() : FIRST[n % 20] + ' ' + LAST[(n * 7) % 16] + ' ' + LAST[(n * 11 + 3) % 16],
+          created: ymd(swapMi - extra, day), swapDate: extra === 0 ? '—' : ymd(swapMi, 1 + (n * 5) % 28),
+          provStatus: suspended ? 'SUSPENDED' : 'ACTIVE',
+          age, rent: base, dataAdd, roam, quota, cost: base + dataAdd + roam + quota, status
+        });
+      }
+    }));
+    this._fleet = lines;
+    return lines;
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const all = this.fleetData().filter((l) => co === 'all' || l.co === co);
+    const money = (v) => Math.round(v).toLocaleString('en-US');
+    const money2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const kk = (v) => (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 });
+    const tone = { 'Sin alerta': ['#EEF1F4', '#3E4A58'], 'Sin uso 90 días': ['#FBE9DF', '#8A3A12'], 'Cambiazo elegible': ['#E6EEF7', '#1D3557'] };
+    const deco = (l) => Object.assign({}, l, {
+      priceF: '$' + money2(l.cost), areaU: l.area.toUpperCase(), deptU: l.dept.toUpperCase(), coShort: co === 'all' ? ' · ' + TH[l.co].name : '',
+      psBg: l.provStatus === 'ACTIVE' ? '#E7F5EF' : '#EEF1F4', psFg: l.provStatus === 'ACTIVE' ? '#075B3F' : '#3E4A58',
+      bg: tone[l.status][0], fg: tone[l.status][1]
+    });
+    const sum = (arr, k) => arr.reduce((a, l) => a + l[k], 0);
+    const cnt = (arr, st) => arr.filter((l) => l.status === st).length;
+    const total = sum(all, 'cost');
+    const idleAll = all.filter((l) => l.status === 'Sin uso 90 días');
+    const susp = all.filter((l) => l.provStatus === 'SUSPENDED').length;
+    const kpis = [
+      { label: 'Líneas en flota', value: String(all.length), sub: (all.length - susp) + ' ACTIVE · ' + susp + ' SUSPENDED', color: th.ink },
+      { label: 'Costo mensual', value: (total / 1e6).toFixed(2) + ' M', sub: money(total / all.length) + ' promedio por línea', color: th.primary },
+      { label: 'Sin uso 90 días', value: String(idleAll.length), sub: 'Potencial ' + money(sum(idleAll, 'rent') * 12) + ' anuales', color: th.risk },
+      { label: 'Cambiazos elegibles', value: String(cnt(all, 'Cambiazo elegible')), sub: '33 meses o más desde el último cambiazo', color: th.ink },
+      { label: 'Ejecución del ejercicio', value: { all: '66.3 %', cat: '57.3 %', bona: '81.1 %' }[co], sub: { all: '15.9 de 24.0 M', cat: '8.6 de 15.0 M', bona: '7.3 de 9.0 M' }[co], color: th.ink },
+      { label: 'Ahorro en el ejercicio', value: { all: '1.55 M', cat: '0.35 M', bona: '1.20 M' }[co], sub: 'Ver detalle en Ahorros', color: th.saveInk }
+    ];
+    const planOf = (l) => (l.datos === 'NO' ? 'Datos NO · solo voz' : 'Datos SI · ' + l.qty);
+    const pm = {};
+    all.forEach((l) => { const k = planOf(l); pm[k] = (pm[k] || 0) + 1; });
+    const pcolors = [th.primary, th.primary2, th.primary3, th.risk];
+    const split = ['Datos SI · 30GB', 'Datos SI · 15GB', 'Datos SI · 5GB', 'Datos NO · solo voz'].filter((k) => pm[k])
+      .map((k, i) => ({ name: k, value: pm[k] + ' líneas', w: ((pm[k] / all.length) * 100).toFixed(1), color: pcolors[i] }));
+    const openA = this.state.openA, openD = this.state.openD;
+    const groupBy = (arr, keyFn) => { const m = {}; const order = []; arr.forEach((l) => { const k = keyFn(l); if (!m[k]) { m[k] = []; order.push(k); } m[k].push(l); }); return order.map((k) => [k, m[k]]); };
+    const setFilter = (patch) => this.setState({ f: Object.assign(this.noFilter(), patch), page: 0 });
+    const areaGroups = groupBy(all, (l) => l.co + '|' + l.area);
+    const amax = Math.max.apply(null, areaGroups.map(([, ls]) => sum(ls, 'cost')));
+    const f = this.state.f;
+    const areas = areaGroups.map(([key, ls]) => {
+      const aOpen = !!openA[key];
+      const depts = groupBy(ls, (l) => l.dept).map(([dn, dl]) => {
+        const dk = key + '|' + dn;
+        const dOpen = !!openD[dk];
+        const idle = cnt(dl, 'Sin uso 90 días');
+        return {
+          name: dn, lines: dl.length, cost: money(sum(dl, 'cost')), avg: money(sum(dl, 'cost') / dl.length), idle, idleColor: idle ? th.risk : th.muted,
+          swap: cnt(dl, 'Cambiazo elegible'), plan: groupBy(dl, planOf).map(([p]) => p.replace('Datos ', '')).join(' / '), open: dOpen, chev: dOpen ? '▾' : '▸',
+          preview: dOpen ? dl.slice(0, 12).map(deco) : [],
+          more: dl.length > 12 ? 'Ver las ' + dl.length + ' líneas en el listado completo →' : 'Ver en el listado completo →',
+          toggle: () => this.setState((p) => ({ openD: Object.assign({}, p.openD, { [dk]: !p.openD[dk] }) })),
+          filter: () => setFilter({ area: ls[0].area, dept: dn }),
+          toGasto: () => this.draft({
+            co: ls[0].co, origin: 'Flotas', refText: ls[0].area + ' · ' + dn + ' · línea nueva', prov: dl[0].prov, acct: dl[0].acct,
+            partida: ls[0].co === 'cat' ? 'FLO-010' : 'BFLO-002', cc: '413', gl: ls[0].co === 'cat' ? '' : '6205-021',
+            desc: 'Activación de línea y equipo', cur: 'RD$', fromLabel: 'Flotas · ' + ls[0].area + ' · ' + dn
+          })
+        };
+      });
+      const c = sum(ls, 'cost');
+      const idle = cnt(ls, 'Sin uso 90 días');
+      return {
+        name: ls[0].area, coName: TH[ls[0].co].name, nd: depts.length, lines: ls.length, cost: money(c), avg: money(c / ls.length),
+        idle, idleColor: idle ? th.risk : th.muted, swap: cnt(ls, 'Cambiazo elegible'), w: ((c / amax) * 100).toFixed(1), barColor: TH[ls[0].co].primary2,
+        open: aOpen, chev: aOpen ? '▾' : '▸', rowBg: aOpen ? th.soft : '#FFFFFF', depts: aOpen ? depts : [],
+        toggle: () => this.setState((p) => ({ openA: Object.assign({}, p.openA, { [key]: !p.openA[key] }) }))
+      };
+    });
+    const byArea = groupBy(all, (l) => l.area);
+    const bmax = Math.max.apply(null, byArea.map(([, ls]) => sum(ls, 'cost')));
+    const areaBars = byArea.map(([name, ls]) => ({ name, lines: ls.length, cost: kk(sum(ls, 'cost')), w: ((sum(ls, 'cost') / bmax) * 100).toFixed(1), c: sum(ls, 'cost') }))
+      .sort((a, b) => b.c - a.c);
+    const q = f.q.trim().toLowerCase();
+    const filtered = all.filter((l) => (!f.area || l.area === f.area) && (!f.dept || l.dept === f.dept) && (!f.datos || l.datos === f.datos) &&
+      (!f.prov || l.prov === f.prov) && (!f.ps || l.provStatus === f.ps) && (!f.status || l.status === f.status) &&
+      (!q || [l.num, l.who, l.sim, l.acct, l.dept, l.area].join(' ').toLowerCase().indexOf(q) >= 0));
+    const per = 25;
+    const pages = Math.max(1, Math.ceil(filtered.length / per));
+    const page = Math.min(this.state.page, pages - 1);
+    const uniq = (arr) => arr.filter((v, i) => arr.indexOf(v) === i);
+    const opts = (label, vals) => [{ v: '', l: label }].concat(vals.map((v) => ({ v, l: v })));
+    const setF = (key) => (e) => {
+      const nf = Object.assign({}, this.state.f, { [key]: e.target.value });
+      if (key === 'area') nf.dept = '';
+      this.setState({ f: nf, page: 0 });
+    };
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([key, label]) => ({
+      label, on: key === co, bg: key === co ? TH[key].on : '#FFFFFF', fg: key === co ? '#FFFFFF' : th.ink,
+      pick: () => this.setState({ co: key, openA: {}, openD: {}, f: this.noFilter(), page: 0 })
+    }));
+    return {
+      th, nav: this.nav('Flotas.dc.html', th), cos, kpis, split, areas, areaBars,
+      expandAll: () => { const o = {}; areaGroups.forEach(([k]) => { o[k] = true; }); this.setState({ openA: o }); },
+      collapseAll: () => this.setState({ openA: {}, openD: {} }),
+      f, rows: filtered.slice(page * per, page * per + per).map(deco), empty: filtered.length === 0,
+      opt: {
+        area: opts('Todas', uniq(all.map((l) => l.area))),
+        dept: opts('Todos', uniq(all.filter((l) => !f.area || l.area === f.area).map((l) => l.dept))),
+        datos: opts('Todos', ['SI', 'NO']), prov: opts('Todos', uniq(all.map((l) => l.prov)).sort()),
+        ps: opts('Todos', ['ACTIVE', 'SUSPENDED']), status: opts('Todas', ['Sin alerta', 'Sin uso 90 días', 'Cambiazo elegible'])
+      },
+      listInfo: filtered.length + ' líneas · RD$ ' + money(sum(filtered, 'cost')) + ' / mes',
+      pageInfo: filtered.length ? 'Mostrando ' + (page * per + 1) + '–' + Math.min(filtered.length, page * per + per) + ' de ' + filtered.length + ' · página ' + (page + 1) + ' de ' + pages : '',
+      noPrev: page === 0, noNext: page >= pages - 1,
+      prev: () => this.setState({ page: Math.max(0, page - 1) }), next: () => this.setState({ page: Math.min(pages - 1, page + 1) }),
+      setQ: setF('q'), setArea: setF('area'), setDept: setF('dept'), setDatos: setF('datos'), setProv: setF('prov'), setPs: setF('ps'), setStatus: setF('status'),
+      clear: () => this.setState({ f: this.noFilter(), page: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

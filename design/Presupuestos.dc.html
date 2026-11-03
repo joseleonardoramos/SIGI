@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Presupuestos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .r{text-align:right}
+button,select{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Presupuestos · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Presupuesto y control de ejecución</h1>
+<span style="font-size: 14px; color: {{th.muted}}">{{sel.title}} · {{sel.period}} · Versión {{sel.ver}} · <b style="color: {{th.ink}}">{{sel.status}}</b> · RD$ millones</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="2"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos ilustrativos</span>
+<a href="Gastos.dc.html" onClick="{{toGasto}}" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 8px; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600; text-decoration: none">+ Registrar gasto</a>
+</div>
+</header>
+
+<section aria-label="Selección de ejercicio" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 14px 16px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: {{th.muted}}; font-weight: 600">Año fiscal<select value="{{fy}}" onChange="{{setFy}}" style="height: 44px; min-width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}; background: #FFFFFF"><sc-for list="{{fyOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: {{th.muted}}; font-weight: 600">Comparar con<select value="{{cmp}}" onChange="{{setCmp}}" style="height: 44px; min-width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}; background: #FFFFFF"><sc-for list="{{cmpOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<span style="font-size: 13px; color: {{th.muted}}; padding-bottom: 12px">Calendario fiscal {{th.name}}: {{calendar}}</span>
+</section>
+
+<section aria-labelledby="h-port" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-port" style="margin: 0; font-size: 17px; font-weight: 600">Portafolio presupuestario · {{th.name}}</h2>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 900px">
+<thead><tr style="color: {{th.muted}}"><th>Presupuesto</th><th>Período</th><th>Versión</th><th>Estado</th><th class="r">Presupuesto</th><th class="r">Ejecutado</th><th class="r">% ejec.</th><th class="r">Ahorro</th><th></th></tr></thead>
+<tbody>
+<sc-for list="{{portfolio}}" as="p" hint-placeholder-count="4">
+<tr style="background: {{p.rowBg}}"><td style="font-weight: 600">{{p.title}}</td><td class="mono">{{p.period}}</td><td class="mono">{{p.ver}}</td><td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}">{{p.status}}</span></td><td class="r mono">{{p.bud}}</td><td class="r mono">{{p.exe}}</td><td class="r mono">{{p.pct}}</td><td class="r mono" style="color: {{p.savColor}}">{{p.sav}}</td><td><button onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: {{p.btnBg}}; color: {{p.btnFg}}; font-size: 13px; font-weight: 600">{{p.btn}}</button></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-label="Saldo del ejercicio" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px">
+<sc-for list="{{strip}}" as="s" hint-placeholder-count="5">
+<div style="flex: {{s.flex}}; display: flex; align-items: stretch; gap: 8px">
+<sc-if value="{{s.op}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" class="mono" style="align-self: center; font-size: 20px; color: {{th.muted}}">{{s.op}}</span></sc-if>
+<div style="flex: 1; background: {{s.bg}}; color: {{s.fg}}; border: 1px solid {{th.border}}; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 600; opacity: 0.85">{{s.label}}</span><span class="mono" style="font-size: 22px; font-weight: 600">{{s.value}}</span></div>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-cmp" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-cmp" style="margin: 0; font-size: 17px; font-weight: 600">Comparación {{cmpTitle}}</h2>
+<span style="font-size: 13px; color: {{th.muted}}">Ejecutado = cierre real en ejercicios cerrados · proyección de cierre en el vigente · “—” en borradores</span>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1080px">
+<thead>
+<tr style="color: {{th.muted}}"><th></th><th colspan="3" style="text-align: center; border-bottom: 2px solid {{th.primary}}">{{selLabel}}</th><th colspan="3" style="text-align: center; border-bottom: 2px solid {{th.primary3}}">{{cmpLabel}}</th><th colspan="2" style="text-align: center">Variación</th><th style="width: 200px"></th></tr>
+<tr style="color: {{th.muted}}"><th>Categoría</th><th class="r">Presupuesto</th><th class="r">Ejecutado</th><th class="r">Ahorro</th><th class="r">Presupuesto</th><th class="r">Ejecutado</th><th class="r">Ahorro</th><th class="r">Δ presupuesto</th><th class="r">Δ ejecutado</th><th>Presupuesto (barras)</th></tr>
+</thead>
+<tbody>
+<sc-for list="{{cmpRows}}" as="c" hint-placeholder-count="6">
+<tr style="background: {{c.rowBg}}">
+<td style="font-weight: {{c.weight}}">{{c.name}} <span style="font-size: 12px; color: {{th.muted}}">{{c.type}}</span></td>
+<td class="r mono">{{c.aB}}</td><td class="r mono">{{c.aE}}</td><td class="r mono" style="color: {{c.aSC}}">{{c.aS}}</td>
+<td class="r mono">{{c.bB}}</td><td class="r mono">{{c.bE}}</td><td class="r mono" style="color: {{c.bSC}}">{{c.bS}}</td>
+<td class="r mono" style="color: {{c.dBC}}">{{c.dB}}</td><td class="r mono">{{c.dE}}</td>
+<td><span style="display: flex; flex-direction: column; gap: 3px"><span style="display: block; height: 7px; width: {{c.wA}}%; background: {{th.primary}}; border-radius: 3px"></span><span style="display: block; height: 7px; width: {{c.wB}}%; background: {{th.primary3}}; border-radius: 3px"></span></span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="h-exp" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-exp" style="margin: 0; font-size: 17px; font-weight: 600">Gastos hasta la ejecución, con ahorro · {{selLabel}}</h2>
+<span style="font-size: 13px; color: {{th.muted}}">Por partida: presupuesto → reservado → comprometido → ejecutado → disponible, con proyección y ahorro</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Tipo de gasto" style="display: flex; border: 1px solid {{th.border}}; border-radius: 8px; overflow: hidden">
+<sc-for list="{{expTabs}}" as="x" hint-placeholder-count="3"><button onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="height: 40px; padding: 0 14px; border: none; font-size: 13px; font-weight: 600; background: {{x.bg}}; color: {{x.fg}}">{{x.label}}</button></sc-for>
+</div>
+<button onClick="{{exportOpex}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Exportar OPEX + ahorro</button>
+<button onClick="{{exportCapex}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Exportar CAPEX + ahorro</button>
+<button onClick="{{exportAll}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600">Exportar todo (CSV)</button>
+</div>
+</div>
+<sc-if value="{{msg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.saveBg}}; color: {{th.saveInk}}">{{msg}}</p></sc-if>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1200px">
+<thead><tr style="color: {{th.muted}}"><th>Partida</th><th>Cuenta</th><th>Tipo</th><th class="r">Presupuesto</th><th class="r">Reservado</th><th class="r">Comprometido</th><th class="r">Ejecutado</th><th class="r">Disponible</th><th class="r">Proyección</th><th class="r">Ahorro / (exceso)</th><th style="width: 140px">Ejecución</th></tr></thead>
+<tbody>
+<sc-for list="{{expRows}}" as="e" hint-placeholder-count="10">
+<tr style="background: {{e.rowBg}}">
+<td><span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 12px; color: {{th.muted}}">{{e.id}}</span><span style="font-weight: {{e.weight}}">{{e.name}}</span></span></td>
+<td class="mono" style="font-size: 12px; color: {{th.muted}}">{{e.acct}}</td>
+<td><span style="font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: {{e.tBg}}; color: {{e.tFg}}">{{e.type}}</span></td>
+<td class="r mono" style="font-weight: {{e.weight}}">{{e.bud}}</td><td class="r mono">{{e.res}}</td><td class="r mono">{{e.com}}</td><td class="r mono" style="font-weight: {{e.weight}}">{{e.exe}}</td><td class="r mono">{{e.disp}}</td><td class="r mono">{{e.proj}}</td>
+<td class="r mono" style="font-weight: 600; color: {{e.savColor}}">{{e.sav}}</td>
+<td><span style="display: flex; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; width: {{e.wE}}%; background: {{th.primary}}"></span><span style="display: block; width: {{e.wC}}%; background: {{th.primary2}}"></span></span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="h-mat" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-mat" style="margin: 0; font-size: 17px; font-weight: 600">Programación mensual · {{selLabel}}</h2>
+<span style="font-size: 13px; color: {{th.muted}}">RD$ miles · “—” = sin programación (distinto de 0)</span>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1280px">
+<thead><tr style="color: {{th.muted}}"><th>Partida</th><th>Distribución</th><sc-for list="{{months}}" as="m" hint-placeholder-count="12"><th class="r">{{m}}</th></sc-for><th class="r">Anual</th></tr></thead>
+<tbody>
+<sc-for list="{{matrix}}" as="p" hint-placeholder-count="10">
+<tr>
+<td><span style="display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 12px; color: {{th.muted}}">{{p.id}}</span><span style="font-weight: 500">{{p.name}}</span></span></td>
+<td style="color: {{th.muted}}">{{p.dist}}</td>
+<sc-for list="{{p.cells}}" as="c" hint-placeholder-count="12"><td class="r mono">{{c}}</td></sc-for>
+<td class="r mono" style="font-weight: 600">{{p.total}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-labelledby="h-mov" style="flex: 3 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-mov" style="margin: 0; font-size: 17px; font-weight: 600">Movimientos presupuestarios recientes · vigente</h2>
+<sc-if value="{{gastoNote}}" hint-placeholder-val="{{false}}"><p style="margin: 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.saveBg}}; color: {{th.saveInk}}">{{gastoNote}} <a href="Gastos.dc.html" style="color: {{th.saveInk}}; font-weight: 600">Ver gastos →</a></p></sc-if>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 680px">
+<thead><tr style="color: {{th.muted}}"><th>Fecha</th><th>Tipo</th><th>Partida</th><th>Documento</th><th class="r">Importe RD$ K</th><th>Registrado por</th></tr></thead>
+<tbody>
+<sc-for list="{{moves}}" as="mv" hint-placeholder-count="5">
+<tr><td class="mono">{{mv.date}}</td><td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{mv.bg}}; color: {{mv.fg}}">{{mv.type}}</span></td><td class="mono">{{mv.line}}</td><td style="color: {{th.link}}">{{mv.doc}}</td><td class="r mono">{{mv.amt}}</td><td style="color: {{th.muted}}">{{mv.who}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+<section aria-labelledby="h-calc" style="flex: 2 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-calc" style="margin: 0; font-size: 17px; font-weight: 600">Calculadora de partida · {{calc.id}}</h2>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; font-size: 13px">
+<sc-for list="{{calc.rows}}" as="r" hint-placeholder-count="8"><span style="color: {{r.c}}; font-weight: {{r.w}}">{{r.l}}</span><span class="mono" style="color: {{r.c}}; font-weight: {{r.w}}">{{r.v}}</span></sc-for>
+</div>
+<button style="height: 44px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; font-size: 14px; font-weight: 500; color: {{th.ink}}">Simular escenario sin alterar la versión aprobada</button>
+</section>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["cat","bona"],"default":"cat"},"$preview":{"width":1440,"height":2900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { co: null, fy: null, cmp: null, exp: 'ALL', msg: '' };
+  }
+  themes() {
+    return {
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  componentDidMount() {
+    this.onStorage = (e) => { if (e.key === 'sigi.gastos.v1') this.forceUpdate(); };
+    try { window.addEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  componentWillUnmount() {
+    try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  model() {
+    // Category order: Telecom, Flotas, Software, CAPEX, Mantenimiento. Vigente rows: [bud, exe, com, res, sav].
+    const Y = {
+      cat: [
+        { k: '2024-2025', title: 'Plan Presupuesto TI 2024-2025', period: 'abr 2024 – mar 2025', ver: 'v3', status: 'Cerrado', bud: [19.8, 13.2, 24.6, 16.0, 7.1], exe: [19.1, 12.9, 24.9, 15.2, 7.4] },
+        { k: '2025-2026', title: 'Plan Presupuesto TI 2025-2026', period: 'abr 2025 – mar 2026', ver: 'v2', status: 'Cerrado', bud: [22.1, 14.0, 28.3, 17.5, 7.6], exe: [21.0, 13.4, 27.9, 16.9, 7.9] },
+        { k: '2026-2027', title: 'Plan Presupuesto TI 2026-2027', period: 'abr 2026 – mar 2027', ver: 'v2', status: 'Vigente', vig: [[24.0, 13.4, 2.6, 0.2, 2.65], [15.0, 8.6, 1.2, 0.1, 0.35], [31.6, 19.9, 4.3, 0.4, 1.92], [19.8, 9.4, 6.1, 0.6, 0], [8.2, 4.9, 0.8, 0.1, -0.30]] },
+        { k: '2027-2028', title: 'Plan Presupuesto TI 2027-2028', period: 'abr 2027 – mar 2028', ver: 'v1', status: 'Borrador', bud: [23.2, 14.6, 33.9, 24.5, 8.0] }
+      ],
+      bona: [
+        { k: '2024', title: 'Presupuesto Infraestructura 2024', period: 'ene – dic 2024', ver: 'v4', status: 'Cerrado', bud: [11.8, 7.4, 10.2, 8.0, 3.9], exe: [11.5, 7.6, 10.0, 7.1, 4.0] },
+        { k: '2025', title: 'Presupuesto Infraestructura 2025', period: 'ene – dic 2025', ver: 'v3', status: 'Cerrado', bud: [13.0, 8.3, 12.6, 9.9, 4.3], exe: [12.4, 8.0, 12.5, 9.6, 4.4] },
+        { k: '2026', title: 'Presupuesto Infraestructura 2026', period: 'ene – dic 2026', ver: 'v3', status: 'Vigente', vig: [[14.4, 11.6, 1.2, 0.1, 1.38], [9.0, 7.3, 0.5, 0.1, 1.20], [14.9, 12.1, 1.4, 0.2, 0], [11.4, 8.4, 2.6, 0.4, 0], [4.7, 4.1, 0.4, 0.1, -0.20]] },
+        { k: '2027', title: 'Presupuesto Infraestructura 2027', period: 'ene – dic 2027', ver: 'v1', status: 'Borrador', bud: [15.0, 9.2, 16.1, 13.0, 5.0] }
+      ]
+    };
+    const P = {
+      cat: [
+        ['TEL-001', 'Internet dedicado y respaldo · sucursales', 0, 0.35, '11-[CC]-63-0115', 'Uniforme', 1.45],
+        ['TEL-014', 'MPLS, SD-WAN y enlaces corporativos', 0, 0.40, '11-[CC]-63-0115', 'Uniforme', 1.20],
+        ['TEL-020', 'Voz, troncales y DID', 0, 0.25, '11-[CC]-63-0115', 'Uniforme', 0],
+        ['FLO-003', 'Renta y datos de líneas', 1, 0.78, '[cuenta por recibir]', 'Uniforme', 0.35],
+        ['FLO-010', 'Equipos móviles', 1, 0.22, '[cuenta por recibir]', 'Trimestral', 0],
+        ['SW-021', 'Microsoft 365', 2, 0.28326, '[cuenta por recibir]', 'Puntual · nov', 1.92],
+        ['SW-030', 'ERP y aplicaciones de negocio', 2, 0.5, '[cuenta por recibir]', 'Uniforme', 0],
+        ['SW-040', 'Seguridad y otros SaaS', 2, 0.21674, '[cuenta por recibir]', 'Trimestral', 0],
+        ['CAP-007', 'Switches y red', 3, 0.40, '[activo fijo por recibir]', 'Puntual · ago', 0],
+        ['CAP-011', 'Servidores y almacenamiento', 3, 0.45, '[activo fijo por recibir]', 'Puntual · ene', 0],
+        ['CAP-012', 'Reposición de computadoras', 3, 0.15, '[activo fijo por recibir]', 'Trimestral', 0],
+        ['MAN-004', 'Mantenimiento UPS y climatización', 4, 0.55, '11-[CC]-64-0117', 'Trimestral', 0],
+        ['MAN-009', 'Consumibles y soporte', 4, 0.45, '11-[CC]-64-0117', 'Uniforme', -0.30]
+      ],
+      bona: [
+        ['BTEL-001', 'Internet y enlaces', 0, 0.62, '6205-010', 'Uniforme', 0.98],
+        ['BTEL-004', 'Voz y troncales', 0, 0.38, '6205-011', 'Uniforme', 0.40],
+        ['BFLO-001', 'Renta y datos de líneas', 1, 0.8, '6205-020', 'Uniforme', 1.20],
+        ['BFLO-002', 'Equipos móviles', 1, 0.2, '6205-021', 'Trimestral', 0],
+        ['BSW-001', 'Microsoft 365', 2, 0.45055, '6210-010', 'Puntual · mar', 0],
+        ['BSW-002', 'Aplicaciones de negocio', 2, 0.54945, '6210-020', 'Uniforme', 0],
+        ['BCAP-001', 'Red y servidores', 3, 0.6, '1530-010', 'Puntual · may', 0],
+        ['BCAP-002', 'Aperturas y remodelaciones', 3, 0.4, '1530-020', 'Trimestral', 0],
+        ['BMAN-001', 'Mantenimiento y consumibles', 4, 1.0, '6220-001', 'Uniforme', -0.20]
+      ]
+    };
+    return { Y, P };
+  }
+  // Normalizes a year into per-category [bud, exe|null, com, res, sav|null, proj|null].
+  cats(y) {
+    if (y.vig) return y.vig.map(([b, e, c, r, s]) => [b, e, c, r, s, b - s]);
+    if (y.exe) return y.bud.map((b, i) => [b, y.exe[i], 0, 0, b - y.exe[i], y.exe[i]]);
+    return y.bud.map((b) => [b, null, null, null, null, null]);
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'cat';
+    const TH = this.themes();
+    const th = TH[co];
+    const { Y, P } = this.model();
+    const years = Y[co];
+    const vigente = years.find((y) => y.status === 'Vigente');
+    const fyKey = years.some((y) => y.k === this.state.fy) ? this.state.fy : vigente.k;
+    const sel = years.find((y) => y.k === fyKey);
+    const si = years.indexOf(sel);
+    const cmpKey = years.some((y) => y.k === this.state.cmp && y.k !== fyKey) ? this.state.cmp : (years[si - 1] || years[si + 1]).k;
+    const other = years.find((y) => y.k === cmpKey);
+    const f1 = (v) => (v === null ? '—' : v.toFixed(1));
+    const f2 = (v) => (v === null ? '—' : v.toFixed(2));
+    const savF = (v) => (v === null ? '—' : v < -0.004 ? '(' + (-v).toFixed(2) + ')' : v.toFixed(2));
+    const savC = (v) => (v === null ? th.muted : v < -0.004 ? th.risk : v > 0.004 ? th.saveInk : th.muted);
+    const sumCol = (rows, j) => (rows[0][j] === null ? null : rows.reduce((a, r) => a + r[j], 0));
+    const names = ['Telecomunicaciones', 'Flotas móviles', 'Software y suscripciones', 'Infraestructura y equipos', 'Mantenimiento y otros'];
+    const types = ['OPEX', 'OPEX', 'OPEX', 'CAPEX', 'OPEX'];
+    const A0 = this.cats(sel), B = this.cats(other);
+    // Gastos registrados en SIGI (pantalla Gastos y evidencias) afectan la versión vigente: compromiso pendiente y ejecutado por partida.
+    const gastos = sel.status === 'Vigente' ? (((this.readStore('sigi.gastos.v1') || {}).items) || []).filter((g) => g.co === co) : [];
+    const dCom = {}, dExe = {};
+    gastos.forEach((g) => {
+      const fx = g.cur === 'US$' ? g.rate : 1;
+      const sum = (t) => g.steps.filter((s) => s.type === t).reduce((a, s) => a + s.amount, 0);
+      const inv = sum('Factura');
+      const com = Math.max(sum('Compromiso'), inv);
+      dCom[g.partida] = (dCom[g.partida] || 0) + ((com - inv) * fx) / 1e6;
+      dExe[g.partida] = (dExe[g.partida] || 0) + (inv * fx) / 1e6;
+    });
+    const A = A0.map((r, i) => {
+      if (!gastos.length) return r;
+      const ids = P[co].filter((p) => p[2] === i).map((p) => p[0]);
+      const e = ids.reduce((a, id) => a + (dExe[id] || 0), 0), c = ids.reduce((a, id) => a + (dCom[id] || 0), 0);
+      return [r[0], r[1] + e, r[2] + c, r[3], r[4], r[5]];
+    });
+    const gastoTotal = Object.keys(dExe).reduce((a, k) => a + dExe[k] + (dCom[k] || 0), 0);
+    const tone = { Vigente: ['#E7F5EF', '#075B3F'], Cerrado: ['#EEF1F4', '#3E4A58'], Borrador: ['#FFF4D6', '#6B4A00'] };
+
+    const portfolio = years.map((y) => {
+      const c = this.cats(y);
+      const b = sumCol(c, 0), e = y.status === 'Vigente' ? sumCol(c, 1) : sumCol(c, 1), s = sumCol(c, 4);
+      const on = y.k === fyKey;
+      return {
+        title: y.title, period: y.period, ver: y.ver, status: y.status, bg: tone[y.status][0], fg: tone[y.status][1],
+        bud: f1(b), exe: e === null ? '—' : f1(e), pct: e === null ? '—' : ((e / b) * 100).toFixed(1) + ' %', sav: savF(s), savColor: savC(s),
+        on, rowBg: on ? th.soft : '#FFFFFF', btn: on ? 'Seleccionado' : 'Ver', btnBg: on ? th.on : '#FFFFFF', btnFg: on ? '#FFFFFF' : th.ink,
+        pick: () => this.setState({ fy: y.k, cmp: null, msg: '' })
+      };
+    });
+
+    const tb = sumCol(A, 0), te = sumCol(A, 1), tc = sumCol(A, 2), tr = sumCol(A, 3), ts = sumCol(A, 4);
+    const card = (op, label, value, dark) => ({ op, label, value, flex: op ? '1 1 170px' : '1 1 140px', bg: dark ? th.nav : '#FFFFFF', fg: dark ? th.navText : th.ink });
+    let strip;
+    if (sel.status === 'Vigente') strip = [card('', 'Vigente aprobado', f1(tb)), card('−', 'Reservas activas', f1(tr)), card('−', 'Compromisos', f1(tc)), card('−', 'Ejecución reconocida', f1(te)), card('=', 'Disponible', f1(tb - tr - tc - te), true), card('', 'Ahorro neto proyectado', f2(ts))];
+    else if (sel.status === 'Cerrado') strip = [card('', 'Presupuesto final', f1(tb)), card('−', 'Ejecutado al cierre', f1(te)), card('=', 'Ahorro / (exceso) del ejercicio', savF(ts), true)];
+    else strip = [card('', 'Presupuesto propuesto', f1(tb)), card('', 'Variación vs. vigente', (((tb - sumCol(this.cats(vigente), 0)) / sumCol(this.cats(vigente), 0)) * 100).toFixed(1) + ' %'), card('', 'Estado', 'Pendiente de aprobación', true)];
+
+    const pct = (a, b) => (a === null || b === null ? '—' : b === 0 ? 'n/a' : ((a - b) / b * 100 >= 0 ? '+' : '') + ((a - b) / b * 100).toFixed(1) + ' %');
+    const maxB = Math.max.apply(null, A.map((r) => r[0]).concat(B.map((r) => r[0])));
+    const cmpRows = A.map((r, i) => {
+      const o = B[i];
+      return {
+        name: names[i], type: types[i], weight: 500, rowBg: '#FFFFFF',
+        aB: f1(r[0]), aE: f1(r[5]), aS: savF(r[4]), aSC: savC(r[4]), bB: f1(o[0]), bE: f1(o[5]), bS: savF(o[4]), bSC: savC(o[4]),
+        dB: pct(r[0], o[0]), dBC: r[0] >= o[0] ? th.ink : th.saveInk, dE: pct(r[5], o[5]),
+        wA: ((r[0] / maxB) * 100).toFixed(1), wB: ((o[0] / maxB) * 100).toFixed(1)
+      };
+    });
+    const tA = [0, 5, 4].map((j) => sumCol(A, j)), tB = [0, 5, 4].map((j) => sumCol(B, j));
+    cmpRows.push({ name: 'Total', type: '', weight: 700, rowBg: th.soft, aB: f1(tA[0]), aE: f1(tA[1]), aS: savF(tA[2]), aSC: savC(tA[2]), bB: f1(tB[0]), bE: f1(tB[1]), bS: savF(tB[2]), bSC: savC(tB[2]), dB: pct(tA[0], tB[0]), dBC: th.ink, dE: pct(tA[1], tB[1]), wA: '0', wB: '0' });
+
+    const parts = P[co].map(([id, name, ci, share, acct, dist, vSav]) => {
+      const c = A0[ci];
+      const bud = c[0] * share;
+      const isV = sel.status === 'Vigente';
+      const exe = c[1] === null ? null : c[1] * share + (dExe[id] || 0);
+      const com = c[2] === null ? null : c[2] * share + (dCom[id] || 0);
+      const res = c[3] === null ? null : c[3] * share;
+      const sav = c[4] === null ? null : (isV ? vSav : bud - exe);
+      const proj = sav === null ? null : (isV ? bud - sav : exe);
+      return { id, name, ci, acct, dist, type: types[ci], bud, exe, com, res, disp: exe === null ? null : bud - exe - com - res, sav, proj };
+    });
+    const expFilter = this.state.exp;
+    const shown = parts.filter((p) => expFilter === 'ALL' || p.type === expFilter);
+    const rowOf = (p, bold) => ({
+      id: p.id, name: p.name, acct: p.acct, type: p.type, weight: bold ? 700 : 500, rowBg: bold ? th.soft : '#FFFFFF',
+      tBg: p.type === 'CAPEX' ? th.primary2 : th.primary, tFg: '#FFFFFF',
+      bud: f2(p.bud), res: f2(p.res), com: f2(p.com), exe: f2(p.exe), disp: f2(p.disp), proj: f2(p.proj), sav: savF(p.sav), savColor: savC(p.sav),
+      wE: p.exe === null ? '0' : Math.min(100, (p.exe / p.bud) * 100).toFixed(1), wC: p.com === null ? '0' : Math.min(100, ((p.com + p.res) / p.bud) * 100).toFixed(1)
+    });
+    const subtotal = (label, arr, type) => {
+      const s = (k) => (arr.length && arr[0][k] === null ? null : arr.reduce((a, p) => a + p[k], 0));
+      return rowOf({ id: '', name: label, acct: '', type, bud: s('bud'), res: s('res'), com: s('com'), exe: s('exe'), disp: s('disp'), proj: s('proj'), sav: s('sav') }, true);
+    };
+    let expRows = [];
+    ['OPEX', 'CAPEX'].forEach((t) => {
+      const g = shown.filter((p) => p.type === t);
+      if (!g.length) return;
+      expRows = expRows.concat(g.map((p) => rowOf(p, false)));
+      expRows.push(subtotal('Subtotal ' + t, g, t));
+    });
+    if (expFilter === 'ALL') expRows.push(subtotal('Total OPEX + CAPEX', parts, 'TOTAL'));
+    expRows.forEach((r) => { if (r.type === 'TOTAL') { r.tBg = th.ink; } });
+
+    const download = (t) => {
+      const rows = parts.filter((p) => t === 'ALL' || p.type === t);
+      const n = (v) => (v === null ? '' : v.toFixed(2));
+      const head = ['Empresa', 'Ejercicio', 'Version', 'Partida', 'Descripcion', 'Cuenta', 'Tipo', 'Presupuesto', 'Reservado', 'Comprometido', 'Ejecutado', 'Disponible', 'Proyeccion', 'Ahorro'];
+      const lines = [head.join(',')].concat(rows.map((p) => [th.name, sel.k, sel.ver, p.id, '"' + p.name + '"', p.acct, p.type, n(p.bud), n(p.res), n(p.com), n(p.exe), n(p.disp), n(p.proj), n(p.sav)].join(',')));
+      const file = 'SIGI_' + (co === 'cat' ? 'ElCatador' : 'Bona') + '_' + sel.k + '_' + (t === 'ALL' ? 'OPEX-CAPEX' : t) + '.csv';
+      try {
+        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = file;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        this.setState({ msg: 'Exportado ' + file + ' · ' + rows.length + ' partidas con presupuesto, ejecución y ahorro.' });
+      } catch (err) {
+        this.setState({ msg: 'La vista previa no permite descargas; en SIGI se generará ' + file + '.' });
+      }
+    };
+
+    const fiscal = co === 'cat' ? ['Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar'] : ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const matrix = parts.map((p) => {
+      const k = p.bud * 1000;
+      let cells;
+      if (p.dist === 'Uniforme') cells = fiscal.map(() => k / 12);
+      else if (p.dist === 'Trimestral') cells = fiscal.map((_, i) => (i % 3 === 2 ? k / 4 : null));
+      else { const m = p.dist.split('· ')[1]; cells = fiscal.map((x) => (x.toLowerCase() === m ? k : null)); }
+      return { id: p.id, name: p.name, dist: p.dist, cells: cells.map((v) => (v === null ? '—' : Math.round(v).toLocaleString('en-US'))), total: Math.round(k).toLocaleString('en-US') };
+    });
+
+    const mtone = { res: ['#E6EEF7', '#1D3557'], com: ['#DCE7F3', '#1D3557'], exe: [th.primary, '#FFFFFF'], lib: ['#EEF1F4', '#3E4A58'], adj: ['#FFF4D6', '#6B4A00'] };
+    const moves = (co === 'cat' ? [
+      ['31 oct', 'Ejecución', 'TEL-001', 'Factura F-88213 (oct)', '702.5', 'Integración ERP', 'exe'],
+      ['29 oct', 'Compromiso', 'SW-021', 'OC-2026-0412', '8,951.0', 'Compras', 'com'],
+      ['29 oct', 'Liberación', 'SW-021', 'Reserva R-0388 → OC', '−8,951.0', 'Sistema (RPC)', 'lib'],
+      ['24 oct', 'Reserva', 'CAP-011', 'Solicitud SOL-0471', '640.0', 'Infraestructura', 'res'],
+      ['18 oct', 'Ajuste', 'MAN-004', 'Reverso duplicado imp. lote 12', '−375.8', 'Control presupuestario', 'adj']
+    ] : [
+      ['31 oct', 'Ejecución', 'BTEL-001', 'Factura FB-20931 (oct)', '744.0', 'Integración ERP', 'exe'],
+      ['27 oct', 'Compromiso', 'BCAP-002', 'OC-B-2026-0187', '1,140.0', 'Compras', 'com'],
+      ['22 oct', 'Reserva', 'BFLO-002', 'Solicitud SOL-B-0233', '310.0', 'Flotas', 'res'],
+      ['15 oct', 'Ejecución', 'BFLO-001', 'Factura FB-20877 (sep)', '600.0', 'Integración ERP', 'exe'],
+      ['09 oct', 'Ajuste', 'BMAN-001', 'Excepción aprobada EXC-B-014', '200.0', 'Finanzas', 'adj']
+    ]).map(([date, type, line, doc, amt, who, t]) => ({ date, type, line, doc, amt, who, bg: mtone[t][0], fg: mtone[t][1] }));
+    const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const gMoves = [];
+    gastos.forEach((g) => g.steps.filter((s) => s.type !== 'Evidencia').forEach((s) => {
+      const t = s.type === 'Compromiso' ? 'com' : s.type === 'Factura' ? 'exe' : 'lib';
+      const [y, m, d] = s.date.split('-');
+      gMoves.push({ sort: s.date, date: d + ' ' + MON[+m - 1], type: s.type === 'Factura' ? 'Ejecución' : s.type, line: g.partida, doc: g.id + ' · ' + s.doc + ((s.files || []).length ? ' · ' + s.files.length + ' evidencia(s)' : ''),
+        amt: ((s.amount * (g.cur === 'US$' ? g.rate : 1)) / 1000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), who: s.type === 'Pago' ? 'Pago · no afecta el disponible' : 'Gastos y evidencias', bg: mtone[t][0], fg: mtone[t][1] });
+    }));
+    gMoves.sort((a, b) => (a.sort < b.sort ? 1 : -1));
+    const allMoves = gMoves.concat(moves);
+    const C = co === 'cat'
+      ? { id: 'SW-021 · Microsoft 365', q: '420 × US$ 30.00', per: '12 meses · pago anual nov', sub: 'US$ 151,200', amt: 'RD$ 8,951 K', cont: '5 % · RD$ 448 K', fx: '+RD$ 197 K' }
+      : { id: 'BSW-001 · Microsoft 365', q: '315 × US$ 30.00', per: '12 meses · pago anual mar', sub: 'US$ 113,400', amt: 'RD$ 6,713 K', cont: '5 % · RD$ 336 K', fx: '+RD$ 147 K' };
+    const calc = {
+      id: C.id, rows: [
+        { l: 'Cantidad × precio unitario', v: C.q, c: th.muted, w: 400 }, { l: 'Periodicidad', v: C.per, c: th.muted, w: 400 },
+        { l: 'Descuento / incremento', v: '0 % / 0 %', c: th.muted, w: 400 }, { l: 'Subtotal (moneda origen)', v: C.sub, c: th.muted, w: 400 },
+        { l: 'Tasa presupuestaria', v: '59.20', c: th.muted, w: 400 }, { l: 'Importe presupuestado', v: C.amt, c: th.ink, w: 700 },
+        { l: 'Impuestos (registrados aparte)', v: '[POR DEFINIR CON FINANZAS]', c: th.muted, w: 400 }, { l: 'Contingencia (aparte)', v: C.cont, c: th.muted, w: 400 },
+        { l: 'Efecto cambiario a tasa real 60.50', v: C.fx, c: th.risk, w: 400 }
+      ]
+    };
+    const cos = [['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
+      label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink,
+      pick: () => this.setState({ co: k, fy: null, cmp: null, msg: '' })
+    }));
+    const expTabs = [['ALL', 'Todo'], ['OPEX', 'OPEX'], ['CAPEX', 'CAPEX']].map(([k, label]) => ({
+      label, on: k === expFilter, bg: k === expFilter ? th.on : '#FFFFFF', fg: k === expFilter ? '#FFFFFF' : th.ink, pick: () => this.setState({ exp: k })
+    }));
+    const lbl = (y) => y.k + ' · ' + y.status;
+    return {
+      th, nav: this.nav('Presupuestos.dc.html', th), cos, sel, fy: fyKey, cmp: cmpKey,
+      fyOpts: years.map((y) => ({ v: y.k, l: lbl(y) })), cmpOpts: years.filter((y) => y.k !== fyKey).map((y) => ({ v: y.k, l: lbl(y) })),
+      setFy: (e) => this.setState({ fy: e.target.value, cmp: null, msg: '' }), setCmp: (e) => this.setState({ cmp: e.target.value }),
+      calendar: co === 'cat' ? 'abril – marzo' : 'enero – diciembre',
+      portfolio, strip, cmpRows, cmpTitle: lbl(sel) + ' vs. ' + lbl(other), selLabel: th.name + ' ' + sel.k, cmpLabel: th.name + ' ' + other.k,
+      expTabs, expRows, msg: this.state.msg,
+      exportOpex: () => download('OPEX'), exportCapex: () => download('CAPEX'), exportAll: () => download('ALL'),
+      months: fiscal, matrix, moves: allMoves, calc,
+      gastoNote: gastos.length ? 'Incluye ' + gastos.length + ' gasto(s) registrados en SIGI por RD$ ' + gastoTotal.toFixed(2) + ' M (compromisos y facturas).' : '',
+      toGasto: () => {
+        try { window.localStorage.setItem('sigi.gastos.draft', JSON.stringify({ co, origin: 'Partida', partida: P[co][0][0], cur: 'RD$', fromLabel: 'Presupuestos · ' + th.name + ' ' + sel.k })); } catch (err) { /* sin almacenamiento */ }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

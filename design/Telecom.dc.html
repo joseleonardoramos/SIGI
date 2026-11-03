@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Telecomunicaciones</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:10px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:10px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .r{text-align:right}
+table.t .nw{white-space:nowrap}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Telecomunicaciones · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Telecomunicaciones</h1>
+<span style="font-size: 14px; color: {{th.muted}}">Internet, Telefonía, Metro Ethernet e Internet Móvil · Montos mensuales en moneda del contrato (RD$ por defecto) · Totales en RD$ a 60.50 · Corte 31 oct 2026</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos ilustrativos</span>
+<button style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Solicitar alta / cambio</button>
+</div>
+</header>
+
+<section aria-label="Indicadores de telecomunicaciones" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="7">
+<div style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 26px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-labelledby="h-tipo" style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-tipo" style="margin: 0; font-size: 17px; font-weight: 600">Costo mensual por tipo de servicio</h2><span style="font-size: 13px; color: {{th.muted}}">RD$ miles · cantidad de servicios · clic para filtrar</span></div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<button onClick="{{g.pick}}" style="display: flex; flex-direction: column; gap: 6px; padding: 4px 0; border: none; background: transparent; color: {{th.ink}}; text-align: left; width: 100%">
+<span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px; width: 100%"><span>{{g.name}} <span style="color: {{th.muted}}">· {{g.count}}</span></span><span class="mono" style="font-weight: 600">{{g.cost}}</span></span>
+<span style="display: block; width: 100%; height: 10px; background: {{th.track}}; border-radius: 5px; overflow: hidden"><span style="display: block; width: {{g.w}}%; height: 100%; background: {{th.primary}}"></span></span>
+</button>
+</sc-for>
+</section>
+<section aria-labelledby="h-ges" style="flex: 1 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-ges" style="margin: 0; font-size: 17px; font-weight: 600">Servicios en gestión y calidad de datos</h2><span style="font-size: 13px; color: {{th.muted}}">Clic en una tarjeta para filtrar el listado completo</span></div>
+<sc-for list="{{statusCards}}" as="s" hint-placeholder-count="4">
+<button onClick="{{s.pick}}" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: {{th.soft}}; color: {{th.ink}}; font-size: 14px; text-align: left">
+<span style="display: flex; align-items: center; gap: 10px"><span style="font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: {{s.bg}}; color: {{s.fg}}">{{s.count}}</span>{{s.name}}</span>
+<span class="mono" style="font-size: 13px">{{s.cost}}</span>
+</button>
+</sc-for>
+</section>
+</div>
+
+<section aria-labelledby="h-suc" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-suc" style="margin: 0; font-size: 17px; font-weight: 600">Dashboard por sucursal</h2>
+<div style="display: flex; gap: 8px; align-items: center">
+<span style="font-size: 13px; color: {{th.muted}}">{{siteCount}}</span>
+<button onClick="{{expandAll}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Expandir todo</button>
+<button onClick="{{collapseAll}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Contraer</button>
+</div>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 900px; display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 32px minmax(200px, 2fr) 110px minmax(140px, 1fr) 90px 130px 160px 110px; gap: 8px; padding: 10px 12px; font-size: 12px; font-weight: 600; color: {{th.muted}}; border-bottom: 1px solid {{th.border}}">
+<span></span><span>Sucursal</span><span>Empresa</span><span>Ubicación</span><span style="text-align: right">Servicios</span><span style="text-align: right">Costo mensual RD$</span><span>Peso en el costo</span><span>Respaldo</span>
+</div>
+<sc-for list="{{sites}}" as="s" hint-placeholder-count="10">
+<div style="display: flex; flex-direction: column; border-bottom: 1px solid {{th.track}}">
+<button onClick="{{s.toggle}}" aria-expanded="{{s.open}}" style="display: grid; grid-template-columns: 32px minmax(200px, 2fr) 110px minmax(140px, 1fr) 90px 130px 160px 110px; gap: 8px; align-items: center; padding: 12px; min-height: 48px; border: none; background: {{s.rowBg}}; color: {{th.ink}}; font-size: 14px; text-align: left; width: 100%">
+<span class="mono" aria-hidden="true" style="font-size: 14px; color: {{th.muted}}">{{s.chev}}</span>
+<span style="font-weight: 600">{{s.name}}<span style="font-weight: 400; color: {{th.risk}}; font-size: 12px">{{s.flag}}</span></span>
+<span style="font-size: 13px; color: {{th.muted}}">{{s.coName}}</span>
+<span style="font-size: 13px; color: {{th.muted}}">{{s.city}}</span>
+<span class="mono" style="text-align: right">{{s.count}}</span>
+<span class="mono" style="text-align: right; font-weight: 600">{{s.cost}}</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="flex: 1; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; height: 100%; width: {{s.w}}%; background: {{s.barColor}}"></span></span><span class="mono" style="font-size: 12px; width: 44px; text-align: right">{{s.share}}</span></span>
+<span style="font-size: 13px; color: {{s.backupColor}}">{{s.backup}}</span>
+</button>
+<sc-if value="{{s.open}}" hint-placeholder-val="{{false}}">
+<div style="padding: 4px 12px 16px 52px; display: flex; flex-direction: column; gap: 8px; background: {{th.soft}}">
+<div style="overflow-x: auto">
+<table class="t" style="background: #FFFFFF; border: 1px solid {{th.track}}; min-width: 1360px">
+<thead><tr style="color: {{th.muted}}"><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th></tr></thead>
+<tbody>
+<sc-for list="{{s.svcs}}" as="v" hint-placeholder-count="4">
+<tr>
+<td style="font-weight: 600">{{v.op}}</td>
+<td class="mono">{{v.acct}}</td>
+<td class="mono nw"><span style="font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{v.glBg}}; color: {{v.glFg}}">{{v.glF}}</span></td>
+<td class="mono nw">{{v.circuit}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{v.bg}}; color: {{v.fg}}; white-space: nowrap">{{v.status}}</span></td>
+<td class="nw" style="font-weight: 500">{{v.detail}}</td>
+<td class="nw">{{v.tipo}}</td>
+<td class="mono nw">{{v.speed}}</td>
+<td class="mono">{{v.cur}}</td>
+<td class="r mono nw">{{v.amountF}}</td>
+<td style="color: {{th.muted}}; min-width: 220px">{{v.note}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button onClick="{{s.filter}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: none; background: transparent; color: {{th.link}}; font-size: 13px; font-weight: 600">Ver esta sucursal en el listado completo →</button>
+<a href="Gastos.dc.html" onClick="{{s.toGasto}}" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 8px; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600; text-decoration: none">Registrar gasto de esta sucursal →</a>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-all" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-all" style="margin: 0; font-size: 17px; font-weight: 600">Todos los servicios de telecomunicaciones</h2>
+<span class="mono" style="font-size: 13px; color: {{th.muted}}">{{listInfo}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{f.q}}" onChange="{{setQ}}" placeholder="Circuito, cuenta, detalle…" style="height: 40px; width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Sucursal<select value="{{f.site}}" onChange="{{setSite}}" style="height: 40px; min-width: 180px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.site}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{f.tipo}}" onChange="{{setTipo}}" style="height: 40px; min-width: 150px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.tipo}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Proveedor<select value="{{f.op}}" onChange="{{setOp}}" style="height: 40px; min-width: 120px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.op}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta contable<select value="{{f.gl}}" onChange="{{setGl}}" style="height: 40px; min-width: 150px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.gl}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Moneda<select value="{{f.cur}}" onChange="{{setCur}}" style="height: 40px; min-width: 100px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.cur}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Estatus<select value="{{f.status}}" onChange="{{setStatus}}" style="height: 40px; min-width: 160px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.status}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<button onClick="{{clear}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Limpiar filtros</button>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1720px">
+<thead><tr style="color: {{th.muted}}"><th>Sucursal</th><th>Ubicación</th><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<tr>
+<td class="nw" style="font-weight: 600">{{r.site}} <span style="font-weight: 400; font-size: 12px; color: {{th.muted}}">{{r.coShort}}</span></td>
+<td class="nw">{{r.city}}</td>
+<td style="font-weight: 600">{{r.op}}</td>
+<td class="mono">{{r.acct}}</td>
+<td class="mono nw"><span style="font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{r.glBg}}; color: {{r.glFg}}">{{r.glF}}</span></td>
+<td class="mono nw">{{r.circuit}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{r.bg}}; color: {{r.fg}}; white-space: nowrap">{{r.status}}</span></td>
+<td class="nw" style="font-weight: 500">{{r.detail}}</td>
+<td class="nw">{{r.tipo}}</td>
+<td class="mono nw">{{r.speed}}</td>
+<td class="mono">{{r.cur}}</td>
+<td class="r mono nw">{{r.amountF}}</td>
+<td style="color: {{th.muted}}; min-width: 240px">{{r.note}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 16px; text-align: center; color: {{th.muted}}; font-size: 14px">Ningún servicio coincide con los filtros.</p></sc-if>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<span class="mono" style="font-size: 13px; color: {{th.muted}}">{{pageInfo}}</span>
+<div style="display: flex; gap: 8px">
+<button onClick="{{prev}}" disabled="{{noPrev}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px">← Anterior</button>
+<button onClick="{{next}}" disabled="{{noNext}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px">Siguiente →</button>
+</div>
+</div>
+<span style="font-size: 12px; color: {{th.muted}}">Cuenta del proveedor y cuenta contable son dimensiones distintas. Un valor que no es una cuenta del catálogo (por ejemplo “CANCELADO”) se marca para revisión y no se imputa hasta corregirse.</span>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { co: null, open: {}, f: this.noFilter(), page: 0 };
+  }
+  // Deja el gasto prellenado para la pantalla Gastos y evidencias.
+  draft(d) {
+    try { window.localStorage.setItem('sigi.gastos.draft', JSON.stringify(d)); } catch (err) { /* sin almacenamiento */ }
+  }
+  noFilter() {
+    return { q: '', site: '', tipo: '', op: '', gl: '', cur: '', status: '' };
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  telecomData() {
+    if (this._tel) return this._tel;
+    const FX = 60.5;
+    // [tipo, detalle, velocidad, moneda, monto mensual]
+    const SVC = {
+      'INT|1 Gbps': ['Internet', 'INT. DEDICADO CORP. 1GBPS', '1000/1000Mbps', 'RD$', 180000],
+      'INT|500 Mbps': ['Internet', 'INT. DEDICADO CORP. 500MBPS', '500/500Mbps', 'RD$', 68400],
+      'INT|200 Mbps': ['Internet', 'INT. FIJO CORP. 200/100MBPS', '200/100Mbps', 'RD$', 32500],
+      'INT|50 Mbps': ['Internet', 'INT. FIJO CORP. 50/25MBPS', '50/25Mbps', 'RD$', 12300],
+      'INT|200 temp': ['Internet', 'INT. FIJO CORP.  200/100MBPS', '200/100Mbps', 'RD$', 19493.5],
+      'RES|100 Mbps': ['Internet', 'INT. RESPALDO 100/50MBPS', '100/50Mbps', 'RD$', 8900],
+      'RES|30 Mbps': ['Internet', 'INT. RESPALDO 30/10MBPS', '30/10Mbps', 'RD$', 4200],
+      'IP|/29': ['Internet', 'BLOQUE IP PÚBLICAS /29', '—', 'RD$', 3900],
+      'RADIO|50 Mbps': ['Internet', 'RADIOENLACE 50MBPS', '50/50Mbps', 'RD$', 6500],
+      'INTL|1 Gbps': ['Internet', 'ENLACE INTERNACIONAL 1GBPS', '1000/1000Mbps', 'US$', 6776.86],
+      'MPLS|100 Mbps': ['Metro Ethernet', 'MPLS CORP. 100MBPS', '100/100Mbps', 'RD$', 41200],
+      'MPLS|20 Mbps': ['Metro Ethernet', 'MPLS CORP. 20MBPS', '20/20Mbps', 'RD$', 9800],
+      'METRO|200 Mbps': ['Metro Ethernet', 'METRO ETHERNET 200MBPS', '200/200Mbps', 'RD$', 37600],
+      'COLO|2 racks': ['Metro Ethernet', 'COUBICACIÓN 2 RACKS + CROSS-CONNECT', '1000/1000Mbps', 'US$', 4710.74],
+      'SDWAN|Gestionado': ['Metro Ethernet', 'SD-WAN GESTIONADO · 15 SITIOS', '—', 'US$', 3471.07],
+      'SDWAN|Gestionado B': ['Metro Ethernet', 'SD-WAN GESTIONADO · 10 SITIOS', '—', 'RD$', 160000],
+      'NUBE|1 Gbps': ['Metro Ethernet', 'ENLACE DEDICADO A NUBE 1GBPS', '1000/1000Mbps', 'US$', 3636.36],
+      'SIP|60 canales': ['Telefonía', 'TRONCAL SIP 60 CANALES', '—', 'RD$', 52000],
+      'SIP|30 canales': ['Telefonía', 'TRONCAL SIP 30 CANALES', '—', 'RD$', 26500],
+      'SIP|10 canales': ['Telefonía', 'TRONCAL SIP 10 CANALES', '—', 'RD$', 9800],
+      'DID|100 números': ['Telefonía', 'BLOQUE DID 100 NÚMEROS', '—', 'RD$', 4800],
+      'FIJA|1 línea': ['Telefonía', 'LÍNEA FIJA COMERCIAL', '—', 'RD$', 1450],
+      'MOV|20 GB': ['Internet Móvil', 'INTERNET MÓVIL 4G · 20 GB', '20 GB', 'RD$', 1850]
+    };
+    const T = {
+      big: [['INT', '500 Mbps', 'O1'], ['RES', '100 Mbps', 'O2'], ['MPLS', '100 Mbps', 'O1'], ['SIP', '30 canales', 'O2'], ['DID', '100 números', 'O1'], ['IP', '/29', 'O1']],
+      cd: [['INT', '200 Mbps', 'O1'], ['RES', '100 Mbps', 'O2'], ['METRO', '200 Mbps', 'O3'], ['SIP', '10 canales', 'O2'], ['FIJA', '1 línea', 'O1']],
+      a: [['INT', '50 Mbps', 'O1'], ['RES', '30 Mbps', 'O2'], ['MPLS', '20 Mbps', 'O1'], ['FIJA', '1 línea', 'O1']],
+      b: [['INT', '50 Mbps', 'O2'], ['MPLS', '20 Mbps', 'O1'], ['FIJA', '1 línea', 'O1']],
+      r: [['INT', '50 Mbps', 'O2'], ['RADIO', '50 Mbps', 'O3'], ['MOV', '20 GB', 'O1'], ['FIJA', '1 línea', 'O1']],
+      temp: [['INT', '200 temp', 'O1']],
+      dcCat: [['COLO', '2 racks', 'O3'], ['INTL', '1 Gbps', 'O1'], ['INT', '1 Gbps', 'O3'], ['SDWAN', 'Gestionado', 'O1']],
+      dcBona: [['SDWAN', 'Gestionado B', 'O2'], ['NUBE', '1 Gbps', 'O2'], ['SIP', '60 canales', 'O2']]
+    };
+    const OP = { O1: 'CLARO', O2: 'ALTICE', O3: 'WIND' };
+    const ACCT = { cat: { O1: '741203556', O2: '803114270', O3: '520067815' }, bona: { O1: '741889302', O2: '803557129', O3: '520114093' } };
+    const GL = {
+      cat: { 'Internet': '6105-020', 'Metro Ethernet': '6105-021', 'Telefonía': '6105-022', 'Internet Móvil': '6105-023' },
+      bona: { 'Internet': '6205-010', 'Metro Ethernet': '6205-010', 'Telefonía': '6205-011', 'Internet Móvil': '6205-012' }
+    };
+    const EXP = { cat: { INT: 'mar 2027', RES: 'jun 2027', MPLS: 'dic 2026', METRO: 'sep 2027', SIP: 'ago 2027', DID: 'ago 2027', FIJA: 'ago 2027', IP: 'mar 2027', RADIO: 'may 2027', COLO: 'ene 2028', INTL: 'jul 2027', SDWAN: 'dic 2026', MOV: 'jul 2027' }, bona: { INT: 'ene 2027', RES: 'abr 2027', MPLS: 'feb 2027', METRO: 'oct 2027', SIP: 'nov 2027', DID: 'nov 2027', FIJA: 'nov 2027', IP: 'ene 2027', RADIO: 'jun 2027', SDWAN: 'mar 2027', NUBE: 'dic 2027', MOV: 'jul 2027' } };
+    const sitesRaw = [
+      ['cat', 'Tecnología · Sede central', 'Santo Domingo', 'big', '413'], ['cat', 'Centro de datos · corporativo', 'Santo Domingo', 'dcCat', '413'],
+      ['cat', 'Almacén CDSD', 'Santo Domingo', 'cd', '311'], ['cat', 'Almacén Evaristo (CDEVM)', 'Santo Domingo', 'cd', '317'], ['cat', 'Almacén Los Alcarrizos', 'Los Alcarrizos', 'temp', null],
+      ['cat', 'Experiencia BMPC', 'Santo Domingo', 'a', '115'], ['cat', 'Experiencia CDC', 'Santo Domingo', 'a', '116'], ['cat', 'Experiencia EVM', 'Santo Domingo', 'a', '113'],
+      ['cat', 'Experiencia LDV', 'Santo Domingo', 'a', '114'], ['cat', 'Experiencia STGO', 'Santiago', 'a', '118'], ['cat', 'Experiencia Gustavo Mejía Ricart', 'Santo Domingo', 'a', '122'],
+      ['cat', 'Butcher Enriquillo', 'Santo Domingo', 'b', '119'], ['cat', 'Butcher Arroyo Hondo', 'Santo Domingo', 'b', '120'], ['cat', 'Butcher Piantini', 'Santo Domingo', 'b', '121'],
+      ['cat', 'Off Trade Norte', 'Santiago', 'b', '161'], ['cat', 'Don Pepe', 'Santo Domingo', 'b', null], ['cat', 'Experiencia Hard Rock', 'Punta Cana', 'r', '117'],
+      ['bona', 'Sede Bona', 'Santo Domingo', 'big'], ['bona', 'Corporativo Bona', 'Santo Domingo', 'dcBona'], ['bona', 'Planta y CD Bona', 'Santo Domingo Oeste', 'cd'],
+      ['bona', 'Bona 01', 'Santo Domingo', 'a'], ['bona', 'Bona 02', 'Santo Domingo', 'a'], ['bona', 'Bona 03', 'Santiago', 'a'],
+      ['bona', 'Bona 04', 'Santo Domingo Este', 'b'], ['bona', 'Bona 05', 'San Cristóbal', 'b'], ['bona', 'Bona 06', 'Moca', 'b'],
+      ['bona', 'Bona 07', 'San Pedro de Macorís', 'b'], ['bona', 'Bona 08', 'Jarabacoa', 'r']
+    ];
+    const STATUS = { 'cat|MPLS': 'En renegociación', 'cat|SDWAN': 'En renegociación', 'cat|Experiencia Hard Rock|FIJA': 'Baja programada', 'bona|Bona 02|INT': 'Upgrade solicitado', 'bona|Bona 06|MPLS': 'Baja programada', 'bona|SIP': 'Migración a SIP' };
+    const NOTE = {
+      'cat|Almacén Los Alcarrizos|INT': 'Internet de Almacén Temporal - Temporada Alta',
+      'cat|Tecnología · Sede central|RES': 'Respaldo con proveedor distinto al principal',
+      'cat|Centro de datos · corporativo|INTL': 'Facturado en US$; conversión a tasa real del mes',
+      'cat|Centro de datos · corporativo|SDWAN': 'Incluido en renegociación AH-06',
+      'cat|Experiencia Hard Rock|INT': 'Cuenta 11-117-63-0115 inactiva: reasignar o dar de baja el servicio',
+      'cat|Experiencia Hard Rock|FIJA': 'Se elimina al activar telefonía IP',
+      'cat|Experiencia Hard Rock|MOV': 'Respaldo por falta de cobertura de fibra',
+      'cat|Don Pepe|INT': 'El catálogo lista “Don Pepe” sin código contable',
+      'cat|Almacén Evaristo (CDEVM)|INT': 'No existe 11-317-63-0115: solicitar creación a Contabilidad',
+      'bona|Bona 02|INT': 'Upgrade a 100/50 en evaluación',
+      'bona|Bona 06|MPLS': 'Consolidación de circuitos (AH-04)',
+      'bona|Bona 08|MOV': 'Respaldo por falta de cobertura de fibra',
+      'bona|Corporativo Bona|NUBE': 'Facturado en US$'
+    };
+    // Datos de calidad: valor importado que no es una cuenta del catálogo.
+    const GL_BAD = { 'cat|Almacén Los Alcarrizos|INT': 'CANCELADO', 'bona|Bona 08|MOV': '' };
+    // El Catador: cuenta 11-[centro de costo]-63-0115 (Serv Com Internet y Telefonía) según el catálogo recibido.
+    const CAT_ACTIVE = ['115', '116', '113', '114', '311', '411', '413', '119', '120', '121', '118', '171', '172', '162', '122', '161'];
+    const CAT_INACTIVE = ['117', '416'];
+    const glFor = (co, tipo, cc, key) => {
+      if (Object.prototype.hasOwnProperty.call(GL_BAD, key)) return [null, GL_BAD[key]];
+      if (co !== 'cat') return [GL[co][tipo], ''];
+      if (!cc) return [null, 'Sin código'];
+      const code = '11-' + cc + '-63-0115';
+      if (CAT_INACTIVE.indexOf(cc) >= 0) return [null, code + ' inactiva'];
+      if (CAT_ACTIVE.indexOf(cc) < 0) return [null, code + ' no existe'];
+      return [code, ''];
+    };
+    const services = [];
+    const sites = sitesRaw.map(([co, name, city, tpl, cc], si) => {
+      const svcs = T[tpl].map(([type, plan, op], k) => {
+        const key = co + '|' + name + '|' + type;
+        const [tipo, detail, speed, cur, amount] = SVC[type + '|' + plan];
+        const rate = cur === 'US$' ? Math.round(amount * FX * 100) / 100 : amount;
+        const n = si * 10 + k + 1;
+        const [gl, glRaw] = glFor(co, tipo, cc, key);
+        const s = {
+          id: (co === 'cat' ? 'TC-' : 'TB-') + String(n).padStart(4, '0'), co, site: name, city, tipo, detail, speed, cur, amount, rate,
+          op: OP[op], acct: ACCT[co][op], gl, glRaw,
+          circuit: key === 'cat|Almacén Los Alcarrizos|INT' ? '809-524-3744' : (['809', '829', '849'][n % 3] + '-' + String(200 + (n * 37) % 790) + '-' + String(1000 + (n * 7919) % 9000)),
+          exp: EXP[co][type], status: STATUS[key] || STATUS[co + '|' + type] || 'Activo', note: NOTE[key] || ''
+        };
+        services.push(s);
+        return s;
+      });
+      const net = svcs.filter((s) => s.tipo === 'Internet' || s.tipo === 'Internet Móvil').length;
+      return { co, cc, name: cc ? name + ' · CC ' + cc : name, city, corp: tpl.indexOf('dc') === 0, svcs, cost: svcs.reduce((a, s) => a + s.rate, 0), backup: net >= 2 };
+    });
+    this._tel = { sites, services };
+    return this._tel;
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const { sites, services } = this.telecomData();
+    const inCo = (x) => co === 'all' || x.co === co;
+    const svc = services.filter(inCo);
+    const sts = sites.filter(inCo);
+    const phys = sts.filter((s) => !s.corp);
+    const k = (v) => (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 });
+    const money = (v) => Math.round(v).toLocaleString('en-US');
+    const money2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const total = svc.reduce((a, s) => a + s.rate, 0);
+    const tone = { 'Activo': ['#E7F5EF', '#075B3F'], 'En renegociación': ['#FFF4D6', '#6B4A00'], 'Upgrade solicitado': ['#E6EEF7', '#1D3557'], 'Migración a SIP': ['#E6EEF7', '#1D3557'], 'Baja programada': ['#FBE9DF', '#8A3A12'] };
+    const deco = (s) => Object.assign({}, s, {
+      amountF: '$' + money2(s.amount), coShort: co === 'all' ? '· ' + TH[s.co].name : '',
+      glF: s.gl || (s.glRaw ? s.glRaw + ' · revisar' : 'Sin cuenta · revisar'),
+      glBg: s.gl ? th.soft : '#FBE9DF', glFg: s.gl ? th.ink : '#8A3A12',
+      bg: tone[s.status][0], fg: tone[s.status][1]
+    });
+    const soon = ['nov 2026', 'dic 2026', 'ene 2027'];
+    const managed = svc.filter((s) => s.status !== 'Activo');
+    const noGl = svc.filter((s) => !s.gl);
+    const usd = svc.filter((s) => s.cur === 'US$');
+    const budgetMonth = { all: 3.2, cat: 2.0, bona: 1.2 }[co];
+    const kpis = [
+      { label: 'Servicios', value: String(svc.length), sub: sts.length + ' ubicaciones · 3 proveedores', color: th.ink },
+      { label: 'Costo mensual (RD$)', value: (total / 1e6).toFixed(2) + ' M', sub: 'Presupuesto mensual ' + budgetMonth.toFixed(2) + ' M', color: th.primary },
+      { label: 'Contratos en US$', value: String(usd.length), sub: 'US$ ' + money2(usd.reduce((a, s) => a + s.amount, 0)) + ' / mes', color: th.ink },
+      { label: 'Sucursales con respaldo', value: phys.filter((s) => s.backup).length + ' / ' + phys.length, sub: phys.filter((s) => !s.backup).length + ' con enlace único', color: th.ink },
+      { label: 'Servicios en gestión', value: String(managed.length), sub: k(managed.reduce((a, s) => a + s.rate, 0)) + ' K RD$ / mes', color: th.ink },
+      { label: 'Vencen en 90 días', value: String(svc.filter((s) => soon.indexOf(s.exp) >= 0).length), sub: 'nov 2026 – ene 2027', color: th.risk },
+      { label: 'Sin cuenta contable válida', value: String(noGl.length), sub: noGl.length ? 'No se imputan hasta corregir' : 'Todo clasificado', color: noGl.length ? th.risk : th.saveInk }
+    ];
+    const setFilter = (patch) => this.setState({ f: Object.assign(this.noFilter(), patch), page: 0 });
+    const TIPOS = ['Internet', 'Telefonía', 'Metro Ethernet', 'Internet Móvil'];
+    const gm = {};
+    svc.forEach((s) => { gm[s.tipo] = gm[s.tipo] || { n: 0, c: 0 }; gm[s.tipo].n++; gm[s.tipo].c += s.rate; });
+    const present = TIPOS.filter((t) => gm[t]);
+    const gmax = Math.max.apply(null, present.map((t) => gm[t].c));
+    const groups = present.map((t) => ({ name: t, count: gm[t].n, cost: k(gm[t].c), w: ((gm[t].c / gmax) * 100).toFixed(1), pick: () => setFilter({ tipo: t }) }));
+    const sm = {};
+    managed.forEach((s) => { sm[s.status] = sm[s.status] || { n: 0, c: 0 }; sm[s.status].n++; sm[s.status].c += s.rate; });
+    const statusCards = Object.keys(sm).map((st) => ({
+      name: st, count: sm[st].n, cost: money(sm[st].c) + ' RD$ / mes', bg: tone[st][0], fg: tone[st][1], pick: () => setFilter({ status: st })
+    }));
+    if (noGl.length) statusCards.push({ name: 'Sin cuenta contable válida', count: noGl.length, cost: money(noGl.reduce((a, s) => a + s.rate, 0)) + ' RD$ / mes', bg: '#FBE9DF', fg: '#8A3A12', pick: () => setFilter({ gl: '__none' }) });
+    const open = this.state.open;
+    const smax = Math.max.apply(null, sts.map((s) => s.cost));
+    const siteRows = sts.slice().sort((a, b) => b.cost - a.cost).map((s) => {
+      const key = s.co + '|' + s.name;
+      const isOpen = !!open[key];
+      const nm = s.svcs.filter((v) => v.status !== 'Activo').length;
+      const nb = s.svcs.filter((v) => !v.gl).length;
+      const flags = (nm ? '  · ' + nm + ' en gestión' : '') + (nb ? '  · ' + nb + ' sin cuenta contable' : '');
+      return {
+        name: s.name, city: s.city, coName: TH[s.co].name, count: s.svcs.length, cost: money2(s.cost),
+        share: ((s.cost / total) * 100).toFixed(1) + '%', w: ((s.cost / smax) * 100).toFixed(1), barColor: TH[s.co].primary2,
+        backup: s.corp ? 'N/A' : (s.backup ? 'Sí' : 'Enlace único'), backupColor: s.corp || s.backup ? th.muted : th.risk,
+        flag: flags, open: isOpen, chev: isOpen ? '▾' : '▸', rowBg: isOpen ? th.soft : '#FFFFFF',
+        svcs: s.svcs.map(deco),
+        toggle: () => this.setState((p) => ({ open: Object.assign({}, p.open, { [key]: !p.open[key] }) })),
+        filter: () => setFilter({ site: s.name }),
+        toGasto: () => this.draft({
+          co: s.co, origin: 'Telecom', refText: s.name + ' · ' + s.svcs.map((v) => v.tipo).filter((v, i, a) => a.indexOf(v) === i).join(' / '),
+          prov: s.svcs[0].op, acct: s.svcs[0].acct, partida: s.co === 'cat' ? 'TEL-001' : 'BTEL-001', cc: s.cc || '413', gl: s.svcs[0].gl || '',
+          desc: '', cur: 'RD$', fromLabel: 'Telecomunicaciones · ' + s.name
+        })
+      };
+    });
+    const f = this.state.f;
+    const q = f.q.trim().toLowerCase();
+    const filtered = svc.filter((s) => (!f.site || s.site === f.site) && (!f.tipo || s.tipo === f.tipo) && (!f.op || s.op === f.op) &&
+      (!f.gl || (f.gl === '__none' ? !s.gl : s.gl === f.gl)) && (!f.cur || s.cur === f.cur) && (!f.status || s.status === f.status) &&
+      (!q || [s.site, s.city, s.op, s.acct, s.gl || s.glRaw, s.circuit, s.detail, s.tipo, s.note].join(' ').toLowerCase().indexOf(q) >= 0));
+    const per = 20;
+    const pages = Math.max(1, Math.ceil(filtered.length / per));
+    const page = Math.min(this.state.page, pages - 1);
+    const uniq = (arr) => arr.filter((v, i) => arr.indexOf(v) === i);
+    const opts = (label, vals) => [{ v: '', l: label }].concat(vals.map((v) => ({ v, l: v })));
+    const setF = (key) => (e) => this.setState({ f: Object.assign({}, this.state.f, { [key]: e.target.value }), page: 0 });
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([key, label]) => ({
+      label, on: key === co, bg: key === co ? TH[key].on : '#FFFFFF', fg: key === co ? '#FFFFFF' : th.ink,
+      pick: () => this.setState({ co: key, f: this.noFilter(), page: 0, open: {} })
+    }));
+    return {
+      th, nav: this.nav('Telecom.dc.html', th), cos, kpis, groups, statusCards, sites: siteRows,
+      siteCount: sts.length + ' ubicaciones · total RD$ ' + money(total) + ' / mes',
+      expandAll: () => { const o = {}; sts.forEach((s) => { o[s.co + '|' + s.name] = true; }); this.setState({ open: o }); },
+      collapseAll: () => this.setState({ open: {} }),
+      f, rows: filtered.slice(page * per, page * per + per).map(deco), empty: filtered.length === 0,
+      opt: {
+        site: opts('Todas', uniq(svc.map((s) => s.site))), tipo: opts('Todos', TIPOS),
+        op: opts('Todos', uniq(svc.map((s) => s.op)).sort()),
+        gl: [{ v: '', l: 'Todas' }].concat(uniq(svc.filter((s) => s.gl).map((s) => s.gl)).sort().map((v) => ({ v, l: v }))).concat([{ v: '__none', l: 'Sin cuenta válida' }]),
+        cur: opts('Todas', ['RD$', 'US$']), status: opts('Todos', uniq(svc.map((s) => s.status)))
+      },
+      listInfo: filtered.length + ' servicios · RD$ ' + money(filtered.reduce((a, s) => a + s.rate, 0)) + ' / mes',
+      pageInfo: filtered.length ? 'Mostrando ' + (page * per + 1) + '–' + Math.min(filtered.length, page * per + per) + ' de ' + filtered.length + ' · página ' + (page + 1) + ' de ' + pages : '',
+      noPrev: page === 0, noNext: page >= pages - 1,
+      prev: () => this.setState({ page: Math.max(0, page - 1) }), next: () => this.setState({ page: Math.min(pages - 1, page + 1) }),
+      setQ: setF('q'), setSite: setF('site'), setTipo: setF('tipo'), setOp: setF('op'), setGl: setF('gl'), setCur: setF('cur'), setStatus: setF('status'),
+      clear: () => this.setState({ f: this.noFilter(), page: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

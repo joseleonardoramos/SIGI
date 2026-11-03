@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Gastos y evidencias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:top}
+table.t .r{text-align:right}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Gastos y evidencias · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Gastos y evidencias</h1>
+<span style="font-size: 14px; color: {{th.muted}}">Compromiso → factura → pago, con sus documentos · Cada paso actualiza la ejecución de la partida · Importes en RD$ a la tasa registrada</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: {{storeBg}}; color: {{storeFg}}; font-weight: 600">{{storeLabel}}</span>
+<sc-if value="{{hasCreated}}" hint-placeholder-val="{{false}}"><button onClick="{{resetCreated}}" style="height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid {{resetBorder}}; background: #FFFFFF; color: {{resetFg}}; font-size: 13px; font-weight: 600">{{resetLabel}}</button></sc-if>
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<button onClick="{{openForm}}" style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">+ Registrar gasto</button>
+</div>
+</header>
+
+<sc-if value="{{msg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #E7F5EF; color: #075B3F; font-size: 13px">{{msg}}</p></sc-if>
+
+<section aria-label="Indicadores de gasto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+<button onClick="{{k.pick}}" aria-pressed="{{k.on}}" style="text-align: left; background: #FFFFFF; border: {{k.ring}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; color: {{th.ink}}"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 24px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></button>
+</sc-for>
+</section>
+
+<sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-new" style="background: #FFFFFF; border: 2px solid {{fTh.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><div style="display: flex; flex-direction: column; gap: 2px"><h2 id="h-new" style="margin: 0; font-size: 17px; font-weight: 600">Registrar gasto</h2><span style="font-size: 13px; color: {{th.muted}}">{{gf.from}}</span></div><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">¿Qué se compra?</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Empresa<select value="{{gf.co}}" onChange="{{gCo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="cat">El Catador</option><option value="bona">Bona</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Módulo<select value="{{gf.origin}}" onChange="{{gOrigin}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Software">Software y suscripciones</option><option value="Telecom">Telecomunicaciones</option><option value="Flotas">Flotas móviles</option><option value="Partida">Otro gasto de una partida</option></select></label>
+<sc-if value="{{isSw}}" hint-placeholder-val="{{true}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Producto<select value="{{gf.ref}}" onChange="{{gRefSel}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{swOpts}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label></sc-if>
+<sc-if value="{{notSw}}" hint-placeholder-val="{{false}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">{{refLabel}}<input type="text" value="{{gf.refText}}" onChange="{{gRefText}}" placeholder="{{refHint}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Descripción<input type="text" value="{{gf.desc}}" onChange="{{gDesc}}" placeholder="Renovación certificado SSL 2027" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<sc-if value="{{isSw}}" hint-placeholder-val="{{true}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Renueva hasta (opcional)<input type="date" value="{{gf.renew}}" onChange="{{gRenew}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+</fieldset>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Proveedor e imputación</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Proveedor (del maestro)<select value="{{gf.prov}}" onChange="{{gProv}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{provOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta de proveedor<input type="text" value="{{gf.acct}}" onChange="{{gAcct}}" placeholder="[No. cliente / contrato]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Partida presupuestaria<select value="{{gf.partida}}" onChange="{{gPartida}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{partidaOpts}}" as="o" hint-placeholder-count="8"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<sc-if value="{{isCatForm}}" hint-placeholder-val="{{true}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Centro de costo<select value="{{gf.cc}}" onChange="{{gCc}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{ccOpts}}" as="o" hint-placeholder-count="8"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label></sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta contable<input type="text" value="{{gf.gl}}" onChange="{{gGl}}" placeholder="{{glHint}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</fieldset>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Primer documento</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{gf.stage}}" onChange="{{gStage}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Compromiso">Orden de compra / contrato</option><option value="Factura">Factura directa (sin OC)</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Número de documento<input type="text" value="{{gf.doc}}" onChange="{{gDoc}}" placeholder="{{docHint}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<sc-if value="{{isInvoice}}" hint-placeholder-val="{{false}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">NCF / e-CF<input type="text" value="{{gf.ncf}}" onChange="{{gNcf}}" placeholder="B0100000000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Fecha<input type="date" value="{{gf.date}}" onChange="{{gDate}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Moneda<select value="{{gf.cur}}" onChange="{{gCur}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="RD$">RD$</option><option value="US$">US$</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Monto<input type="number" min="0" step="0.01" value="{{gf.amount}}" onChange="{{gAmount}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<sc-if value="{{isUsd}}" hint-placeholder-val="{{false}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tasa RD$ / US$<input type="number" min="0" step="0.01" value="{{gf.rate}}" onChange="{{gRate}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}; grid-column: span 2">Evidencias (PDF, imagen)<input type="file" multiple onChange="{{gFiles}}" style="min-height: 40px; font-size: 13px; color: {{th.ink}}"></label>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}"><span style="color: {{th.muted}}">Impacto</span><b class="mono">{{gPreview}}</b><span style="color: {{th.muted}}">{{gFilesLabel}}</span></div>
+<sc-if value="{{gErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{gErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" onClick="{{saveForm}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Registrar</button>
+<span style="font-size: 12px; color: {{th.muted}}">Los archivos se registran por nombre y tamaño en esta vista; en SIGI se guardan en almacenamiento privado con enlace temporal.</span>
+</div>
+</form>
+</sc-if>
+
+<section aria-labelledby="h-list" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-list" style="margin: 0; font-size: 17px; font-weight: 600">Gastos registrados</h2><span style="font-size: 13px; color: {{th.muted}}">{{listInfo}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{f.q}}" onChange="{{setQ}}" placeholder="Descripción, documento, NCF…" style="height: 40px; width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Módulo<select value="{{f.origin}}" onChange="{{setOrigin}}" style="height: 40px; min-width: 150px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="">Todos</option><option value="Software">Software</option><option value="Telecom">Telecom</option><option value="Flotas">Flotas</option><option value="Partida">Otro</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Estado<select value="{{f.status}}" onChange="{{setStatus}}" style="height: 40px; min-width: 170px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{statusOpts}}" as="o" hint-placeholder-count="6"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+</div>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 1180px; display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 28px 90px minmax(240px, 2fr) 110px minmax(150px, 1fr) 110px 120px 120px 120px 150px; gap: 8px; padding: 10px 12px; font-size: 12px; font-weight: 600; color: {{th.muted}}; border-bottom: 1px solid {{th.border}}">
+<span></span><span>ID</span><span>Gasto · vínculo</span><span>Módulo</span><span>Proveedor · partida</span><span style="text-align: right">Comprometido</span><span style="text-align: right">Facturado</span><span style="text-align: right">Pagado</span><span style="text-align: right">Por pagar</span><span>Estado</span>
+</div>
+<sc-for list="{{rows}}" as="g" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; border-bottom: 1px solid {{th.track}}">
+<button onClick="{{g.toggle}}" aria-expanded="{{g.open}}" style="display: grid; grid-template-columns: 28px 90px minmax(240px, 2fr) 110px minmax(150px, 1fr) 110px 120px 120px 120px 150px; gap: 8px; align-items: center; padding: 12px; min-height: 52px; border: none; background: {{g.rowBg}}; color: {{th.ink}}; font-size: 13px; text-align: left; width: 100%">
+<span class="mono" aria-hidden="true" style="color: {{th.muted}}">{{g.chev}}</span>
+<span class="mono" style="color: {{th.muted}}">{{g.id}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 14px">{{g.desc}}</b><span style="font-size: 12px; color: {{th.muted}}">{{g.refLabel}} · {{g.coName}}{{g.sampleTag}}</span></span>
+<span>{{g.origin}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span>{{g.prov}}</span><span class="mono" style="font-size: 12px; color: {{th.muted}}">{{g.partida}}</span></span>
+<span class="mono" style="text-align: right">{{g.comF}}</span>
+<span class="mono" style="text-align: right">{{g.invF}}</span>
+<span class="mono" style="text-align: right">{{g.paidF}}</span>
+<span class="mono" style="text-align: right; font-weight: 600; color: {{g.dueColor}}">{{g.dueF}}</span>
+<span style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start"><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{g.sBg}}; color: {{g.sFg}}; white-space: nowrap">{{g.status}}</span><span style="font-size: 11px; color: #8A3A12">{{g.flags}}</span></span>
+</button>
+<sc-if value="{{g.open}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 6px 12px 16px 48px; background: {{th.soft}}">
+<div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<b style="font-size: 13px">Historial y evidencias</b>
+<sc-for list="{{g.steps}}" as="s" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; border-left: 4px solid {{s.color}}; font-size: 13px">
+<b>{{s.type}}</b><span>{{s.detail}}</span><span class="mono" style="font-weight: 600">{{s.amountF}}</span>
+<span class="mono" style="color: {{th.muted}}">{{s.dateF}}</span><span style="color: {{th.muted}}">{{s.who}}</span><span></span>
+<span></span><span style="display: flex; flex-wrap: wrap; gap: 6px"><sc-for list="{{s.files}}" as="fl" hint-placeholder-count="1"><span style="font-size: 12px; padding: 3px 8px; border-radius: 4px; border: 1px solid {{th.border}}; background: {{th.soft}}">{{fl}}</span></sc-for><span style="font-size: 12px; color: #8A3A12">{{s.noFile}}</span></span><span></span>
+</div>
+</sc-for>
+</div>
+<div style="flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<b style="font-size: 13px">Siguiente paso</b>
+<sc-if value="{{g.locked}}" hint-placeholder-val="{{false}}"><p style="margin: 0; font-size: 13px; color: {{th.muted}}">Registro de ejemplo: cree uno propio para probar los pasos.</p></sc-if>
+<sc-if value="{{g.canAct}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: #FFFFFF; border: 1px solid {{th.border}}">
+<div role="group" aria-label="Acción" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{g.actions}}" as="a" hint-placeholder-count="3"><button onClick="{{a.pick}}" aria-pressed="{{a.on}}" disabled="{{a.off}}" style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid {{th.border}}; background: {{a.bg}}; color: {{a.fg}}; font-size: 12px; font-weight: 600">{{a.label}}</button></sc-for>
+</div>
+<sc-if value="{{g.isInv}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">No. factura<input type="text" value="{{sf.doc}}" onChange="{{sDoc}}" placeholder="F-0000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">NCF / e-CF<input type="text" value="{{sf.ncf}}" onChange="{{sNcf}}" placeholder="B0100000000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</div>
+</sc-if>
+<sc-if value="{{g.isPay}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Forma de pago<select value="{{sf.method}}" onChange="{{sMethod}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Transferencia">Transferencia</option><option value="Cheque">Cheque</option><option value="Tarjeta corporativa">Tarjeta corporativa</option><option value="Débito automático">Débito automático</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Referencia bancaria<input type="text" value="{{sf.doc}}" onChange="{{sDoc}}" placeholder="TRX-000000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</div>
+</sc-if>
+<sc-if value="{{g.isEv}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: {{th.muted}}">Adjunte documentos al paso seleccionado (carta, contrato, acta de recepción).</span></sc-if>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px">
+<sc-if value="{{g.needsAmount}}" hint-placeholder-val="{{true}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Monto ({{g.cur}})<input type="number" min="0" step="0.01" value="{{sf.amount}}" onChange="{{sAmount}}" placeholder="{{g.suggest}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+<sc-if value="{{g.needsAmount}}" hint-placeholder-val="{{true}}"><label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Fecha<input type="date" value="{{sf.date}}" onChange="{{sDate}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label></sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}; grid-column: 1 / -1">Evidencias<input type="file" multiple onChange="{{sFiles}}" style="min-height: 40px; font-size: 13px; color: {{th.ink}}"></label>
+</div>
+<span style="font-size: 12px; color: {{th.muted}}">{{sFilesLabel}}</span>
+<sc-if value="{{sErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 8px 10px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{sErr}}</p></sc-if>
+<button onClick="{{g.save}}" style="height: 44px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">{{g.saveLabel}}</button>
+</div>
+</sc-if>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; font-size: 12px; padding: 12px; border-radius: 8px; background: #FFFFFF; border: 1px solid {{th.border}}">
+<span style="color: {{th.muted}}">Cuenta proveedor</span><span class="mono">{{g.acct}}</span>
+<span style="color: {{th.muted}}">Cuenta contable</span><span class="mono">{{g.gl}}</span>
+<span style="color: {{th.muted}}">Centro de costo</span><span class="mono">{{g.cc}}</span>
+<span style="color: {{th.muted}}">Moneda · tasa</span><span class="mono">{{g.cur}} · {{g.rate}}</span>
+<span style="color: {{th.muted}}">Renovación</span><span class="mono">{{g.renew}}</span>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 16px; text-align: center; color: {{th.muted}}; font-size: 14px">No hay gastos con estos filtros.</p></sc-if>
+<span style="font-size: 12px; color: {{th.muted}}">Reglas: la factura libera solo la porción del compromiso que cubre y cuenta como ejecutado; el pago no vuelve a disminuir el disponible. Nada se borra: las correcciones se hacen con nota de crédito o reverso.</span>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const saved = this.readStore('sigi.gastos.v1');
+    const draft = this.readStore('sigi.gastos.draft');
+    this.state = {
+      co: null, open: {}, f: { q: '', origin: '', status: '' }, kf: '',
+      form: false, gf: this.emptyGf('cat'), gErr: '', msg: '',
+      act: {}, sf: this.emptySf(), sErr: '',
+      items: (saved && saved.items) || [], store: saved === undefined ? 'off' : 'on', confirmReset: false
+    };
+    if (draft) this.applyDraft(draft, true);
+  }
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  applyDraft(d, initial) {
+    try { window.localStorage.removeItem('sigi.gastos.draft'); } catch (err) { /* sin almacenamiento */ }
+    const gf = Object.assign(this.emptyGf(d.co || 'cat'), d, { from: 'Desde ' + (d.fromLabel || d.origin) });
+    if (initial) { this.state.form = true; this.state.gf = gf; } else this.setState({ form: true, gf, gErr: '', msg: '' });
+  }
+  componentDidMount() {
+    this.onStorage = (e) => {
+      if (e.key === 'sigi.gastos.draft' && e.newValue) this.applyDraft(JSON.parse(e.newValue), false);
+      if (e.key === 'sigi.catalogos.v1' || e.key === 'sigi.software.v1') this.forceUpdate();
+    };
+    try { window.addEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  componentWillUnmount() {
+    try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  componentDidUpdate(prevProps, prev) {
+    if (prev.items === this.state.items) return;
+    try {
+      window.localStorage.setItem('sigi.gastos.v1', JSON.stringify({ items: this.state.items }));
+    } catch (err) {
+      if (this.state.store !== 'off') this.setState({ store: 'off' });
+    }
+  }
+  emptyGf(co) {
+    return { co, origin: 'Software', ref: '', refText: '', desc: '', renew: '', prov: 'CLARO', acct: '', partida: co === 'cat' ? 'SW-040' : 'BSW-002', cc: '413', gl: '', stage: 'Compromiso', doc: '', ncf: '', date: '2026-11-03', cur: 'RD$', amount: '', rate: '60.50', files: [], from: 'Nuevo registro' };
+  }
+  emptySf() {
+    return { doc: '', ncf: '', amount: '', date: '2026-11-03', method: 'Transferencia', files: [] };
+  }
+  setGf(patch) {
+    this.setState((s) => ({ gf: Object.assign({}, s.gf, patch), gErr: '' }));
+  }
+  setSf(patch) {
+    this.setState((s) => ({ sf: Object.assign({}, s.sf, patch), sErr: '' }));
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  ref() {
+    const PARTIDAS = {
+      cat: [['TEL-001', 'Internet dedicado y respaldo · sucursales'], ['TEL-014', 'MPLS, SD-WAN y enlaces corporativos'], ['TEL-020', 'Voz, troncales y DID'], ['FLO-003', 'Renta y datos de líneas'], ['FLO-010', 'Equipos móviles'], ['SW-021', 'Microsoft 365'], ['SW-030', 'ERP y aplicaciones de negocio'], ['SW-040', 'Seguridad y otros SaaS'], ['CAP-007', 'Switches y red'], ['CAP-011', 'Servidores y almacenamiento'], ['CAP-012', 'Reposición de computadoras'], ['MAN-004', 'Mantenimiento UPS y climatización'], ['MAN-009', 'Consumibles y soporte']],
+      bona: [['BTEL-001', 'Internet y enlaces'], ['BTEL-004', 'Voz y troncales'], ['BFLO-001', 'Renta y datos de líneas'], ['BFLO-002', 'Equipos móviles'], ['BSW-001', 'Microsoft 365'], ['BSW-002', 'Aplicaciones de negocio'], ['BCAP-001', 'Red y servidores'], ['BCAP-002', 'Aperturas y remodelaciones'], ['BMAN-001', 'Mantenimiento y consumibles']]
+    };
+    const SW = [
+      ['SW-C01', 'cat', 'Microsoft 365 E3', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'SW-021'], ['SW-C02', 'cat', 'Power BI Pro', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'SW-021'],
+      ['SW-C03', 'cat', 'ERP · licencias de usuario y soporte', '[Proveedor ERP]', 'ERP-2210', 'SW-030'], ['SW-C04', 'cat', 'Adobe Acrobat Pro', 'Adobe', 'ADB-VIP-41007', 'SW-040'],
+      ['SW-C05', 'cat', 'FortiGate · licencias y soporte', 'Fortinet (vía distribuidor)', 'FTN-88102', 'SW-040'], ['SW-C06', 'cat', 'Protección de equipos (EDR)', '[Proveedor de seguridad]', 'SEC-7781', 'SW-040'],
+      ['SW-C07', 'cat', 'AWS · cómputo y respaldo', 'Amazon Web Services', 'AWS-4410-2291', 'SW-040'], ['SW-C08', 'cat', 'AWS · base de datos administrada', 'Amazon Web Services', 'AWS-4410-2291', 'SW-040'],
+      ['SW-C09', 'cat', 'Certificados SSL', '[Autoridad certificadora]', 'CA-1029', 'SW-040'], ['SW-C10', 'cat', 'Dominio corporativo y DNS', '[Autoridad certificadora]', 'CA-1029', 'SW-040'],
+      ['SW-B01', 'bona', 'Microsoft 365', 'Microsoft (vía distribuidor)', 'MS-CSP-30418', 'BSW-001'], ['SW-B02', 'bona', 'Power BI Pro', 'Microsoft (vía distribuidor)', 'MS-CSP-30418', 'BSW-001'],
+      ['SW-B03', 'bona', 'ERP · licencias de usuario y soporte', '[Proveedor ERP]', 'ERP-2214', 'BSW-002'], ['SW-B04', 'bona', 'Adobe Creative Cloud', 'Adobe', 'ADB-VIP-55120', 'BSW-002'],
+      ['SW-B05', 'bona', 'FortiGate · licencias y soporte', 'Fortinet (vía distribuidor)', 'FTN-88317', 'BSW-002'], ['SW-B06', 'bona', 'Certificados SSL', '[Autoridad certificadora]', 'CA-1077', 'BSW-002']
+    ];
+    const swStore = this.readStore('sigi.software.v1') || {};
+    (swStore.extra || []).forEach((r) => SW.push([r[0], r[1], r[2], r[4], r[5], r[17]]));
+    const catStore = this.readStore('sigi.catalogos.v1') || {};
+    const PROVS = ['CLARO', 'ALTICE', 'WIND', 'Microsoft (vía distribuidor)', 'Amazon Web Services', 'Adobe', 'Fortinet (vía distribuidor)', '[Autoridad certificadora]', '[Proveedor ERP]', '[Proveedor de seguridad]', '[Consultor de infraestructura]', '[Arrendador de equipos]']
+      .concat((catStore.extraProv || []).map((p) => p[1]));
+    const CC = [['101', 'Dirección de Ventas'], ['112', 'Experiencia B2C'], ['113', 'Experiencia EVM'], ['114', 'Experiencia LDV'], ['115', 'Experiencia BMPC'], ['116', 'Experiencia CDC'], ['118', 'Experiencia STGO'], ['119', 'Enriquillo'], ['120', 'Butcher Arroyo Hondo'], ['121', 'Butcher Piantini'], ['122', 'Experiencia Gustavo Mejía Ricart'], ['140', 'Cartera B2C'], ['150', 'Digital'], ['161', 'Off Trade Norte'], ['162', 'Off Trade SD'], ['206', 'Mercadeo'], ['311', 'Almacén CDSD'], ['312', 'Distribución CDSD'], ['317', 'Almacén Evaristo (CDEVM)'], ['320', 'Almacén Punta Cana (CDPC)'], ['370', 'Compras e Importación'], ['401', 'Gerencia General'], ['411', 'Finanzas'], ['412', 'Administración'], ['413', 'Tecnología'], ['430', 'Recursos Humanos']];
+    Object.keys(catStore.extraCc || {}).forEach((k) => CC.push([k, catStore.extraCc[k]]));
+    return { PARTIDAS, SW, PROVS, CC };
+  }
+  samples() {
+    return [
+      { id: 'GT-0001', sample: true, co: 'cat', origin: 'Software', ref: 'SW-C09', refLabel: 'SW-C09 · Certificados SSL', desc: 'Renovación certificados SSL 2027', renew: '2027-12-08', prov: '[Autoridad certificadora]', acct: 'CA-1029', partida: 'SW-040', cc: '413', gl: '[cuenta de software por recibir]', cur: 'US$', rate: 60.5,
+        steps: [{ type: 'Compromiso', date: '2026-10-28', doc: 'OC-2026-0455', amount: 1080, files: ['OC-2026-0455.pdf', 'Cotizacion-SSL.pdf'] }] },
+      { id: 'GT-0002', sample: true, co: 'cat', origin: 'Telecom', ref: '', refLabel: 'Experiencia Gustavo Mejía Ricart · Internet', desc: 'Instalación de Internet dedicado', renew: '', prov: 'CLARO', acct: '741203556', partida: 'TEL-001', cc: '122', gl: '11-122-63-0115', cur: 'RD$', rate: 1,
+        steps: [{ type: 'Factura', date: '2026-10-15', doc: 'F-88540', ncf: 'B0100004512', amount: 18500, files: ['Factura-F-88540.pdf'] }, { type: 'Pago', date: '2026-10-30', doc: 'TRX-88120', method: 'Transferencia', amount: 18500, files: ['Comprobante-TRX-88120.pdf'] }] },
+      { id: 'GT-0003', sample: true, co: 'bona', origin: 'Flotas', ref: '', refLabel: 'Comercial · Ventas · línea nueva', desc: 'Activación de línea y equipo', renew: '', prov: 'ALTICE', acct: 'A118920641', partida: 'BFLO-002', cc: '', gl: '6205-021', cur: 'RD$', rate: 1,
+        steps: [{ type: 'Factura', date: '2026-10-22', doc: 'FA-20931', ncf: 'B0100009871', amount: 4250, files: [] }] },
+      { id: 'GT-0004', sample: true, co: 'bona', origin: 'Software', ref: 'SW-B05', refLabel: 'SW-B05 · FortiGate · licencias y soporte', desc: 'Renovación soporte FortiGate', renew: '2027-11-30', prov: 'Fortinet (vía distribuidor)', acct: 'FTN-88317', partida: 'BSW-002', cc: '', gl: '6210-020', cur: 'US$', rate: 60.5,
+        steps: [{ type: 'Compromiso', date: '2026-10-20', doc: 'OC-B-2026-0201', amount: 6100, files: ['OC-B-2026-0201.pdf'] }, { type: 'Factura', date: '2026-10-31', doc: 'FTN-INV-7781', ncf: 'B0100003310', amount: 3050, files: ['FTN-INV-7781.pdf'] }] }
+    ];
+  }
+  totals(g) {
+    const sum = (t) => g.steps.filter((s) => s.type === t).reduce((a, s) => a + s.amount, 0);
+    const inv = sum('Factura');
+    const com = Math.max(sum('Compromiso'), inv);
+    const paid = sum('Pago');
+    let status;
+    if (inv > 0 && paid >= inv && inv >= com) status = 'Pagado';
+    else if (paid > 0) status = 'Pagado parcial';
+    else if (inv > 0 && inv >= com) status = 'Facturado';
+    else if (inv > 0) status = 'Facturado parcial';
+    else status = 'Comprometido';
+    return { com, inv, paid, status };
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const R = this.ref();
+    const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const fmtD = (s) => { if (!s) return '—'; const [y, m, d] = s.split('-'); return d + ' ' + MON[+m - 1] + ' ' + y; };
+    const m2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const money = (v) => Math.round(v).toLocaleString('en-US');
+    const all = this.samples().concat(this.state.items);
+    const inCo = all.filter((g) => co === 'all' || g.co === co);
+    const sTone = { 'Comprometido': ['#E6EEF7', '#1D3557'], 'Facturado parcial': ['#FFF4D6', '#6B4A00'], 'Facturado': ['#FFF4D6', '#6B4A00'], 'Pagado parcial': ['#E6EEF7', '#1D3557'], 'Pagado': ['#E7F5EF', '#075B3F'] };
+    const flagsOf = (g, t) => {
+      const fl = [];
+      g.steps.forEach((s) => { if ((s.type === 'Factura' || s.type === 'Pago') && !(s.files || []).length) fl.push((s.type === 'Factura' ? 'Factura' : 'Pago') + ' sin evidencia'); });
+      if (g.steps.some((s) => s.type === 'Factura' && !s.ncf) && g.cur === 'RD$') fl.push('Factura sin NCF');
+      return fl;
+    };
+    const dec = inCo.map((g) => Object.assign({}, g, this.totals(g), { flags: flagsOf(g) }));
+    const rdOf = (g, v) => v * (g.cur === 'US$' ? g.rate : 1);
+    const S = (k) => dec.reduce((a, g) => a + rdOf(g, g[k]), 0);
+    const comPend = dec.reduce((a, g) => a + rdOf(g, g.com - g.inv), 0);
+    const due = dec.reduce((a, g) => a + rdOf(g, g.inv - g.paid), 0);
+    const kf = this.state.kf;
+    const kdefs = [
+      ['', 'Gastos registrados', String(dec.length), dec.filter((g) => !g.sample).length + ' creados por usted', th.ink],
+      ['com', 'Comprometido pendiente', money(comPend), 'Reservado en la partida, sin factura', th.primary],
+      ['inv', 'Facturado (ejecutado)', money(S('inv')), 'Ya descuenta del disponible', th.ink],
+      ['paid', 'Pagado', money(S('paid')), 'No vuelve a descontar', th.saveInk],
+      ['due', 'Por pagar', money(due), 'Facturas pendientes de pago', due > 0 ? th.risk : th.muted],
+      ['flag', 'Sin evidencia o NCF', String(dec.filter((g) => g.flags.length).length), 'Revisar antes del cierre', dec.some((g) => g.flags.length) ? th.risk : th.saveInk]
+    ];
+    const kpis = kdefs.map(([k, label, value, sub, color]) => ({ label, value, sub, color, on: kf === k, ring: kf === k ? '2px solid ' + th.on : '1px solid ' + th.border, pick: () => this.setState({ kf: kf === k ? '' : k }) }));
+    const f = this.state.f;
+    const q = f.q.trim().toLowerCase();
+    const kmatch = (g) => !kf || (kf === 'com' && g.com > g.inv) || (kf === 'inv' && g.inv > 0) || (kf === 'paid' && g.paid > 0) || (kf === 'due' && g.inv > g.paid) || (kf === 'flag' && g.flags.length);
+    const list = dec.filter((g) => kmatch(g) && (!f.origin || g.origin === f.origin) && (!f.status || g.status === f.status) &&
+      (!q || [g.id, g.desc, g.refLabel, g.prov, g.partida].concat(g.steps.map((s) => (s.doc || '') + ' ' + (s.ncf || ''))).join(' ').toLowerCase().indexOf(q) >= 0))
+      .sort((a, b) => (a.id < b.id ? 1 : -1));
+    const act = this.state.act;
+    const sf = this.state.sf;
+    const stepColor = { Compromiso: '#5B84B1', Factura: '#C8642A', Pago: '#0B7A55', Evidencia: '#8E99A8' };
+    const rows = list.map((g) => {
+      const open = !!this.state.open[g.id];
+      const mode = act[g.id] || (g.com > g.inv ? 'Factura' : (g.inv > g.paid ? 'Pago' : 'Evidencia'));
+      const remaining = mode === 'Factura' ? g.com - g.inv : (mode === 'Pago' ? g.inv - g.paid : 0);
+      const actions = [['Factura', 'Registrar factura', g.com > g.inv || g.status === 'Comprometido'], ['Pago', 'Marcar pagado', g.inv > g.paid], ['Evidencia', 'Adjuntar evidencia', true]].map(([k, label, enabled]) => ({
+        label, on: mode === k, off: !enabled, bg: mode === k ? TH[g.co].on : '#FFFFFF', fg: mode === k ? '#FFFFFF' : (enabled ? th.ink : th.muted),
+        pick: () => this.setState((s) => ({ act: Object.assign({}, s.act, { [g.id]: k }), sf: this.emptySf(), sErr: '' }))
+      }));
+      const save = () => {
+        const amount = parseFloat(sf.amount);
+        if (mode !== 'Evidencia') {
+          if (!(amount > 0)) return this.setState({ sErr: 'Escriba un monto mayor que cero.' });
+          if (amount > remaining + 0.004) return this.setState({ sErr: (mode === 'Factura' ? 'La factura supera el compromiso pendiente (' : 'El pago supera lo facturado pendiente (') + g.cur + ' ' + m2(remaining) + '). Registre una ampliación o excepción.' });
+          if (mode === 'Factura' && sf.ncf && !/^(B\d{10}|E\d{12})$/.test(sf.ncf.trim())) return this.setState({ sErr: 'El NCF debe tener 11 caracteres (B01…) o el e-CF 13 (E31…).' });
+          if (!sf.doc.trim()) return this.setState({ sErr: mode === 'Factura' ? 'Escriba el número de factura.' : 'Escriba la referencia del pago.' });
+        } else if (!sf.files.length) return this.setState({ sErr: 'Seleccione al menos un archivo.' });
+        const step = mode === 'Evidencia'
+          ? { type: 'Evidencia', date: '2026-11-03', doc: 'Documentos adicionales', amount: 0, files: sf.files }
+          : { type: mode, date: sf.date, doc: sf.doc.trim(), ncf: sf.ncf.trim(), method: mode === 'Pago' ? sf.method : '', amount, files: sf.files };
+        this.setState((s) => ({
+          items: s.items.map((x) => (x.id === g.id ? Object.assign({}, x, { steps: x.steps.concat([step]) }) : x)),
+          sf: this.emptySf(), act: Object.assign({}, s.act, { [g.id]: '' }), sErr: '',
+          msg: g.id + ': ' + (mode === 'Factura' ? 'factura registrada; la partida ' + g.partida + ' aumenta su ejecutado.' : mode === 'Pago' ? 'pago registrado.' : 'evidencia adjunta.')
+        }));
+      };
+      const t = TH[g.co];
+      return {
+        id: g.id, desc: g.desc, refLabel: g.refLabel, coName: t.name, sampleTag: g.sample ? ' · ejemplo' : '', origin: g.origin, prov: g.prov, partida: g.partida,
+        comF: g.cur + ' ' + m2(g.com), invF: g.cur + ' ' + m2(g.inv), paidF: g.cur + ' ' + m2(g.paid), dueF: g.cur + ' ' + m2(g.inv - g.paid), dueColor: g.inv > g.paid ? th.risk : th.muted,
+        status: g.status, sBg: sTone[g.status][0], sFg: sTone[g.status][1], flags: g.flags.join(' · '),
+        open, chev: open ? '▾' : '▸', rowBg: open ? th.soft : '#FFFFFF',
+        toggle: () => this.setState((s) => ({ open: Object.assign({}, s.open, { [g.id]: !s.open[g.id] }), sErr: '' })),
+        steps: g.steps.map((s) => ({
+          type: s.type === 'Compromiso' ? 'Compromiso' : s.type, color: stepColor[s.type],
+          detail: s.type === 'Compromiso' ? 'Orden / contrato ' + s.doc : s.type === 'Factura' ? 'Factura ' + s.doc + (s.ncf ? ' · NCF ' + s.ncf : ' · sin NCF') : s.type === 'Pago' ? s.method + ' · ref. ' + s.doc : s.doc,
+          amountF: s.amount ? g.cur + ' ' + m2(s.amount) : '', dateF: fmtD(s.date), who: g.sample ? 'Ejemplo' : 'Registrado en SIGI',
+          files: s.files || [], noFile: (s.files || []).length ? '' : (s.type === 'Factura' || s.type === 'Pago' ? 'Sin evidencia adjunta' : '')
+        })),
+        locked: !!g.sample, canAct: !g.sample, actions, isInv: mode === 'Factura', isPay: mode === 'Pago', isEv: mode === 'Evidencia', needsAmount: mode !== 'Evidencia',
+        suggest: remaining ? m2(remaining) : '', saveLabel: mode === 'Factura' ? 'Registrar factura' : mode === 'Pago' ? 'Registrar pago' : 'Adjuntar', save,
+        acct: g.acct || '—', gl: g.gl || 'Por definir', cc: g.cc || '—', cur: g.cur, rate: g.cur === 'US$' ? m2(g.rate) : '1.00', renew: g.renew ? 'Hasta ' + fmtD(g.renew) : '—'
+      };
+    });
+
+    // Formulario de alta
+    const gf = this.state.gf;
+    const fco = gf.co;
+    const swOpts = [{ v: '', l: 'Seleccione…' }].concat(R.SW.filter((s) => s[1] === fco).map((s) => ({ v: s[0], l: s[0] + ' · ' + s[2] })));
+    const partidaOpts = R.PARTIDAS[fco].map(([v, l]) => ({ v, l: v + ' · ' + l }));
+    const amountN = parseFloat(gf.amount);
+    const rateN = gf.cur === 'US$' ? parseFloat(gf.rate) : 1;
+    const gPreview = amountN > 0 ? (gf.stage === 'Compromiso' ? 'Reserva ' : 'Ejecuta ') + 'RD$ ' + money(amountN * (rateN || 0)) + ' en ' + gf.partida : 'Indique el monto';
+    const refLabels = { Telecom: ['Sucursal y servicio', 'Experiencia BMPC · Internet 50 Mbps'], Flotas: ['Área · departamento · línea', 'Comercial · Ventas · línea nueva'], Partida: ['Concepto', 'Compra de consumibles'] };
+    const glHint = fco === 'cat' ? '11-' + (gf.cc || '___') + '-63-0115' : '6205-010';
+    const saveForm = () => {
+      const amount = parseFloat(gf.amount);
+      if (gf.origin === 'Software' && !gf.ref) return this.setState({ gErr: 'Seleccione el producto de software.' });
+      if (gf.origin !== 'Software' && !gf.refText.trim()) return this.setState({ gErr: 'Indique a qué ' + refLabels[gf.origin][0].toLowerCase() + ' corresponde.' });
+      if (!gf.desc.trim()) return this.setState({ gErr: 'Escriba una descripción.' });
+      if (!gf.doc.trim()) return this.setState({ gErr: 'Escriba el número de la orden de compra o factura.' });
+      if (!(amount > 0)) return this.setState({ gErr: 'El monto debe ser mayor que cero.' });
+      if (gf.cur === 'US$' && !(parseFloat(gf.rate) > 0)) return this.setState({ gErr: 'Indique la tasa de cambio.' });
+      if (gf.stage === 'Factura' && gf.ncf && !/^(B\d{10}|E\d{12})$/.test(gf.ncf.trim())) return this.setState({ gErr: 'El NCF debe tener 11 caracteres (B01…) o el e-CF 13 (E31…).' });
+      const sw = R.SW.find((s) => s[0] === gf.ref);
+      const n = 5 + this.state.items.length;
+      const id = 'GT-' + String(n).padStart(4, '0');
+      const item = {
+        id, co: fco, origin: gf.origin, ref: gf.origin === 'Software' ? gf.ref : '', refLabel: gf.origin === 'Software' ? gf.ref + ' · ' + (sw ? sw[2] : '') : gf.refText.trim(),
+        desc: gf.desc.trim(), renew: gf.origin === 'Software' ? gf.renew : '', prov: gf.prov, acct: gf.acct.trim(), partida: gf.partida, cc: fco === 'cat' ? gf.cc : '',
+        gl: gf.gl.trim(), cur: gf.cur, rate: gf.cur === 'US$' ? parseFloat(gf.rate) : 1,
+        steps: [{ type: gf.stage, date: gf.date, doc: gf.doc.trim(), ncf: gf.stage === 'Factura' ? gf.ncf.trim() : '', amount, files: gf.files }]
+      };
+      this.setState((s) => ({
+        items: s.items.concat([item]), form: false, gf: this.emptyGf(fco), f: { q: '', origin: '', status: '' }, kf: '', open: Object.assign({}, s.open, { [id]: true }),
+        msg: id + ' registrado: ' + (gf.stage === 'Compromiso' ? 'compromiso reservado' : 'factura ejecutada') + ' en ' + gf.partida + '.'
+      }));
+    };
+    const filesOf = (e) => { const out = []; const fl = (e && e.target && e.target.files) || []; for (let i = 0; i < fl.length; i++) out.push(fl[i].name + ' (' + Math.max(1, Math.round(fl[i].size / 1024)) + ' KB)'); return out; };
+    const pickSw = (e) => {
+      const sw = R.SW.find((s) => s[0] === e.target.value);
+      this.setGf(sw ? { ref: sw[0], prov: R.PROVS.indexOf(sw[3]) >= 0 ? sw[3] : gf.prov, acct: sw[4], partida: sw[5], desc: gf.desc || 'Renovación ' + sw[2] } : { ref: '' });
+    };
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
+      label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k })
+    }));
+    const created = this.state.items.length;
+    const storeOn = this.state.store === 'on';
+    return {
+      th, nav: this.nav('Gastos.dc.html', th), cos, kpis, rows, empty: rows.length === 0, f, msg: this.state.msg,
+      listInfo: rows.length + ' gastos · facturado RD$ ' + money(list.reduce((a, g) => a + rdOf(g, g.inv), 0)),
+      statusOpts: [{ v: '', l: 'Todos' }].concat(['Comprometido', 'Facturado parcial', 'Facturado', 'Pagado parcial', 'Pagado'].map((v) => ({ v, l: v }))),
+      setQ: (e) => this.setState({ f: Object.assign({}, f, { q: e.target.value }) }), setOrigin: (e) => this.setState({ f: Object.assign({}, f, { origin: e.target.value }) }),
+      setStatus: (e) => this.setState({ f: Object.assign({}, f, { status: e.target.value }) }),
+      sf, sErr: this.state.sErr, sFilesLabel: sf.files.length ? 'Adjuntos: ' + sf.files.join(', ') : 'Sin archivos seleccionados',
+      sDoc: (e) => this.setSf({ doc: e.target.value }), sNcf: (e) => this.setSf({ ncf: e.target.value }), sAmount: (e) => this.setSf({ amount: e.target.value }),
+      sDate: (e) => this.setSf({ date: e.target.value }), sMethod: (e) => this.setSf({ method: e.target.value }), sFiles: (e) => this.setSf({ files: filesOf(e) }),
+      storeLabel: storeOn ? 'Guardado en este navegador · ' + created + ' creados' : 'Sin guardado en esta vista · se pierde al recargar',
+      storeBg: storeOn ? '#E7F5EF' : '#FFF4D6', storeFg: storeOn ? '#075B3F' : '#6B4A00',
+      hasCreated: created > 0, resetLabel: this.state.confirmReset ? 'Confirmar: borrar ' + created + ' gastos' : 'Borrar lo creado',
+      resetBorder: this.state.confirmReset ? '#A8481A' : th.border, resetFg: this.state.confirmReset ? '#A8481A' : th.ink,
+      resetCreated: () => (this.state.confirmReset ? this.setState({ items: [], confirmReset: false, msg: 'Se borraron los gastos creados en SIGI.' }) : this.setState({ confirmReset: true })),
+      showForm: this.state.form, gf, fTh: TH[fco], gErr: this.state.gErr, isSw: gf.origin === 'Software', notSw: gf.origin !== 'Software',
+      refLabel: (refLabels[gf.origin] || ['', ''])[0], refHint: (refLabels[gf.origin] || ['', ''])[1],
+      isInvoice: gf.stage === 'Factura', isUsd: gf.cur === 'US$', isCatForm: fco === 'cat', glHint,
+      docHint: gf.stage === 'Factura' ? 'F-0000' : 'OC-2026-0000', gPreview, gFilesLabel: gf.files.length ? gf.files.length + ' archivo(s): ' + gf.files.join(', ') : 'Sin evidencias aún',
+      swOpts, partidaOpts, provOpts: R.PROVS, ccOpts: R.CC.map(([v, l]) => ({ v, l: v + ' · ' + l })),
+      gCo: (e) => this.setGf({ co: e.target.value, ref: '', partida: e.target.value === 'cat' ? 'SW-040' : 'BSW-002' }), gOrigin: (e) => this.setGf({ origin: e.target.value, ref: '' }),
+      gRefSel: pickSw, gRefText: (e) => this.setGf({ refText: e.target.value }), gDesc: (e) => this.setGf({ desc: e.target.value }), gRenew: (e) => this.setGf({ renew: e.target.value }),
+      gProv: (e) => this.setGf({ prov: e.target.value }), gAcct: (e) => this.setGf({ acct: e.target.value }), gPartida: (e) => this.setGf({ partida: e.target.value }),
+      gCc: (e) => this.setGf({ cc: e.target.value }), gGl: (e) => this.setGf({ gl: e.target.value }), gStage: (e) => this.setGf({ stage: e.target.value }),
+      gDoc: (e) => this.setGf({ doc: e.target.value }), gNcf: (e) => this.setGf({ ncf: e.target.value }), gDate: (e) => this.setGf({ date: e.target.value }),
+      gCur: (e) => this.setGf({ cur: e.target.value }), gAmount: (e) => this.setGf({ amount: e.target.value }), gRate: (e) => this.setGf({ rate: e.target.value }),
+      gFiles: (e) => this.setGf({ files: filesOf(e) }),
+      openForm: () => this.setState({ form: true, gErr: '', msg: '', gf: this.emptyGf(co === 'all' ? 'cat' : co) }), closeForm: () => this.setState({ form: false }), saveForm
+    };
+  }
+}
+</script>
+</body>
+</html>

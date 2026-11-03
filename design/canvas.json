@@ -1,0 +1,124 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Ahorros.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "title": "Ahorros vs presupuesto",
+      "w": 1440,
+      "x": 1345,
+      "y": 37
+    },
+    "Arquitectura.dc.html": {
+      "h": 1180,
+      "title": "Arquitectura técnica",
+      "w": 1440,
+      "x": 3040,
+      "y": 3420
+    },
+    "Catalogos.dc.html": {
+      "expand": "fill",
+      "h": 2400,
+      "is_interactive": true,
+      "title": "Proveedores y cuentas contables",
+      "w": 1440,
+      "x": 4560,
+      "y": 3420
+    },
+    "Flotas.dc.html": {
+      "expand": "fill",
+      "h": 2200,
+      "is_interactive": true,
+      "title": "Flotas móviles",
+      "w": 1440,
+      "x": 1520,
+      "y": 3420
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 2080,
+      "is_interactive": true,
+      "title": "Panel gerencial",
+      "w": 1440,
+      "x": -161,
+      "y": 37
+    },
+    "Presupuestos.dc.html": {
+      "expand": "fill",
+      "h": 2900,
+      "is_interactive": true,
+      "title": "Presupuestos y control de ejecución",
+      "w": 1440,
+      "x": 2919,
+      "y": 86
+    },
+    "Telecom.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "is_interactive": true,
+      "title": "Telecomunicaciones",
+      "w": 1440,
+      "x": 0,
+      "y": 3420
+    },
+    "Software.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "title": "Software y suscripciones",
+      "w": 1440,
+      "x": 6080,
+      "y": 3420
+    },
+    "Gastos.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "is_interactive": true,
+      "title": "Gastos y evidencias",
+      "w": 1440,
+      "x": 4440,
+      "y": 86
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-02T14:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 6040,
+      "text": "SIGI · Panel gerencial, presupuestos, gastos y ahorros",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 7520,
+      "text": "Módulos operativos, software, catálogos y arquitectura",
+      "w": 240,
+      "x": 51,
+      "y": 3130
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Ahorros.dc.html",
+    "Presupuestos.dc.html",
+    "Gastos.dc.html",
+    "Telecom.dc.html",
+    "Flotas.dc.html",
+    "Arquitectura.dc.html",
+    "Catalogos.dc.html",
+    "Software.dc.html"
+  ],
+  "pages": [],
+  "title": "SIGI — Sistema Integral de Gestión de Infraestructura"
+}

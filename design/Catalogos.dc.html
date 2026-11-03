@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Proveedores y cuentas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .nw{white-space:nowrap}
+table.t .c{text-align:center}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Proveedores y cuentas · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Proveedores y cuentas contables</h1>
+<span style="font-size: 14px; color: {{th.muted}}">Maestro único de proveedores para todas las empresas · Cuentas de proveedor y catálogo contable propios de cada empresa</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: {{storeBg}}; color: {{storeFg}}; font-weight: 600">{{storeLabel}}</span>
+<sc-if value="{{hasCreated}}" hint-placeholder-val="{{false}}"><button onClick="{{resetCreated}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid {{resetBorder}}; background: #FFFFFF; color: {{resetFg}}; font-size: 13px; font-weight: 600">{{resetLabel}}</button></sc-if>
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+</div>
+</header>
+
+<section aria-labelledby="h-gl" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-gl" style="margin: 0; font-size: 17px; font-weight: 600">Catálogo de cuentas contables · {{glTh.name}}</h2><span style="font-size: 13px; color: {{th.muted}}">{{glInfo}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Catálogo de la empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 8px; overflow: hidden">
+<sc-for list="{{glTabs}}" as="x" hint-placeholder-count="2"><button onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="height: 40px; padding: 0 14px; border: none; font-size: 13px; font-weight: 600; background: {{x.bg}}; color: {{x.fg}}">{{x.label}}</button></sc-for>
+</div>
+<button onClick="{{openGlForm}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: none; background: {{glTh.accent}}; color: #FFFFFF; font-size: 13px; font-weight: 600">+ Nueva cuenta</button>
+</div>
+</div>
+
+<sc-if value="{{glMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #E7F5EF; color: #075B3F; font-size: 13px">{{glMsg}}</p></sc-if>
+
+<sc-if value="{{showGlForm}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-newgl" style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 2px solid {{glTh.accent}}; border-radius: 10px; background: {{th.soft}}">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h3 id="h-newgl" style="margin: 0; font-size: 15px; font-weight: 700">Nueva cuenta contable · {{glTh.name}}</h3><button type="button" onClick="{{closeGlForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<sc-if value="{{isCatGl}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Concepto<select value="{{gf.concept}}" onChange="{{gfConcept}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{gfConceptOpts}}" as="o" hint-placeholder-count="5"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Centro de costo<select value="{{gf.cc}}" onChange="{{gfCc}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{gfCcOpts}}" as="o" hint-placeholder-count="5"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+</div>
+<sc-if value="{{gfNewConcept}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta del concepto (00-0000)<input type="text" value="{{gf.acct}}" onChange="{{gfAcct}}" placeholder="63-0120" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre del concepto<input type="text" value="{{gf.cname}}" onChange="{{gfCname}}" placeholder="Software y suscripciones" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{gf.type}}" onChange="{{gfType}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="OPEX">OPEX</option><option value="CAPEX">CAPEX</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Categoría SIGI<select value="{{gf.sigi}}" onChange="{{gfSigi}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{sigiOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Subtipo<select value="{{gf.sub}}" onChange="{{gfSub}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{subOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+</div>
+</sc-if>
+<sc-if value="{{gfNewCc}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Código de centro de costo (3 dígitos)<input type="text" value="{{gf.ccCode}}" onChange="{{gfCcCode}}" placeholder="123" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre del centro de costo<input type="text" value="{{gf.ccName}}" onChange="{{gfCcName}}" placeholder="Experiencia [NOMBRE]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</div>
+</sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Descripción<input type="text" value="{{gf.desc}}" onChange="{{gfDesc}}" placeholder="{{gfDescHint}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px"><span style="color: {{th.muted}}">Cuenta resultante</span><b class="mono" style="font-size: 16px">{{gfPreview}}</b></div>
+</div>
+</sc-if>
+<sc-if value="{{isBonaGl}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta (0000-000)<input type="text" value="{{gf.bcode}}" onChange="{{gfBcode}}" placeholder="6210-050" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Descripción<input type="text" value="{{gf.desc}}" onChange="{{gfDesc}}" placeholder="Descripción de la cuenta" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{gf.type}}" onChange="{{gfType}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="OPEX">OPEX</option><option value="CAPEX">CAPEX</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Categoría SIGI<select value="{{gf.sigi}}" onChange="{{gfSigi}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{sigiOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Subtipo<select value="{{gf.sub}}" onChange="{{gfSub}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{subOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+</div>
+</sc-if>
+<sc-if value="{{gfErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{gfErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" onClick="{{saveGl}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{glTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Crear cuenta</button>
+<span style="font-size: 12px; color: {{th.muted}}">Queda como “Pendiente de aprobación” hasta que Contabilidad la confirme; no se puede imputar antes.</span>
+</div>
+</form>
+</sc-if>
+
+<sc-if value="{{isCatGl}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 8px; background: {{th.soft}}; font-size: 13px">
+<b>Estructura</b>
+<span class="mono" style="font-size: 15px"><span style="padding: 2px 6px; border-radius: 4px; background: #262727; color: #FFFFFF">11</span>-<span style="padding: 2px 6px; border-radius: 4px; background: #807451; color: #FFFFFF">112</span>-<span style="padding: 2px 6px; border-radius: 4px; background: #d6cda5; color: #262727">63-0110</span></span>
+<span style="color: {{th.muted}}"><b style="color: {{th.ink}}">11</b> empresa · <b style="color: {{th.ink}}">112</b> centro de costo · <b style="color: {{th.ink}}">63-0110</b> cuenta del concepto</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px">
+<sc-for list="{{dq}}" as="k" hint-placeholder-count="7">
+<button onClick="{{k.pick}}" aria-pressed="{{k.on}}" style="text-align: left; border: {{k.ring}}; border-radius: 10px; padding: 12px 14px; background: #FFFFFF; display: flex; flex-direction: column; gap: 4px; color: {{th.ink}}">
+<span style="font-size: 12px; font-weight: 600; color: {{th.muted}}">{{k.label}}</span><span class="mono" style="font-size: 22px; font-weight: 600; color: {{k.color}}">{{k.value}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{gq}}" onChange="{{setGq}}" placeholder="Cuenta, centro de costo…" style="height: 40px; width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Concepto<select value="{{gc}}" onChange="{{setGc}}" style="height: 40px; min-width: 240px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{conceptOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+</div>
+<div role="group" aria-label="Vista del catálogo" style="display: flex; border: 1px solid {{th.border}}; border-radius: 8px; overflow: hidden">
+<sc-for list="{{views}}" as="x" hint-placeholder-count="2"><button onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="height: 40px; padding: 0 14px; border: none; font-size: 13px; font-weight: 600; background: {{x.bg}}; color: {{x.fg}}">{{x.label}}</button></sc-for>
+</div>
+</div>
+
+<sc-if value="{{viewList}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<div style="border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden">
+<button onClick="{{g.toggle}}" aria-expanded="{{g.open}}" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 12px 14px; border: none; background: {{g.bg}}; color: {{th.ink}}; text-align: left; font-size: 14px">
+<span style="display: flex; align-items: center; gap: 10px"><span class="mono" aria-hidden="true" style="color: {{th.muted}}">{{g.chev}}</span><b style="font-size: 15px">{{g.concept}}</b><span class="mono" style="font-size: 12px; padding: 2px 6px; border-radius: 4px; background: #d6cda5; color: #262727">{{g.acct}}</span><span style="font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: #262727; color: #FFFFFF">{{g.type}}</span></span>
+<span style="font-size: 13px; color: {{th.muted}}">{{g.summary}}</span>
+</button>
+<sc-if value="{{g.open}}" hint-placeholder-val="{{false}}">
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 900px">
+<thead><tr style="color: {{th.muted}}"><th>Cuenta</th><th>CC</th><th>Centro de costo (normalizado)</th><th>Descripción en el catálogo</th><th>Categoría SIGI</th><th>Estado</th></tr></thead>
+<tbody>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="8">
+<tr style="background: {{r.rowBg}}">
+<td class="mono nw" style="font-weight: 600; text-decoration: {{r.strike}}">{{r.code}}</td>
+<td class="mono">{{r.cc}}</td>
+<td>{{r.ccName}}</td>
+<td style="color: {{th.muted}}; text-decoration: {{r.strike}}">{{r.desc}}</td>
+<td style="color: {{th.muted}}">{{r.sigi}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{r.sBg}}; color: {{r.sFg}}; white-space: nowrap">{{r.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{viewMatrix}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; color: {{th.muted}}">Matriz de imputación: qué cuenta existe para cada centro de costo. Un hueco significa que un gasto de ese concepto no tiene dónde imputarse.</span>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 960px">
+<thead><tr style="color: {{th.muted}}"><th>CC</th><th>Centro de costo</th><sc-for list="{{matrixHead}}" as="h" hint-placeholder-count="4"><th class="c">{{h.l}}<br><span class="mono" style="font-weight: 400">{{h.a}}</span></th></sc-for><th>Variantes de nombre en el catálogo</th></tr></thead>
+<tbody>
+<sc-for list="{{matrix}}" as="m" hint-placeholder-count="12">
+<tr>
+<td class="mono" style="font-weight: 600">{{m.cc}}</td>
+<td class="nw">{{m.name}}</td>
+<sc-for list="{{m.cells}}" as="c" hint-placeholder-count="4"><td class="c"><span title="{{c.tip}}" style="display: inline-block; min-width: 72px; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{c.bg}}; color: {{c.fg}}">{{c.l}}</span></td></sc-for>
+<td style="font-size: 12px; color: {{m.varColor}}">{{m.variants}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+</sc-if>
+<span style="font-size: 12px; color: {{th.muted}}">Fuente: listado de cuentas de El Catador. El segmento de centro de costo se toma del catálogo recibido y debe confirmarse como catálogo oficial. Conceptos aún no recibidos: software y suscripciones (SaaS, PaaS, IaaS, licencias, certificados), flotas, honorarios y activos fijos; pueden crearse con “+ Nueva cuenta”.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{isBonaGl}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; padding: 12px 14px; border-radius: 8px; background: #FFF4D6; color: #6B4A00; font-size: 13px">Catálogo de Bona ilustrativo: pendiente de recibir el listado real. Se mostrará con la misma estructura empresa · centro de costo · cuenta cuando se importe.</p>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 860px">
+<thead><tr style="color: {{th.muted}}"><th>Cuenta</th><th>Descripción</th><th>Tipo</th><th>Categoría SIGI</th><th>Subtipo</th><th>Usada por</th><th>Estado</th></tr></thead>
+<tbody>
+<sc-for list="{{bonaRows}}" as="g" hint-placeholder-count="10">
+<tr><td class="mono" style="font-weight: 600">{{g.code}}</td><td>{{g.desc}}</td><td><span style="font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: {{g.tBg}}; color: #FFFFFF">{{g.type}}</span></td><td>{{g.cat}}</td><td style="color: {{th.muted}}">{{g.sub}}</td><td style="color: {{th.muted}}">{{g.used}}</td><td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{g.sBg}}; color: {{g.sFg}}; white-space: nowrap">{{g.status}}</span></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+</sc-if>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<section aria-labelledby="h-prov" style="flex: 3 1 640px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-prov" style="margin: 0; font-size: 17px; font-weight: 600">Maestro de proveedores</h2><span style="font-size: 13px; color: {{th.muted}}">{{provInfo}}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{q}}" onChange="{{setQ}}" placeholder="Nombre, RNC, cuenta…" style="height: 40px; width: 200px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Categoría<select value="{{cat}}" onChange="{{setCat}}" style="height: 40px; min-width: 170px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{catOpts}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<button onClick="{{openForm}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600">+ Nuevo proveedor</button>
+</div>
+</div>
+<sc-if value="{{provMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #E7F5EF; color: #075B3F; font-size: 13px">{{provMsg}}</p></sc-if>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 860px">
+<thead><tr style="color: {{th.muted}}"><th>ID</th><th>Proveedor</th><th>RNC</th><th>Categorías y tipos</th><th>Cuentas El Catador</th><th>Cuentas Bona</th><th>Estado</th></tr></thead>
+<tbody>
+<sc-for list="{{provs}}" as="p" hint-placeholder-count="10">
+<tr style="background: {{p.rowBg}}">
+<td class="mono" style="color: {{th.muted}}">{{p.id}}</td>
+<td><button onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="border: none; background: transparent; padding: 6px 0; min-height: 32px; font-size: 14px; font-weight: 700; color: {{th.link}}; text-align: left">{{p.name}}</button></td>
+<td class="mono">{{p.rnc}}</td>
+<td><span style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{p.tags}}" as="g" hint-placeholder-count="2"><span style="font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{th.soft}}; border: 1px solid {{th.border}}; white-space: nowrap">{{g}}</span></sc-for></span></td>
+<td class="mono nw" style="color: {{p.catColor}}">{{p.catAcc}}</td>
+<td class="mono nw" style="color: {{p.bonaColor}}">{{p.bonaAcc}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{p.sBg}}; color: {{p.sFg}}; white-space: nowrap">{{p.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<div style="flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-new" style="background: #FFFFFF; border: 2px solid {{th.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-new" style="margin: 0; font-size: 17px; font-weight: 600">Nuevo proveedor</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre o razón social<input type="text" value="{{pf.name}}" onChange="{{pfName}}" placeholder="[NOMBRE DEL PROVEEDOR]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">RNC o cédula (9 u 11 dígitos; vacío si es extranjero)<input type="text" value="{{pf.rnc}}" onChange="{{pfRnc}}" placeholder="000000000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 10px 12px; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 14px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Categorías y tipos que provee</legend>
+<sc-for list="{{formTags}}" as="t" hint-placeholder-count="8"><label style="display: flex; align-items: center; gap: 6px; font-size: 13px; min-height: 32px"><input type="checkbox" checked="{{t.on}}" onChange="{{t.toggle}}">{{t.label}}</label></sc-for>
+</fieldset>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 10px 12px; margin: 0; display: flex; flex-direction: column; gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Empresas habilitadas</legend>
+<sc-for list="{{formCos}}" as="c" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; min-height: 32px"><input type="checkbox" checked="{{c.on}}" onChange="{{c.toggle}}"><span style="width: 12px; height: 12px; border-radius: 3px; background: {{c.color}}"></span>{{c.name}}</label>
+<sc-if value="{{c.on}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; padding-left: 24px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta de proveedor<input type="text" value="{{c.acct}}" onChange="{{c.setAcct}}" placeholder="[No. cliente / contrato]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Concepto contable sugerido<select value="{{c.glv}}" onChange="{{c.setGl}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 13px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{c.gl}}" as="o" hint-placeholder-count="3"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</fieldset>
+<sc-if value="{{pfErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{pfErr}}</p></sc-if>
+<button type="button" onClick="{{saveForm}}" style="height: 44px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Crear proveedor</button>
+<span style="font-size: 12px; color: {{th.muted}}">Se valida RNC y nombre duplicados. El alta queda pendiente hasta que un aprobador distinto del solicitante la confirme.</span>
+</form>
+</sc-if>
+
+<section aria-labelledby="h-det" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-det" style="margin: 0; font-size: 17px; font-weight: 600">{{det.name}}</h2><span style="font-size: 13px; color: {{th.muted}}">{{det.sub}}</span></div>
+<sc-for list="{{det.groups}}" as="g" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 8px; background: {{th.soft}}; border-left: 4px solid {{g.color}}">
+<b style="font-size: 14px">{{g.name}}</b>
+<sc-for list="{{g.accts}}" as="a" hint-placeholder-count="2">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; font-size: 13px; padding: 8px 0; border-top: 1px solid {{th.border}}">
+<span>Cuenta proveedor <b class="mono">{{a.acct}}</b></span><span class="mono" style="color: {{th.muted}}">{{a.cur}}</span>
+<span style="color: {{th.muted}}">{{a.svc}}</span><span></span>
+<span style="color: {{th.muted}}">Cuenta contable: <span class="mono" style="color: {{th.ink}}">{{a.gl}}</span></span><span class="mono" style="color: {{th.muted}}">{{a.n}}</span>
+</div>
+</sc-for>
+<sc-if value="{{g.empty}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: {{th.muted}}">No habilitado para esta empresa.</span></sc-if>
+</div>
+</sc-for>
+</section>
+</div>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2400}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const saved = this.load();
+    const s = saved || {};
+    this.state = {
+      co: null, sel: 'PRV-001', q: '', cat: '', glCo: 'cat', view: 'list', openG: { '63-0115': true }, gq: '', gc: '', dqf: '',
+      form: false, pf: this.emptyPf(), pfErr: '', provMsg: '', extraProv: s.extraProv || [],
+      glForm: false, gf: this.emptyGf(), gfErr: '', glMsg: '', extraGl: s.extraGl || [], extraBona: s.extraBona || [], extraCc: s.extraCc || {},
+      store: saved === undefined ? 'off' : 'on', confirmReset: false
+    };
+  }
+  // Registros creados en SIGI: se guardan en este navegador y los leen las demás pantallas (Software).
+  load() {
+    try {
+      const raw = window.localStorage.getItem('sigi.catalogos.v1');
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  componentDidUpdate(prevProps, prev) {
+    const s = this.state;
+    if (prev.extraProv === s.extraProv && prev.extraGl === s.extraGl && prev.extraBona === s.extraBona && prev.extraCc === s.extraCc) return;
+    try {
+      window.localStorage.setItem('sigi.catalogos.v1', JSON.stringify({ extraProv: s.extraProv, extraGl: s.extraGl, extraBona: s.extraBona, extraCc: s.extraCc }));
+    } catch (err) {
+      if (s.store !== 'off') this.setState({ store: 'off' });
+    }
+  }
+  emptyPf() {
+    return { name: '', rnc: '', tags: {}, cos: { cat: true, bona: false }, acct: { cat: '', bona: '' }, gl: { cat: '', bona: '' } };
+  }
+  emptyGf() {
+    return { concept: '63-0115', cc: '', acct: '', cname: '', type: 'OPEX', sigi: 'Software y suscripciones', sub: '—', ccCode: '', ccName: '', desc: '', bcode: '' };
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  catalogCat() {
+    // Listado de cuentas de El Catador tal como se recibió. Estado: A activa, N nueva, I inactiva, S sin código, P pendiente de aprobación.
+    const C = [
+      ['63-0110', 'Alquiler de equipos informática', 'OPEX', 'Alquileres de equipos', [
+        ['11-112-63-0110', 'Alquiler de equipos informatica Experiencia B2C', 'A'], ['11-311-63-0110', 'Alquiler de equipos informatica Almacén CDSD', 'A'],
+        ['11-312-63-0110', 'Alquiler de equipos informatica Distribución CDSD', 'A'], ['11-411-63-0110', 'Alquiler de equipos informática Finanzas', 'A'],
+        ['11-413-63-0110', 'Alquiler de equipos informatica Tecnología', 'A'], ['11-430-63-0110', 'Alquiler de equipos informatica Recursos Humanos', 'A'],
+        ['11-317-63-0110', 'Alquiler equipos informática Almacén Evaristo', 'A'], ['11-101-63-0110', 'Alquiler equipos informática Dirección de Ventas', 'A'],
+        ['11-140-63-0110', 'Alquiler equipos informática Cartera B2C', 'A'], ['11-500-63-0110', 'Alquiler Equipos Informatica Canastas', 'A'],
+        ['11-370-63-0110', 'Alquiler equipos informática Compras e Importación', 'A'], ['11-206-63-0110', 'Alquiler equipos informática Mercadeo', 'A'],
+        ['11-150-63-0110', 'Alquiler de equipos Digital', 'N']]],
+      ['63-0115', 'Serv Com Internet y Telefonía', 'OPEX', 'Telecomunicaciones', [
+        ['11-115-63-0115', 'Serv Com Internet  Experiencia BMPC', 'A'], ['11-116-63-0115', 'Serv Com Internet  Experiencia CDC', 'A'],
+        ['11-113-63-0115', 'Serv Com Internet  Experiencia EVM', 'A'], ['11-117-63-0115', 'Serv Com Internet  Experiencia Hard Rock', 'I'],
+        ['11-114-63-0115', 'Serv Com Internet  Experiencia LDV', 'A'], ['11-311-63-0115', 'Serv Com Internet  Almacén CDSD', 'A'],
+        ['', 'Don Pepe', 'S'], ['11-411-63-0115', 'Serv Com Internet  Finanzas', 'A'], ['11-413-63-0115', 'Serv Com Internet  Tecnología', 'A'],
+        ['11-119-63-0115', 'Serv Com internet Butcher Enriquillo', 'A'], ['11-120-63-0115', 'Serv Com internet Butcher Arroyo Hondo', 'A'],
+        ['11-121-63-0115', 'Serv Com internet Butcher Piantini', 'A'], ['11-118-63-0115', 'Serv Com internet Experiencia STGO', 'A'],
+        ['11-416-63-0115', 'Serv Com Internet  Transformación', 'I'], ['11-171-63-0115', 'Serv Com Internet  On Trade SD', 'A'],
+        ['11-172-63-0115', 'Serv Com Internet  On Trade Int', 'A'], ['11-162-63-0115', 'Serv Com Internet Off Trade SD', 'A'],
+        ['11-122-63-0115', 'Serv Com Internet Experiencia Gustavo Mejia Ricart', 'N'], ['11-161-63-0115', 'Serv Com Internet  Off Trade Norte', 'A']]],
+      ['64-0117', 'Mantenimiento, Reparaciones y Material Gastable Equipos TI', 'OPEX', 'Mantenimiento', [
+        ['11-101-64-0117', 'Mant. Equipos Informática  Dirección de ventas', 'A'], ['11-115-64-0117', 'Mant. Equipos Informática  Experiencia BMPC', 'A'],
+        ['11-113-64-0117', 'Mant. Equipos Informática  Experiencia EVM', 'A'], ['11-114-64-0117', 'Mant. Equipos Informática  Experiencia LDV', 'A'],
+        ['11-161-64-0117', 'Mant. Equipos Informática  Off Trade Norte', 'A'], ['11-172-64-0117', 'Mant. Equipos Informática  On Trade Int', 'A'],
+        ['11-171-64-0117', 'Mant. Equipos Informática  On Trade SD', 'A'], ['11-317-64-0117', 'Mant. Equipos Informática  Almacén CDEVM', 'A'],
+        ['11-311-64-0117', 'Mant. Equipos Informática  Almacén CDSD', 'A'], ['11-370-64-0117', 'Mant. Equipos Informática  Compras e importación', 'A'],
+        ['11-206-64-0117', 'Mant. Equipos Informática  Mercadeo', 'A'], ['11-412-64-0117', 'Mant. Equipos Informática  Administración', 'A'],
+        ['11-411-64-0117', 'Mant. Equipos Informática  Finanzas', 'A'], ['11-140-64-0117', 'Mant. Equipos Informática  Cartera B2C', 'A'],
+        ['11-116-64-0117', 'Mant. Equipos Informática Experiencia CDC', 'A'], ['11-430-64-0117', 'Mant. Equipos Informática  Recursos humanos', 'A'],
+        ['11-416-64-0117', 'Mant. Equipos Informática Transformación', 'A'], ['11-119-64-0117', 'Mant. Equipos Informática Experiencia Enriquillo', 'A'],
+        ['11-118-64-0117', 'Mant. Equipos Informática Experiencia STGO', 'A'], ['11-150-64-0117', 'Mant. Equipos Informática Digital', 'N'],
+        ['11-162-64-0117', 'Mant. Equipos Informática Off Trade SD', 'A'], ['11-112-64-0117', 'Mant. Equipos Informática Experiencia B2C', 'A'],
+        ['11-204-64-0117', 'Mant. Equipos Informática D. M. Vinos y Tiendas', 'A'], ['11-413-64-0117', 'Mant. Equipos Informática Tecnología', 'A'],
+        ['11-414-64-0117', 'Mant. Equipos Informática Legal', 'A'], ['11-415-64-0117', 'Mant. Equipos Informática GIR', 'A'],
+        ['11-301-64-0117', 'Mant. Equipos Informaticas Direccion Operaciones', 'N'], ['11-320-64-0117', 'Mant. Equipos Informatica Almacen Punta Cana', 'N'],
+        ['11-122-64-0117', 'Mant. Equipos Informatica Experiencia Gustavo M Ricart', 'N'], ['11-401-64-0117', 'Mant. Equipos Informatica Gerencia General', 'N']]],
+      ['64-0300', 'Equipos de Informática no A.F.', 'OPEX', 'Equipos no activo fijo', [
+        ['11-101-64-0300', 'Equipos de Informática no A.F. Dirección de venta', 'A'], ['11-140-64-0300', 'Equipos de Informática no A.F. Cartera B2C', 'A'],
+        ['11-160-64-0300', 'Equipos de Informática no A.F. Dirección Off Trade', 'A'], ['11-311-64-0300', 'Equipos de Informática no A.F. Almacén CDSD', 'A'],
+        ['11-382-64-0300', 'Equipo de Informática no A.F Control de Inventario', 'A'], ['11-370-64-0300', 'Equipo de Informática no A.F Compras e importación', 'A'],
+        ['11-312-64-0300', 'Equipos de Informática no A.F. Distribución CDSD', 'A'], ['11-320-64-0300', 'Equipos de Informática no A.F. CDPC', 'A'],
+        ['11-301-64-0300', 'Equipo de Informática no A.F Dirección operaciones', 'A'], ['11-206-64-0300', 'Equipos de Informática no A.F. Mercadeo', 'A'],
+        ['11-401-64-0300', 'Equipos de Informática no A.F. Gerencia General', 'A'], ['11-411-64-0300', 'Equipos de Informática no A.F. Finanzas', 'A'],
+        ['11-412-64-0300', 'Equipos de Informática no A.F. Administración', 'A'], ['11-413-64-0300', 'Equipos de Informática no A.F. Tecnología', 'A'],
+        ['11-415-64-0300', 'Equipos de informática no A.F. GIR', 'A'], ['11-416-64-0300', 'Equipos de Informática no A.F. Transformación', 'A'],
+        ['11-172-64-0300', 'Equipos de Informática no. A.F. On trade Int', 'A'], ['11-171-64-0300', 'Equipos de Informática no. A.F. On trade SD', 'A'],
+        ['11-430-64-0300', 'Equipos de Informática no A.F. Recursos Humanos', 'A'], ['11-150-64-0300', 'Equipos de Informática no A.F. Digital', 'N'],
+        ['11-119-64-0300', 'Equipos de informática no A.F. Enriquillo', 'A'], ['11-118-64-0300', 'Equipos de informática no A.F. STGO', 'A'],
+        ['11-317-64-0300', 'Equipos de Informática no A.F. Almacén EVM', 'A'], ['11-414-64-0300', 'Equipos de Informatica no A.F. Legal', 'N'],
+        ['11-500-64-0300', 'Equipos Informatica no A.F. Canasta', 'N']]]
+    ];
+    const CC = {
+      '101': 'Dirección de Ventas', '112': 'Experiencia B2C', '113': 'Experiencia EVM', '114': 'Experiencia LDV', '115': 'Experiencia BMPC', '116': 'Experiencia CDC',
+      '117': 'Experiencia Hard Rock', '118': 'Experiencia STGO', '119': 'Enriquillo (Butcher / Experiencia)', '120': 'Butcher Arroyo Hondo', '121': 'Butcher Piantini',
+      '122': 'Experiencia Gustavo Mejía Ricart', '140': 'Cartera B2C', '150': 'Digital', '160': 'Dirección Off Trade', '161': 'Off Trade Norte', '162': 'Off Trade SD',
+      '171': 'On Trade SD', '172': 'On Trade Int', '204': 'D. M. Vinos y Tiendas', '206': 'Mercadeo', '301': 'Dirección de Operaciones', '311': 'Almacén CDSD',
+      '312': 'Distribución CDSD', '317': 'Almacén Evaristo (CDEVM)', '320': 'Almacén Punta Cana (CDPC)', '370': 'Compras e Importación', '382': 'Control de Inventario',
+      '401': 'Gerencia General', '411': 'Finanzas', '412': 'Administración', '413': 'Tecnología', '414': 'Legal', '415': 'GIR', '416': 'Transformación',
+      '430': 'Recursos Humanos', '500': 'Canastas'
+    };
+    const VAR = {
+      '317': 'Almacén Evaristo · Almacén CDEVM · Almacén EVM', '119': 'Butcher Enriquillo · Experiencia Enriquillo · Enriquillo',
+      '122': 'Experiencia Gustavo Mejia Ricart · Experiencia Gustavo M Ricart', '320': 'Almacen Punta Cana · CDPC', '118': 'Experiencia STGO · STGO', '500': 'Canastas · Canasta'
+    };
+    // Cuentas creadas en SIGI (pendientes de aprobación) se agregan al catálogo recibido.
+    const groups = C.map(([a, c, t, s, rows]) => [a, c, t, s, rows.slice()]);
+    this.state.extraGl.forEach((x) => {
+      let g = groups.find((gr) => gr[0] === x.acct);
+      if (!g) { g = [x.acct, x.concept, x.type, x.sigi, []]; groups.push(g); }
+      g[4].push([x.code, x.desc, 'P']);
+    });
+    return { C: groups, CC: Object.assign({}, CC, this.state.extraCc), VAR };
+  }
+  data() {
+    const P = [
+      ['PRV-001', 'CLARO', '[RNC]', ['Telecomunicaciones', 'Flotas'], 'Activo', [
+        ['cat', '741203556', 'Internet · Metro Ethernet · Telefonía · Internet Móvil', '11-[CC]-63-0115 por sucursal', 'RD$ / US$', '41 servicios'],
+        ['cat', 'G702214590', 'Flotas móviles', '[cuenta de flotas por recibir]', 'RD$', '322 líneas'],
+        ['bona', '741889302', 'Internet · Metro Ethernet · Telefonía · Internet Móvil', '6205-010 / 011 / 012', 'RD$', '25 servicios'],
+        ['bona', 'G705518832', 'Flotas móviles', '6205-020 · 6205-021', 'RD$', '53 líneas']]],
+      ['PRV-002', 'ALTICE', '[RNC]', ['Telecomunicaciones', 'Flotas'], 'Activo', [
+        ['cat', '803114270', 'Internet respaldo · Troncales SIP', '11-[CC]-63-0115 por sucursal', 'RD$', '18 servicios'],
+        ['cat', 'A118403277', 'Flotas móviles', '[cuenta de flotas por recibir]', 'RD$', '80 líneas'],
+        ['bona', '803557129', 'Internet · SD-WAN · Enlace a nube · SIP', '6205-010 · 6205-011', 'RD$ / US$', '15 servicios'],
+        ['bona', 'A118920641', 'Flotas móviles', '6205-020', 'RD$', '157 líneas']]],
+      ['PRV-003', 'WIND', '[RNC]', ['Telecomunicaciones'], 'Activo', [
+        ['cat', '520067815', 'Metro Ethernet · Coubicación · Radioenlace', '11-[CC]-63-0115 por sucursal', 'RD$ / US$', '5 servicios'],
+        ['bona', '520114093', 'Metro Ethernet · Radioenlace', '6205-010', 'RD$', '2 servicios']]],
+      ['PRV-004', 'Microsoft (vía distribuidor)', '[RNC]', ['SaaS', 'Licencias'], 'Activo', [
+        ['cat', 'MS-EA-77120', 'Microsoft 365 E3 · Power BI Pro', '[cuenta de software por recibir]', 'US$', '2 suscripciones'],
+        ['bona', 'MS-CSP-30418', 'Microsoft 365 · Power BI Pro', '6210-010', 'US$', '2 suscripciones']]],
+      ['PRV-005', 'Amazon Web Services', '[RNC no aplica · extranjero]', ['IaaS', 'PaaS'], 'Activo', [
+        ['cat', 'AWS-4410-2291', 'Cómputo, respaldo y base de datos administrada', '[cuenta de software por recibir]', 'US$', '2 servicios']]],
+      ['PRV-006', 'Adobe', '[RNC no aplica · extranjero]', ['SaaS'], 'Activo', [
+        ['cat', 'ADB-VIP-41007', 'Acrobat Pro · 40 licencias', '[cuenta de software por recibir]', 'US$', '1 suscripción'],
+        ['bona', 'ADB-VIP-55120', 'Creative Cloud · 6 licencias', '6210-010', 'US$', '1 suscripción']]],
+      ['PRV-007', 'Fortinet (vía distribuidor)', '[RNC]', ['Licencias', 'Mantenimiento'], 'Activo', [
+        ['cat', 'FTN-88102', 'Licencias y soporte FortiGate · 12 equipos', '[cuenta de software por recibir]', 'US$', '12 equipos'],
+        ['bona', 'FTN-88317', 'Licencias y soporte FortiGate · 4 equipos', '6210-020', 'US$', '4 equipos']]],
+      ['PRV-008', '[Autoridad certificadora]', '[RNC no aplica · extranjero]', ['Certificados'], 'Activo', [
+        ['cat', 'CA-1029', 'Certificados SSL · dominio corporativo', '[cuenta de software por recibir]', 'US$', '7 certificados'],
+        ['bona', 'CA-1077', 'Certificados SSL · 2 dominios', '6210-040', 'US$', '2 certificados']]],
+      ['PRV-009', '[Proveedor ERP]', '[RNC]', ['Licencias'], 'Activo', [
+        ['cat', 'ERP-2210', 'Licencias ERP y soporte anual', '[cuenta de software por recibir]', 'US$', '1 contrato'],
+        ['bona', 'ERP-2214', 'Licencias ERP y soporte anual', '6210-020', 'US$', '1 contrato']]],
+      ['PRV-010', '[Proveedor de seguridad]', '[RNC]', ['SaaS'], 'Activo', [
+        ['cat', 'SEC-7781', 'Protección de equipos (EDR) · 219 equipos', '[cuenta de software por recibir]', 'US$', '1 suscripción']]],
+      ['PRV-011', '[Consultor de infraestructura]', '[RNC]', ['Honorarios'], 'En revisión', [
+        ['cat', 'HON-0045', 'Honorarios · diseño de red sucursales', '[cuenta de honorarios por recibir]', 'RD$', '1 orden']]],
+      ['PRV-012', '[Arrendador de equipos]', '[RNC]', ['Alquileres'], 'Activo', [
+        ['cat', 'ARR-3310', 'Alquiler de equipos informática', '11-[CC]-63-0110 por centro de costo', 'RD$', '13 centros de costo']]]
+    ].concat(this.state.extraProv);
+    const BONA = [
+      ['6205-010', 'Internet y Metro Ethernet', 'OPEX', 'Telecomunicaciones', 'Internet / Metro Ethernet', 'CLARO · ALTICE · WIND'],
+      ['6205-011', 'Telefonía', 'OPEX', 'Telecomunicaciones', 'Telefonía', 'CLARO · ALTICE'],
+      ['6205-012', 'Internet móvil', 'OPEX', 'Telecomunicaciones', 'Internet Móvil', 'CLARO'],
+      ['6205-020', 'Flotas · renta y datos', 'OPEX', 'Flotas móviles', '—', 'CLARO · ALTICE'],
+      ['6205-021', 'Flotas · equipos', 'OPEX', 'Flotas móviles', '—', 'CLARO'],
+      ['6210-010', 'Software SaaS', 'OPEX', 'Software y suscripciones', 'SaaS', 'Microsoft · Adobe'],
+      ['6210-020', 'Licencias de software y soporte', 'OPEX', 'Software y suscripciones', 'Licencias', 'Fortinet · [Proveedor ERP]'],
+      ['6210-030', 'Nube PaaS / IaaS', 'OPEX', 'Software y suscripciones', 'PaaS / IaaS', '—'],
+      ['6210-040', 'Certificados y dominios', 'OPEX', 'Software y suscripciones', 'Certificados', '[Autoridad certificadora]'],
+      ['6220-001', 'Mantenimiento y consumibles', 'OPEX', 'Mantenimiento', '—', '—'],
+      ['6230-010', 'Honorarios profesionales TI', 'OPEX', 'Honorarios', 'Honorarios', '—'],
+      ['1530-010', 'Red y servidores', 'CAPEX', 'Activos de infraestructura', '—', '—'],
+      ['1530-020', 'Aperturas y remodelaciones', 'CAPEX', 'Proyectos', '—', '—']
+    ].map((r) => r.concat(['A'])).concat(this.state.extraBona);
+    return { P, BONA };
+  }
+  setPf(patch) {
+    this.setState((s) => ({ pf: Object.assign({}, s.pf, patch), pfErr: '' }));
+  }
+  setGf(patch) {
+    this.setState((s) => ({ gf: Object.assign({}, s.gf, patch), gfErr: '' }));
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const { P, BONA } = this.data();
+    const { C, CC, VAR } = this.catalogCat();
+    const CATS = ['Telecomunicaciones', 'Flotas', 'SaaS', 'PaaS', 'IaaS', 'Licencias', 'Certificados', 'Honorarios', 'Alquileres', 'Mantenimiento'];
+    const SIGI = ['Software y suscripciones', 'Telecomunicaciones', 'Flotas móviles', 'Alquileres de equipos', 'Mantenimiento', 'Equipos no activo fijo', 'Honorarios', 'Activos de infraestructura', 'Proyectos'];
+    const SUBS = ['—', 'SaaS', 'PaaS', 'IaaS', 'Licencias', 'Certificados'];
+    const q = this.state.q.trim().toLowerCase();
+    const visible = P.filter((p) => (co === 'all' || p[5].some((a) => a[0] === co)) && (!this.state.cat || p[3].indexOf(this.state.cat) >= 0) &&
+      (!q || [p[0], p[1], p[2]].concat(p[5].map((a) => a[1])).join(' ').toLowerCase().indexOf(q) >= 0));
+    const accOf = (p, k) => p[5].filter((a) => a[0] === k).map((a) => a[1]).join(' · ') || 'No habilitado';
+    const sTone = { 'Activo': ['#E7F5EF', '#075B3F'], 'En revisión': ['#FFF4D6', '#6B4A00'], 'Pendiente de aprobación': ['#FFF4D6', '#6B4A00'] };
+    const sel = P.find((p) => p[0] === this.state.sel) || P[0];
+    const provs = visible.map((p) => ({
+      id: p[0], name: p[1], rnc: p[2], tags: p[3], status: p[4], sBg: sTone[p[4]][0], sFg: sTone[p[4]][1],
+      catAcc: accOf(p, 'cat'), bonaAcc: accOf(p, 'bona'),
+      catColor: accOf(p, 'cat') === 'No habilitado' ? th.muted : th.ink, bonaColor: accOf(p, 'bona') === 'No habilitado' ? th.muted : th.ink,
+      on: p[0] === sel[0], rowBg: p[0] === sel[0] ? th.soft : '#FFFFFF', pick: () => this.setState({ sel: p[0] })
+    }));
+    const det = {
+      name: sel[1], sub: sel[0] + ' · RNC ' + sel[2] + ' · ' + sel[3].join(', ') + ' · ' + sel[4],
+      groups: (co === 'all' ? ['cat', 'bona'] : [co]).map((k) => {
+        const accts = sel[5].filter((a) => a[0] === k).map((a) => ({ acct: a[1], svc: a[2], gl: a[3], cur: a[4], n: a[5] }));
+        return { name: TH[k].name, color: TH[k].primary2, accts, empty: accts.length === 0 };
+      })
+    };
+
+    const glCo = co === 'all' ? this.state.glCo : co;
+    const glTh = TH[glCo];
+    const ST = { A: ['Activa', '#E7F5EF', '#075B3F'], N: ['Nueva', '#E6EEF7', '#1D3557'], I: ['Inactiva', '#EEEEEE', '#4D4D4D'], S: ['Sin código', '#FBE9DF', '#8A3A12'], P: ['Pendiente de aprobación', '#FFF4D6', '#6B4A00'] };
+    const all = [];
+    C.forEach(([acct, concept, type, sigi, rows]) => rows.forEach(([code, desc, st]) => {
+      const cc = code ? code.split('-')[1] : '';
+      all.push({ acct, concept, type, sigi, code, desc, st, cc });
+    }));
+    const count = (st) => all.filter((r) => r.st === st).length;
+    const dqf = this.state.dqf;
+    const allOpen = {};
+    C.forEach(([a]) => { allOpen[a] = true; });
+    const dqDefs = [['', 'Cuentas', String(all.length), th.ink], ['A', 'Activas', String(count('A')), '#075B3F'], ['N', 'Nuevas', String(count('N')), '#1D3557'],
+      ['I', 'Inactivas', String(count('I')), '#4D4D4D'], ['S', 'Sin código', String(count('S')), '#8A3A12'], ['P', 'Creadas en SIGI', String(count('P')), '#6B4A00'],
+      ['V', 'CC con nombres distintos', String(Object.keys(VAR).length), '#6B4A00']];
+    const dq = dqDefs.map(([k, label, value, color]) => ({
+      label, value, color, on: dqf === k, ring: dqf === k ? '2px solid ' + glTh.on : '1px solid ' + th.border,
+      pick: () => this.setState({ dqf: k, view: k === 'V' ? 'matrix' : 'list', openG: k && k !== 'V' ? allOpen : this.state.openG })
+    }));
+    const gq = this.state.gq.trim().toLowerCase();
+    const gc = this.state.gc;
+    const match = (r) => (!gc || r.acct === gc) && (!dqf || dqf === 'V' || r.st === dqf) &&
+      (!gq || [r.code, r.desc, r.cc, CC[r.cc] || ''].join(' ').toLowerCase().indexOf(gq) >= 0);
+    const openG = this.state.openG;
+    const groups = C.filter(([acct]) => !gc || acct === gc).map(([acct, concept, type, sigi]) => {
+      const rows = all.filter((r) => r.acct === acct && match(r));
+      const tot = all.filter((r) => r.acct === acct);
+      const open = !!openG[acct];
+      const PL = { N: ['nueva', 'nuevas'], I: ['inactiva', 'inactivas'], S: ['sin código', 'sin código'], P: ['pendiente de aprobación', 'pendientes de aprobación'] };
+      const flags = ['N', 'I', 'S', 'P'].map((s) => { const n = tot.filter((r) => r.st === s).length; return n ? n + ' ' + PL[s][n > 1 ? 1 : 0] : ''; }).filter(Boolean).join(' · ');
+      return {
+        acct, concept, type, open, chev: open ? '▾' : '▸', bg: open ? th.soft : '#FFFFFF',
+        summary: tot.length + ' cuentas' + (flags ? ' · ' + flags : '') + (rows.length !== tot.length ? ' · ' + rows.length + ' coinciden' : ''),
+        rows: open ? rows.map((r) => ({
+          code: r.code || '— sin código —', cc: r.cc || '—', ccName: r.cc ? CC[r.cc] : 'No identificado', desc: r.desc, sigi: r.sigi,
+          status: ST[r.st][0], sBg: ST[r.st][1], sFg: ST[r.st][2], strike: r.st === 'I' ? 'line-through' : 'none',
+          rowBg: r.st === 'N' ? '#F3F7FC' : (r.st === 'S' ? '#FDF3EE' : (r.st === 'P' ? '#FFFBEF' : '#FFFFFF'))
+        })) : [],
+        toggle: () => this.setState((p) => ({ openG: Object.assign({}, p.openG, { [acct]: !p.openG[acct] }) }))
+      };
+    });
+    const ccs = Object.keys(CC).sort();
+    const matrixHead = C.map(([acct, concept]) => ({ a: acct, l: concept.split(' ').slice(0, 3).join(' ') }));
+    const matrix = ccs.filter((cc) => (!gq || (cc + ' ' + CC[cc]).toLowerCase().indexOf(gq) >= 0) && (dqf !== 'V' || VAR[cc])).map((cc) => ({
+      cc, name: CC[cc], variants: VAR[cc] || '—', varColor: VAR[cc] ? '#6B4A00' : th.muted,
+      cells: C.map(([acct]) => {
+        const r = all.find((x) => x.acct === acct && x.cc === cc);
+        if (!r) return { l: '—', bg: 'transparent', fg: th.muted, tip: 'No existe 11-' + cc + '-' + acct };
+        return { l: r.st === 'P' ? 'Pendiente' : ST[r.st][0], bg: ST[r.st][1], fg: ST[r.st][2], tip: r.code };
+      })
+    }));
+    const views = [['list', 'Por concepto'], ['matrix', 'Matriz CC × concepto']].map(([k, label]) => ({
+      label, on: this.state.view === k, bg: this.state.view === k ? glTh.on : '#FFFFFF', fg: this.state.view === k ? '#FFFFFF' : th.ink, pick: () => this.setState({ view: k })
+    }));
+    const glTabs = ['cat', 'bona'].filter((k) => co === 'all' || k === co).map((k) => ({
+      label: TH[k].name, on: k === glCo, bg: k === glCo ? TH[k].on : '#FFFFFF', fg: k === glCo ? '#FFFFFF' : th.ink, pick: () => this.setState({ glCo: k, gfErr: '' })
+    }));
+    const bonaRows = BONA.map(([code, desc, type, cat, sub, used, st]) => ({ code, desc, type, cat, sub, used, tBg: type === 'CAPEX' ? '#BC2F2C' : '#000000', status: ST[st][0], sBg: ST[st][1], sFg: ST[st][2] }));
+
+    // Formulario de nueva cuenta contable
+    const gf = this.state.gf;
+    const newConcept = gf.concept === '__new';
+    const newCc = gf.cc === '__new';
+    const acctPart = newConcept ? gf.acct.trim() : gf.concept;
+    const ccPart = newCc ? gf.ccCode.trim() : gf.cc;
+    const conceptName = newConcept ? gf.cname.trim() : ((C.find((g) => g[0] === gf.concept) || [])[1] || '');
+    const ccName = newCc ? gf.ccName.trim() : (CC[gf.cc] || '');
+    const gfPreview = '11-' + (ccPart || '___') + '-' + (acctPart || '__-____');
+    const saveGl = () => {
+      const existing = {};
+      all.forEach((r) => { if (r.code) existing[r.code] = true; });
+      if (glCo === 'bona') {
+        const code = gf.bcode.trim();
+        if (!/^\d{4}-\d{3}$/.test(code)) return this.setState({ gfErr: 'La cuenta de Bona debe tener el formato 0000-000.' });
+        if (BONA.some((b) => b[0] === code)) return this.setState({ gfErr: 'La cuenta ' + code + ' ya existe en el catálogo de Bona.' });
+        if (!gf.desc.trim()) return this.setState({ gfErr: 'Escriba la descripción de la cuenta.' });
+        return this.setState((s) => ({ extraBona: s.extraBona.concat([[code, gf.desc.trim(), gf.type, gf.sigi, gf.sub, '—', 'P']]), glForm: false, gf: this.emptyGf(), glMsg: 'Cuenta ' + code + ' creada en Bona · pendiente de aprobación.' }));
+      }
+      if (!/^\d{2}-\d{4}$/.test(acctPart)) return this.setState({ gfErr: 'La cuenta del concepto debe tener el formato 00-0000 (por ejemplo 63-0120).' });
+      if (newConcept && !gf.cname.trim()) return this.setState({ gfErr: 'Escriba el nombre del nuevo concepto.' });
+      if (newConcept && C.some((g) => g[0] === acctPart)) return this.setState({ gfErr: 'El concepto ' + acctPart + ' ya existe; selecciónelo en la lista.' });
+      if (!/^\d{3}$/.test(ccPart)) return this.setState({ gfErr: 'Seleccione un centro de costo o escriba un código de 3 dígitos.' });
+      if (newCc && CC[ccPart]) return this.setState({ gfErr: 'El centro de costo ' + ccPart + ' ya existe (' + CC[ccPart] + '); selecciónelo en la lista.' });
+      if (newCc && !gf.ccName.trim()) return this.setState({ gfErr: 'Escriba el nombre del nuevo centro de costo.' });
+      const code = '11-' + ccPart + '-' + acctPart;
+      if (existing[code]) return this.setState({ gfErr: 'La cuenta ' + code + ' ya existe en el catálogo.' });
+      const g = C.find((x) => x[0] === acctPart);
+      const entry = {
+        acct: acctPart, concept: g ? g[1] : conceptName, type: g ? g[2] : gf.type, sigi: g ? g[3] : gf.sigi + (gf.sub !== '—' ? ' · ' + gf.sub : ''),
+        code, desc: gf.desc.trim() || (conceptName + ' ' + ccName)
+      };
+      this.setState((s) => ({
+        extraGl: s.extraGl.concat([entry]), extraCc: newCc ? Object.assign({}, s.extraCc, { [ccPart]: gf.ccName.trim() }) : s.extraCc,
+        glForm: false, gf: this.emptyGf(), dqf: '', gc: '', gq: '', view: 'list', openG: Object.assign({}, s.openG, { [acctPart]: true }),
+        glMsg: 'Cuenta ' + code + ' creada · pendiente de aprobación de Contabilidad.'
+      }));
+    };
+
+    // Formulario de nuevo proveedor
+    const pf = this.state.pf;
+    const glChoices = {
+      cat: C.map(([a, c]) => '11-[CC]-' + a + ' · ' + c).concat(['[Concepto pendiente de catálogo]']),
+      bona: BONA.map((b) => b[0] + ' · ' + b[1])
+    };
+    const formTags = CATS.map((t) => ({ label: t, on: !!pf.tags[t], toggle: () => this.setPf({ tags: Object.assign({}, pf.tags, { [t]: !pf.tags[t] }) }) }));
+    const formCos = ['cat', 'bona'].map((k) => ({
+      name: TH[k].name, color: TH[k].primary2, on: !!pf.cos[k], gl: glChoices[k], acct: pf.acct[k], glv: pf.gl[k] || glChoices[k][0],
+      toggle: () => this.setPf({ cos: Object.assign({}, pf.cos, { [k]: !pf.cos[k] }) }),
+      setAcct: (e) => this.setPf({ acct: Object.assign({}, pf.acct, { [k]: e.target.value }) }),
+      setGl: (e) => this.setPf({ gl: Object.assign({}, pf.gl, { [k]: e.target.value }) })
+    }));
+    const saveForm = () => {
+      const name = pf.name.trim();
+      const rnc = pf.rnc.replace(/[\s-]/g, '');
+      const tags = CATS.filter((t) => pf.tags[t]);
+      const cosOn = ['cat', 'bona'].filter((k) => pf.cos[k]);
+      if (!name) return this.setState({ pfErr: 'Escriba el nombre o razón social.' });
+      if (P.some((p) => p[1].toLowerCase() === name.toLowerCase())) return this.setState({ pfErr: 'Ya existe un proveedor con el nombre ' + name + '.' });
+      if (rnc && !/^(\d{9}|\d{11})$/.test(rnc)) return this.setState({ pfErr: 'El RNC debe tener 9 dígitos (o 11 si es cédula).' });
+      if (rnc && P.some((p) => p[2] === rnc)) return this.setState({ pfErr: 'El RNC ' + rnc + ' ya está registrado.' });
+      if (!tags.length) return this.setState({ pfErr: 'Seleccione al menos una categoría.' });
+      if (!cosOn.length) return this.setState({ pfErr: 'Habilite al menos una empresa.' });
+      const missing = cosOn.filter((k) => !pf.acct[k].trim());
+      if (missing.length) return this.setState({ pfErr: 'Escriba la cuenta de proveedor para ' + missing.map((k) => TH[k].name).join(' y ') + '.' });
+      const id = 'PRV-' + String(13 + this.state.extraProv.length).padStart(3, '0');
+      const accts = cosOn.map((k) => [k, pf.acct[k].trim(), tags.join(' · '), pf.gl[k] || glChoices[k][0], 'RD$', '0 servicios']);
+      this.setState((s) => ({
+        extraProv: s.extraProv.concat([[id, name, rnc || '[extranjero]', tags, 'Pendiente de aprobación', accts]]),
+        form: false, pf: this.emptyPf(), sel: id, q: '', cat: '', provMsg: id + ' · ' + name + ' creado · pendiente de aprobación.'
+      }));
+    };
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
+      label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k })
+    }));
+    const created = this.state.extraProv.length + this.state.extraGl.length + this.state.extraBona.length;
+    const storeOn = this.state.store === 'on';
+    return {
+      storeLabel: storeOn ? 'Guardado en este navegador · ' + created + ' creados' : 'Sin guardado en esta vista · se pierde al recargar',
+      storeBg: storeOn ? '#E7F5EF' : '#FFF4D6', storeFg: storeOn ? '#075B3F' : '#6B4A00',
+      hasCreated: created > 0, resetLabel: this.state.confirmReset ? 'Confirmar: borrar ' + created + ' registros' : 'Borrar lo creado',
+      resetBorder: this.state.confirmReset ? '#A8481A' : th.border, resetFg: this.state.confirmReset ? '#A8481A' : th.ink,
+      resetCreated: () => (this.state.confirmReset
+        ? this.setState({ extraProv: [], extraGl: [], extraBona: [], extraCc: {}, confirmReset: false, sel: 'PRV-001', provMsg: '', glMsg: 'Se borraron los registros creados en SIGI.' })
+        : this.setState({ confirmReset: true })),
+      th, glTh, nav: this.nav('Catalogos.dc.html', th), cos, provs, det,
+      q: this.state.q, cat: this.state.cat, catOpts: [{ v: '', l: 'Todas' }].concat(CATS.map((c) => ({ v: c, l: c }))),
+      setQ: (e) => this.setState({ q: e.target.value }), setCat: (e) => this.setState({ cat: e.target.value }),
+      provInfo: visible.length + ' de ' + P.length + ' proveedores' + (co === 'all' ? '' : ' habilitados para ' + th.name), provMsg: this.state.provMsg,
+      isCatGl: glCo === 'cat', isBonaGl: glCo === 'bona', glTabs,
+      glInfo: glCo === 'cat' ? all.length + ' cuentas en ' + C.length + ' conceptos · ' + ccs.length + ' centros de costo' : BONA.length + ' cuentas · ilustrativo',
+      dq, gq: this.state.gq, gc, setGq: (e) => this.setState({ gq: e.target.value }), setGc: (e) => this.setState({ gc: e.target.value }),
+      conceptOpts: [{ v: '', l: 'Todos los conceptos' }].concat(C.map(([a, c]) => ({ v: a, l: a + ' · ' + c }))),
+      views, viewList: this.state.view === 'list', viewMatrix: this.state.view === 'matrix', groups, matrixHead, matrix, bonaRows,
+      showGlForm: this.state.glForm, gf, gfErr: this.state.gfErr, glMsg: this.state.glMsg, gfNewConcept: newConcept, gfNewCc: newCc, gfPreview,
+      gfDescHint: (conceptName || 'Concepto') + ' ' + (ccName || 'Centro de costo'),
+      gfConceptOpts: C.map(([a, c]) => ({ v: a, l: a + ' · ' + c })).concat([{ v: '__new', l: '+ Nuevo concepto…' }]),
+      gfCcOpts: [{ v: '', l: 'Seleccione…' }].concat(ccs.map((c) => ({ v: c, l: c + ' · ' + CC[c] }))).concat([{ v: '__new', l: '+ Nuevo centro de costo…' }]),
+      sigiOpts: SIGI, subOpts: SUBS,
+      gfConcept: (e) => this.setGf({ concept: e.target.value }), gfCc: (e) => this.setGf({ cc: e.target.value }), gfAcct: (e) => this.setGf({ acct: e.target.value }),
+      gfCname: (e) => this.setGf({ cname: e.target.value }), gfType: (e) => this.setGf({ type: e.target.value }), gfSigi: (e) => this.setGf({ sigi: e.target.value }),
+      gfSub: (e) => this.setGf({ sub: e.target.value }), gfCcCode: (e) => this.setGf({ ccCode: e.target.value }), gfCcName: (e) => this.setGf({ ccName: e.target.value }),
+      gfDesc: (e) => this.setGf({ desc: e.target.value }), gfBcode: (e) => this.setGf({ bcode: e.target.value }),
+      openGlForm: () => this.setState({ glForm: true, gfErr: '', glMsg: '' }), closeGlForm: () => this.setState({ glForm: false }), saveGl,
+      showForm: this.state.form, pf, pfErr: this.state.pfErr, formTags, formCos,
+      pfName: (e) => this.setPf({ name: e.target.value }), pfRnc: (e) => this.setPf({ rnc: e.target.value }),
+      openForm: () => this.setState({ form: true, pfErr: '', provMsg: '' }), closeForm: () => this.setState({ form: false }), saveForm
+    };
+  }
+}
+</script>
+</body>
+</html>

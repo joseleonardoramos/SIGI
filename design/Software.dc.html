@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Software y suscripciones</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .r{text-align:right}
+table.t .nw{white-space:nowrap}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Software y suscripciones · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Software y suscripciones</h1>
+<span style="font-size: 14px; color: {{th.muted}}">SaaS, PaaS, IaaS, licencias y certificados · Precios en moneda del contrato · Totales en RD$ a 60.50 · Hoy 3 nov 2026</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: {{storeBg}}; color: {{storeFg}}; font-weight: 600">{{storeLabel}}</span>
+<sc-if value="{{hasCreated}}" hint-placeholder-val="{{false}}"><button onClick="{{resetCreated}}" style="height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid {{resetBorder}}; background: #FFFFFF; color: {{resetFg}}; font-size: 13px; font-weight: 600">{{resetLabel}}</button></sc-if>
+<button onClick="{{openForm}}" style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">+ Nuevo software / suscripción</button>
+</div>
+</header>
+
+<sc-if value="{{sMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #E7F5EF; color: #075B3F; font-size: 13px">{{sMsg}}</p></sc-if>
+
+<sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-newsw" style="background: #FFFFFF; border: 2px solid {{fTh.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-newsw" style="margin: 0; font-size: 17px; font-weight: 600">Nuevo software o suscripción</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Producto</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Empresa<select value="{{sf.co}}" onChange="{{sfCo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="cat">El Catador</option><option value="bona">Bona</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre del producto<input type="text" value="{{sf.name}}" onChange="{{sfName}}" placeholder="[NOMBRE DEL SOFTWARE]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{sf.tipo}}" onChange="{{sfTipo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="SaaS">SaaS</option><option value="PaaS">PaaS</option><option value="IaaS">IaaS</option><option value="Licencia">Licencia</option><option value="Certificado">Certificado</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Proveedor (del maestro)<select value="{{sf.prov}}" onChange="{{sfProv}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{provOpts}}" as="o" hint-placeholder-count="6"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta de proveedor<input type="text" value="{{sf.acct}}" onChange="{{sfAcct}}" placeholder="[No. cliente / contrato]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</fieldset>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Cantidad y precio</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Unidad de cobro<select value="{{sf.unit}}" onChange="{{sfUnit}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Usuario">Usuario</option><option value="Equipo">Equipo</option><option value="Certificado">Certificado</option><option value="Dominio">Dominio</option><option value="Consumo">Consumo</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Contratadas<input type="number" min="1" value="{{sf.qty}}" onChange="{{sfQty}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Asignadas<input type="number" min="0" value="{{sf.used}}" onChange="{{sfUsed}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Precio unitario mensual<input type="number" min="0" step="0.01" value="{{sf.price}}" onChange="{{sfPrice}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Moneda<select value="{{sf.cur}}" onChange="{{sfCur}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="US$">US$</option><option value="RD$">RD$</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Facturación<select value="{{sf.period}}" onChange="{{sfPeriod}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Anual">Anual</option><option value="Mensual">Mensual</option></select></label>
+</fieldset>
+<fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px">
+<legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Vigencia, renovación e imputación</legend>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Inicio<input type="date" value="{{sf.start}}" onChange="{{sfStart}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Vencimiento<input type="date" value="{{sf.end}}" onChange="{{sfEnd}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Renovación<select value="{{sf.mode}}" onChange="{{sfMode}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="Automática">Automática</option><option value="Manual">Manual</option><option value="Por consumo">Por consumo</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Preaviso (días)<input type="number" min="0" value="{{sf.notice}}" onChange="{{sfNotice}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta contable<select value="{{sf.gl}}" onChange="{{sfGl}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{glOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Partida presupuestaria<select value="{{sf.line}}" onChange="{{sfLine}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{lineOpts}}" as="o" hint-placeholder-count="3"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}"><span style="color: {{th.muted}}">Costo estimado</span><b class="mono">{{sfPreview}}</b></div>
+<sc-if value="{{sErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{sErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" onClick="{{saveForm}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Crear software</button>
+<span style="font-size: 12px; color: {{th.muted}}">Queda pendiente de aprobación; si no hay saldo en la partida se envía como excepción presupuestaria. ¿El proveedor no está? Créelo en <a href="Catalogos.dc.html" style="color: {{th.link}}; font-weight: 600">Proveedores y cuentas</a>.</span>
+</div>
+</form>
+</sc-if>
+
+<section aria-label="Indicadores de software" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+<div style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 26px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-labelledby="h-tipo" style="flex: 1 1 400px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-tipo" style="margin: 0; font-size: 17px; font-weight: 600">Costo anual por tipo</h2><span style="font-size: 13px; color: {{th.muted}}">RD$ M · clic para filtrar el inventario</span></div>
+<sc-for list="{{types}}" as="g" hint-placeholder-count="5">
+<button onClick="{{g.pick}}" aria-pressed="{{g.on}}" style="display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; border-radius: 8px; border: none; background: {{g.bg}}; color: {{th.ink}}; text-align: left; width: 100%">
+<span style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px; width: 100%"><span><b>{{g.name}}</b> <span style="color: {{th.muted}}">· {{g.count}} productos · {{g.hint}}</span></span><span class="mono" style="font-weight: 600">{{g.cost}}</span></span>
+<span style="display: block; width: 100%; height: 10px; background: {{th.track}}; border-radius: 5px; overflow: hidden"><span style="display: block; width: {{g.w}}%; height: 100%; background: {{th.primary}}"></span></span>
+</button>
+</sc-for>
+</section>
+<section aria-labelledby="h-ren" style="flex: 1 1 440px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-ren" style="margin: 0; font-size: 17px; font-weight: 600">Renovaciones próximas · 120 días</h2><span style="font-size: 13px; color: {{th.muted}}">Plazo de cancelación = vencimiento − preaviso del contrato</span></div>
+<sc-for list="{{renewals}}" as="r" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}">
+<span style="display: flex; flex-direction: column; align-items: center; padding: 4px 0; border-radius: 6px; background: #FFFFFF; border: 1px solid {{th.border}}"><b class="mono" style="font-size: 18px">{{r.day}}</b><span style="font-size: 11px; text-transform: uppercase; color: {{th.muted}}">{{r.mon}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><b style="font-size: 14px">{{r.name}}</b><span style="font-size: 12px; color: {{th.muted}}">{{r.coName}} · {{r.mode}} · {{r.amount}}</span></span>
+<span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{r.bg}}; color: {{r.fg}}; white-space: nowrap">{{r.flag}}</span>
+</div>
+</sc-for>
+</section>
+</div>
+
+<section aria-labelledby="h-inv" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-inv" style="margin: 0; font-size: 17px; font-weight: 600">Inventario de software y suscripciones</h2><span style="font-size: 13px; color: {{th.muted}}">Expanda un producto para ver la asignación por departamento y su costo</span></div>
+<span class="mono" style="font-size: 13px; color: {{th.muted}}">{{listInfo}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Buscar<input type="search" value="{{f.q}}" onChange="{{setQ}}" placeholder="Producto, proveedor, cuenta…" style="height: 40px; width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{f.tipo}}" onChange="{{setTipo}}" style="height: 40px; min-width: 140px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.tipo}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Proveedor<select value="{{f.prov}}" onChange="{{setProv}}" style="height: 40px; min-width: 200px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.prov}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Situación<select value="{{f.sit}}" onChange="{{setSit}}" style="height: 40px; min-width: 200px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opt.sit}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<button onClick="{{clear}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 500">Limpiar filtros</button>
+</div>
+<div style="overflow-x: auto">
+<div style="min-width: 1280px; display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 28px minmax(220px, 2fr) 96px minmax(150px, 1fr) 110px 70px 70px 70px 120px 130px 110px 170px; gap: 8px; padding: 10px 12px; font-size: 12px; font-weight: 600; color: {{th.muted}}; border-bottom: 1px solid {{th.border}}">
+<span></span><span>Producto · empresa</span><span>Tipo</span><span>Proveedor · cuenta</span><span>Unidad</span><span style="text-align: right">Contr.</span><span style="text-align: right">Asig.</span><span style="text-align: right">Libres</span><span style="text-align: right">Precio unit.</span><span style="text-align: right">Costo anual RD$</span><span>Renueva</span><span>Cuenta contable</span>
+</div>
+<sc-for list="{{rows}}" as="p" hint-placeholder-count="10">
+<div style="display: flex; flex-direction: column; border-bottom: 1px solid {{th.track}}">
+<button onClick="{{p.toggle}}" aria-expanded="{{p.open}}" style="display: grid; grid-template-columns: 28px minmax(220px, 2fr) 96px minmax(150px, 1fr) 110px 70px 70px 70px 120px 130px 110px 170px; gap: 8px; align-items: center; padding: 12px; min-height: 52px; border: none; background: {{p.rowBg}}; color: {{th.ink}}; font-size: 13px; text-align: left; width: 100%">
+<span class="mono" aria-hidden="true" style="color: {{th.muted}}">{{p.chev}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 14px">{{p.name}}</b><span style="font-size: 12px; color: {{th.muted}}">{{p.id}} · {{p.coName}}</span></span>
+<span><span style="font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: {{p.tBg}}; color: {{p.tFg}}">{{p.tipo}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span>{{p.prov}}</span><span class="mono" style="font-size: 12px; color: {{th.muted}}">{{p.acct}}</span></span>
+<span style="color: {{th.muted}}">{{p.unit}}</span>
+<span class="mono" style="text-align: right">{{p.qty}}</span>
+<span class="mono" style="text-align: right">{{p.used}}</span>
+<span class="mono" style="text-align: right; font-weight: 600; color: {{p.freeColor}}">{{p.free}}</span>
+<span class="mono" style="text-align: right">{{p.priceF}}</span>
+<span class="mono" style="text-align: right; font-weight: 600">{{p.annualF}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="mono">{{p.endF}}</span><span style="font-size: 11px; color: {{p.renColor}}">{{p.renNote}}</span></span>
+<span><span class="mono" style="font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{p.glBg}}; color: {{p.glFg}}">{{p.gl}}</span></span>
+</button>
+<sc-if value="{{p.open}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 4px 12px 16px 48px; background: {{th.soft}}">
+<div style="flex: 2 1 520px; min-width: 0; overflow-x: auto">
+<table class="t" style="background: #FFFFFF; border: 1px solid {{th.track}}">
+<thead><tr style="color: {{th.muted}}"><th>{{p.deptLabel}}</th><th class="r">Asignadas</th><th class="r">% del total</th><th class="r">Costo mensual RD$</th><th style="width: 160px">Distribución</th></tr></thead>
+<tbody>
+<sc-for list="{{p.depts}}" as="d" hint-placeholder-count="6">
+<tr><td>{{d.name}}</td><td class="r mono">{{d.n}}</td><td class="r mono">{{d.pct}}</td><td class="r mono">{{d.cost}}</td><td><span style="display: block; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; height: 100%; width: {{d.w}}%; background: {{p.bar}}"></span></span></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="flex: 1 1 280px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-content: start; font-size: 13px; background: #FFFFFF; border: 1px solid {{th.track}}; border-radius: 8px; padding: 14px">
+<span style="color: {{th.muted}}">Moneda · periodicidad</span><span class="mono">{{p.cur}} · {{p.period}}</span>
+<span style="color: {{th.muted}}">Vigencia</span><span class="mono">{{p.startF}} → {{p.endF}}</span>
+<span style="color: {{th.muted}}">Modalidad · preaviso</span><span class="mono">{{p.mode}} · {{p.notice}}</span>
+<span style="color: {{th.muted}}">Plazo de cancelación</span><span class="mono" style="color: {{p.renColor}}">{{p.deadline}}</span>
+<span style="color: {{th.muted}}">Costo por nuevo ingreso</span><span class="mono">{{p.perUser}}</span>
+<span style="color: {{th.muted}}">Costo de unidades libres</span><span class="mono" style="color: {{p.freeColor}}">{{p.freeCost}}</span>
+<span style="color: {{th.muted}}">Partida presupuestaria</span><span class="mono">{{p.line}}</span>
+<span style="grid-column: 1 / -1; color: {{th.muted}}">{{p.note}}</span>
+<span style="grid-column: 1 / -1; color: {{th.muted}}">{{p.lastGasto}}</span>
+<a href="Gastos.dc.html" onClick="{{p.toGasto}}" style="grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600; text-decoration: none">Registrar compra o renovación →</a>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 16px; text-align: center; color: {{th.muted}}; font-size: 14px">Ningún producto coincide con los filtros.</p></sc-if>
+<span style="font-size: 12px; color: {{th.muted}}">SaaS: software como servicio · PaaS: plataforma administrada · IaaS: infraestructura en la nube · Licencia: derecho de uso con soporte · Certificado: SSL y dominios. Las cuentas contables de software de El Catador aún no forman parte del catálogo recibido.</span>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const saved = this.readStore('sigi.software.v1');
+    this.state = { co: null, open: {}, f: this.noFilter(), form: false, sf: this.emptySf('cat'), sErr: '', sMsg: '', extra: (saved && saved.extra) || [], store: saved === undefined ? 'off' : 'on', confirmReset: false };
+  }
+  // Lo creado se guarda en este navegador; el maestro de proveedores y las cuentas se leen de la pantalla Proveedores y cuentas.
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  componentDidMount() {
+    this.onStorage = (e) => {
+      if (e.key === 'sigi.catalogos.v1' || e.key === 'sigi.gastos.v1') this.forceUpdate();
+      if (e.key === 'sigi.software.v1') { const s = this.readStore('sigi.software.v1'); this.setState({ extra: (s && s.extra) || [] }); }
+    };
+    try { window.addEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  componentWillUnmount() {
+    try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  componentDidUpdate(prevProps, prev) {
+    if (prev.extra === this.state.extra) return;
+    try {
+      window.localStorage.setItem('sigi.software.v1', JSON.stringify({ extra: this.state.extra }));
+    } catch (err) {
+      if (this.state.store !== 'off') this.setState({ store: 'off' });
+    }
+  }
+  emptySf(co) {
+    return { co, name: '', tipo: 'SaaS', prov: 'Microsoft (vía distribuidor)', acct: '', unit: 'Usuario', qty: '', used: '', price: '', cur: 'US$', period: 'Anual', start: '2026-11-03', end: '2027-11-03', mode: 'Automática', notice: '30', gl: '', line: co === 'cat' ? 'SW-040' : 'BSW-002' };
+  }
+  setSf(patch) {
+    this.setState((s) => ({ sf: Object.assign({}, s.sf, patch), sErr: '' }));
+  }
+  noFilter() {
+    return { q: '', tipo: '', prov: '', sit: '' };
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  data() {
+    // [id, empresa, producto, tipo, proveedor, cuenta proveedor, unidad, contratadas, asignadas, precio unitario mensual, moneda, periodicidad, inicio, fin, modalidad, preaviso días, cuenta contable, partida, nota]
+    return [
+      ['SW-C01', 'cat', 'Microsoft 365 E3', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'Usuario', 420, 412, 30, 'US$', 'Anual', '2025-11-15', '2026-11-15', 'Automática', 60, null, 'SW-021', 'Ajuste de −36 licencias en aprobación (AH-07).'],
+      ['SW-C02', 'cat', 'Power BI Pro', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'Usuario', 60, 52, 10, 'US$', 'Anual', '2025-11-15', '2026-11-15', 'Automática', 60, null, 'SW-021', 'Renueva junto con Microsoft 365.'],
+      ['SW-C03', 'cat', 'ERP · licencias de usuario y soporte', 'Licencia', '[Proveedor ERP]', 'ERP-2210', 'Usuario', 120, 118, 95, 'US$', 'Anual', '2026-04-01', '2027-04-01', 'Manual', 90, null, 'SW-030', 'Incluye soporte y actualizaciones.'],
+      ['SW-C04', 'cat', 'Adobe Acrobat Pro', 'SaaS', 'Adobe', 'ADB-VIP-41007', 'Usuario', 40, 31, 20, 'US$', 'Anual', '2025-12-10', '2026-12-10', 'Automática', 30, null, 'SW-040', '9 licencias libres: candidato a reducir en la renovación.'],
+      ['SW-C05', 'cat', 'FortiGate · licencias y soporte', 'Licencia', 'Fortinet (vía distribuidor)', 'FTN-88102', 'Equipo', 12, 12, 145, 'US$', 'Anual', '2026-06-30', '2027-06-30', 'Manual', 60, null, 'SW-040', 'Vinculado a los activos de red de sucursales.'],
+      ['SW-C06', 'cat', 'Protección de equipos (EDR)', 'SaaS', '[Proveedor de seguridad]', 'SEC-7781', 'Equipo', 219, 198, 4.5, 'US$', 'Anual', '2026-01-20', '2027-01-20', 'Automática', 30, null, 'SW-040', 'Cobertura del parque de computadoras.'],
+      ['SW-C07', 'cat', 'AWS · cómputo y respaldo', 'IaaS', 'Amazon Web Services', 'AWS-4410-2291', 'Consumo', 1, 1, 1850, 'US$', 'Mensual', '2024-03-01', null, 'Por consumo', 0, null, 'SW-040', 'Costo variable con tope presupuestado mensual.'],
+      ['SW-C08', 'cat', 'AWS · base de datos administrada', 'PaaS', 'Amazon Web Services', 'AWS-4410-2291', 'Consumo', 1, 1, 640, 'US$', 'Mensual', '2024-03-01', null, 'Por consumo', 0, null, 'SW-040', 'Plataforma administrada para integraciones.'],
+      ['SW-C09', 'cat', 'Certificados SSL', 'Certificado', '[Autoridad certificadora]', 'CA-1029', 'Certificado', 6, 6, 15, 'US$', 'Anual', '2025-12-08', '2026-12-08', 'Manual', 30, null, 'SW-040', 'Sitios públicos y servicios internos.'],
+      ['SW-C10', 'cat', 'Dominio corporativo y DNS', 'Certificado', '[Autoridad certificadora]', 'CA-1029', 'Dominio', 1, 1, 25, 'US$', 'Anual', '2025-12-08', '2026-12-08', 'Automática', 15, null, 'SW-040', 'Renovación automática con tarjeta corporativa.'],
+      ['SW-B01', 'bona', 'Microsoft 365', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-CSP-30418', 'Usuario', 315, 305, 30, 'US$', 'Anual', '2026-03-01', '2027-03-01', 'Automática', 60, '6210-010', 'BSW-001', ''],
+      ['SW-B02', 'bona', 'Power BI Pro', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-CSP-30418', 'Usuario', 8, 2, 10, 'US$', 'Anual', '2026-03-01', '2027-03-01', 'Automática', 60, '6210-010', 'BSW-001', '6 licencias sin asignar desde la compra.'],
+      ['SW-B03', 'bona', 'ERP · licencias de usuario y soporte', 'Licencia', '[Proveedor ERP]', 'ERP-2214', 'Usuario', 25, 25, 95, 'US$', 'Anual', '2026-06-01', '2027-06-01', 'Manual', 90, '6210-020', 'BSW-002', ''],
+      ['SW-B04', 'bona', 'Adobe Creative Cloud', 'SaaS', 'Adobe', 'ADB-VIP-55120', 'Usuario', 6, 6, 69.99, 'US$', 'Anual', '2026-01-14', '2027-01-14', 'Automática', 30, '6210-010', 'BSW-002', 'Uso exclusivo de Mercadeo.'],
+      ['SW-B05', 'bona', 'FortiGate · licencias y soporte', 'Licencia', 'Fortinet (vía distribuidor)', 'FTN-88317', 'Equipo', 4, 4, 127.08, 'US$', 'Anual', '2025-11-30', '2026-11-30', 'Manual', 60, '6210-020', 'BSW-002', 'Cotización de renovación recibida.'],
+      ['SW-B06', 'bona', 'Certificados SSL', 'Certificado', '[Autoridad certificadora]', 'CA-1077', 'Certificado', 2, 2, 15, 'US$', 'Anual', '2025-12-20', '2026-12-20', 'Manual', 30, '6210-040', 'BSW-002', '']
+    ].concat(this.state.extra);
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const FX = 60.5;
+    const TODAY = Date.UTC(2026, 10, 3);
+    const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+    const fmtD = (t) => { const d = new Date(t); return String(d.getUTCDate()).padStart(2, '0') + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); };
+    const days = (t) => Math.round((t - TODAY) / 86400000);
+    const money = (v) => Math.round(v).toLocaleString('en-US');
+    const m2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const DEPTS = {
+      cat: [['101 · Dirección de Ventas', 8], ['311 · Almacén CDSD', 6], ['112 · Experiencia B2C', 5], ['312 · Distribución CDSD', 5], ['411 · Finanzas', 5], ['140 · Cartera B2C', 4], ['206 · Mercadeo', 4], ['413 · Tecnología', 4], ['150 · Digital', 3], ['370 · Compras e Importación', 3], ['430 · Recursos Humanos', 3]],
+      bona: [['Ventas', 7], ['Producción', 4], ['Distribución', 4], ['Mercadeo', 2], ['Finanzas', 2], ['Gerencia', 2], ['Recursos Humanos', 1], ['TI', 1]]
+    };
+    const tTone = { SaaS: ['#1D3557', '#FFFFFF'], PaaS: ['#5B84B1', '#FFFFFF'], IaaS: ['#A9C1DA', '#131A22'], Licencia: ['#807451', '#FFFFFF'], Certificado: ['#d6cda5', '#262727'] };
+    const gastos = (this.readStore('sigi.gastos.v1') || {}).items || [];
+    const items = this.data().filter((r) => co === 'all' || r[1] === co).map((r) => {
+      const [id, c, name, tipo, prov, acct, unit, qty, used, price, cur, period, start0, end0, mode, notice, gl, line, note] = r;
+      // Una factura registrada en Gastos con "Renueva hasta" extiende la vigencia del producto.
+      const mine = gastos.filter((g) => g.ref === id);
+      const renewed = mine.filter((g) => g.renew && g.steps.some((s) => s.type === 'Factura')).sort((a, b) => (a.renew < b.renew ? 1 : -1))[0];
+      const start = renewed && end0 ? end0 : start0;
+      const end = renewed ? renewed.renew : end0;
+      const lastG = mine[mine.length - 1];
+      const lastGasto = lastG ? 'Último gasto: ' + lastG.id + ' · ' + lastG.steps[lastG.steps.length - 1].type + ' ' + (lastG.steps[lastG.steps.length - 1].doc || '') : 'Sin gastos registrados en SIGI';
+      const monthly = qty * price;
+      const annualRD = monthly * 12 * (cur === 'US$' ? FX : 1);
+      const endT = end ? parse(end) : null;
+      const dl = endT ? endT - notice * 86400000 : null;
+      const dEnd = endT ? days(endT) : null;
+      const dDl = dl ? days(dl) : null;
+      return { id, c, name, tipo, prov, acct, unit, qty, used, price, cur, period, start, end, mode, notice, gl, line, note, lastGasto, renewedBy: renewed ? renewed.id : '', monthly, annualRD, endT, dl, dEnd, dDl, free: qty - used };
+    });
+    const f = this.state.f;
+    const q = f.q.trim().toLowerCase();
+    const sitOf = (p) => {
+      const s = [];
+      if (p.dEnd !== null && p.dEnd <= 90) s.push('ren');
+      if (p.qty > 1 && p.free / p.qty > 0.1) s.push('free');
+      if (!p.gl) s.push('nogl');
+      return s;
+    };
+    const filtered = items.filter((p) => (!f.tipo || p.tipo === f.tipo) && (!f.prov || p.prov === f.prov) && (!f.sit || sitOf(p).indexOf(f.sit) >= 0) &&
+      (!q || [p.id, p.name, p.prov, p.acct, p.tipo].join(' ').toLowerCase().indexOf(q) >= 0));
+    const lic = items.filter((p) => p.unit !== 'Consumo');
+    const sum = (arr, k) => arr.reduce((a, p) => a + p[k], 0);
+    const totalRD = sum(items, 'annualRD');
+    const usdAnnual = items.filter((p) => p.cur === 'US$').reduce((a, p) => a + p.monthly * 12, 0);
+    const freeCost = lic.reduce((a, p) => a + p.free * p.price * 12 * (p.cur === 'US$' ? FX : 1), 0);
+    const ren90 = items.filter((p) => p.dEnd !== null && p.dEnd >= 0 && p.dEnd <= 90);
+    const noGl = items.filter((p) => !p.gl).length;
+    const kpis = [
+      { label: 'Costo anual', value: (totalRD / 1e6).toFixed(2) + ' M', sub: 'US$ ' + money(usdAnnual) + ' · ' + items.length + ' productos', color: th.primary },
+      { label: 'Licencias contratadas', value: sum(lic, 'qty').toLocaleString('en-US'), sub: 'Usuarios, equipos, certificados y dominios', color: th.ink },
+      { label: 'Asignadas', value: sum(lic, 'used').toLocaleString('en-US'), sub: ((sum(lic, 'used') / sum(lic, 'qty')) * 100).toFixed(1) + ' % de uso', color: th.ink },
+      { label: 'Sin asignar', value: String(sum(lic, 'free')), sub: 'RD$ ' + money(freeCost) + ' al año', color: th.risk },
+      { label: 'Renovaciones 90 días', value: String(ren90.length), sub: 'RD$ ' + money(sum(ren90, 'annualRD')) + ' en juego', color: th.ink },
+      { label: 'Sin cuenta contable', value: String(noGl), sub: noGl ? 'Catálogo de software pendiente' : 'Todo clasificado', color: noGl ? th.risk : th.saveInk }
+    ];
+    const setFilter = (patch) => this.setState({ f: Object.assign(this.noFilter(), patch) });
+    const TIPOS = [['SaaS', 'software como servicio'], ['PaaS', 'plataforma administrada'], ['IaaS', 'infraestructura en nube'], ['Licencia', 'derecho de uso y soporte'], ['Certificado', 'SSL y dominios']];
+    const tmax = Math.max.apply(null, TIPOS.map(([t]) => sum(items.filter((p) => p.tipo === t), 'annualRD'))) || 1;
+    const types = TIPOS.map(([t, hint]) => {
+      const g = items.filter((p) => p.tipo === t);
+      const c = sum(g, 'annualRD');
+      return { name: t, hint, count: g.length, cost: (c / 1e6).toFixed(2), w: ((c / tmax) * 100).toFixed(1), on: f.tipo === t, bg: f.tipo === t ? th.soft : 'transparent', pick: () => setFilter({ tipo: f.tipo === t ? '' : t }) };
+    }).filter((t) => t.count);
+    const renewals = items.filter((p) => p.dEnd !== null && p.dEnd >= 0 && p.dEnd <= 120).sort((a, b) => a.endT - b.endT).map((p) => {
+      const d = new Date(p.endT);
+      let flag, bg, fg;
+      if (p.dDl < 0 && p.mode === 'Automática') { flag = 'Renueva sola · plazo vencido'; bg = '#FBE9DF'; fg = '#8A3A12'; }
+      else if (p.dDl < 0) { flag = 'Gestionar renovación ya'; bg = '#FBE9DF'; fg = '#8A3A12'; }
+      else if (p.dDl <= 30) { flag = 'Decidir antes del ' + fmtD(p.dl).slice(0, 6); bg = '#FFF4D6'; fg = '#6B4A00'; }
+      else { flag = 'En plazo'; bg = '#E7F5EF'; fg = '#075B3F'; }
+      return { day: String(d.getUTCDate()).padStart(2, '0'), mon: MON[d.getUTCMonth()], name: p.name, coName: TH[p.c].name, mode: p.mode, amount: 'RD$ ' + money(p.annualRD) + ' / año', flag, bg, fg };
+    });
+    const open = this.state.open;
+    const rows = filtered.map((p) => {
+      const isOpen = !!open[p.id];
+      const D = DEPTS[p.c];
+      const wsum = D.reduce((a, d) => a + d[1], 0);
+      let left = p.used;
+      const alloc = p.unit === 'Consumo' ? [[p.c === 'cat' ? '413 · Tecnología' : 'TI', 1]] : D.map(([n, w], i) => {
+        const v = i === D.length - 1 ? left : Math.min(left, Math.round((p.used * w) / wsum));
+        left -= v;
+        return [n, v];
+      }).filter((d) => d[1] > 0);
+      const amax = Math.max.apply(null, alloc.map((d) => d[1]));
+      const rd = p.cur === 'US$' ? FX : 1;
+      const tone = tTone[p.tipo];
+      const freeBad = p.qty > 1 && p.free / p.qty > 0.1;
+      const renColor = p.dDl !== null && p.dDl < 0 ? th.risk : (p.dEnd !== null && p.dEnd <= 90 ? '#6B4A00' : th.muted);
+      return {
+        id: p.id, name: p.name, coName: TH[p.c].name, tipo: p.tipo, tBg: tone[0], tFg: tone[1], prov: p.prov, acct: p.acct, unit: p.unit,
+        qty: p.unit === 'Consumo' ? '—' : p.qty, used: p.unit === 'Consumo' ? '—' : p.used, free: p.unit === 'Consumo' ? '—' : p.free, freeColor: freeBad ? th.risk : th.muted,
+        priceF: p.cur + ' ' + m2(p.price) + (p.unit === 'Consumo' ? ' / mes' : ''), annualF: money(p.annualRD),
+        endF: p.endT ? fmtD(p.endT) : 'Mensual', startF: fmtD(parse(p.start)),
+        renNote: p.endT ? (p.dEnd < 0 ? 'vencido' : 'en ' + p.dEnd + ' días') : 'por consumo', renColor,
+        gl: p.gl || 'Por definir', glBg: p.gl ? th.soft : '#FFF4D6', glFg: p.gl ? th.ink : '#6B4A00',
+        open: isOpen, chev: isOpen ? '▾' : '▸', rowBg: isOpen ? th.soft : '#FFFFFF', bar: TH[p.c].primary2,
+        deptLabel: p.c === 'cat' ? 'Centro de costo' : 'Departamento',
+        depts: isOpen ? alloc.map(([n, v]) => ({ name: n, n: v, pct: ((v / Math.max(1, p.used)) * 100).toFixed(1) + ' %', cost: money((p.unit === 'Consumo' ? p.monthly : v * p.price) * rd), w: ((v / amax) * 100).toFixed(1) })) : [],
+        cur: p.cur, period: p.period, mode: p.mode, notice: p.notice ? p.notice + ' días' : '—',
+        deadline: p.dl ? fmtD(p.dl) + (p.dDl < 0 ? ' · vencido' : ' · en ' + p.dDl + ' días') : 'No aplica',
+        perUser: p.unit === 'Consumo' ? 'No aplica' : 'RD$ ' + money(p.price * rd) + ' / mes por ' + p.unit.toLowerCase(),
+        freeCost: p.unit === 'Consumo' ? '—' : 'RD$ ' + money(p.free * p.price * 12 * rd) + ' / año', line: p.line, note: (p.renewedBy ? 'Renovado con ' + p.renewedBy + '. ' : '') + (p.note || ''),
+        lastGasto: p.lastGasto,
+        toGasto: () => {
+          const next = p.end ? (parseInt(p.end.slice(0, 4), 10) + 1) + p.end.slice(4) : '';
+          const amt = p.unit === 'Consumo' ? p.monthly : p.monthly * (p.period === 'Anual' ? 12 : 1);
+          try {
+            window.localStorage.setItem('sigi.gastos.draft', JSON.stringify({
+              co: p.c, origin: 'Software', ref: p.id, prov: p.prov, acct: p.acct, partida: p.line, gl: p.gl || '', desc: (p.end ? 'Renovación ' : 'Consumo mensual ') + p.name,
+              renew: next, cur: p.cur, amount: String(Math.round(amt * 100) / 100), fromLabel: 'Software · ' + p.name
+            }));
+          } catch (err) { /* sin almacenamiento */ }
+        },
+        toggle: () => this.setState((s) => ({ open: Object.assign({}, s.open, { [p.id]: !s.open[p.id] }) }))
+      };
+    });
+    const uniq = (arr) => arr.filter((v, i) => arr.indexOf(v) === i);
+    const setF = (key) => (e) => this.setState({ f: Object.assign({}, this.state.f, { [key]: e.target.value }) });
+
+    // Formulario de alta de software o suscripción
+    const sf = this.state.sf;
+    const all = this.data();
+    const cat = this.readStore('sigi.catalogos.v1') || {};
+    const newProvs = (cat.extraProv || []).map((p) => p[1]);
+    const PROVS = ['Microsoft (vía distribuidor)', 'Amazon Web Services', 'Adobe', 'Fortinet (vía distribuidor)', '[Autoridad certificadora]', '[Proveedor ERP]', '[Proveedor de seguridad]'].concat(newProvs);
+    const swGl = (cat.extraGl || []).filter((g) => /^Software/.test(g.sigi)).map((g) => ({ v: g.code, l: g.code + ' · ' + g.desc + ' (pendiente)' }));
+    const swGlB = (cat.extraBona || []).filter((g) => g[3] === 'Software y suscripciones').map((g) => ({ v: g[0], l: g[0] + ' · ' + g[1] + ' (pendiente)' }));
+    const GL_OPTS = {
+      cat: [{ v: '', l: 'Por definir · catálogo de software pendiente' }].concat(swGl),
+      bona: [{ v: '6210-010', l: '6210-010 · Software SaaS' }, { v: '6210-020', l: '6210-020 · Licencias de software y soporte' }, { v: '6210-030', l: '6210-030 · Nube PaaS / IaaS' }, { v: '6210-040', l: '6210-040 · Certificados y dominios' }].concat(swGlB)
+    };
+    const LINES = { cat: ['SW-021', 'SW-030', 'SW-040'], bona: ['BSW-001', 'BSW-002'] };
+    const qtyN = sf.unit === 'Consumo' ? 1 : parseInt(sf.qty, 10);
+    const usedN = sf.unit === 'Consumo' ? 1 : parseInt(sf.used, 10);
+    const priceN = parseFloat(sf.price);
+    const prevMonthly = (qtyN > 0 && priceN > 0) ? qtyN * priceN : 0;
+    const sfPreview = prevMonthly ? sf.cur + ' ' + m2(prevMonthly) + ' / mes · RD$ ' + money(prevMonthly * 12 * (sf.cur === 'US$' ? FX : 1)) + ' / año' : 'Complete cantidad y precio';
+    const saveForm = () => {
+      const name = sf.name.trim();
+      if (!name) return this.setState({ sErr: 'Escriba el nombre del producto.' });
+      if (all.some((r) => r[1] === sf.co && r[2].toLowerCase() === name.toLowerCase())) return this.setState({ sErr: 'Ya existe ' + name + ' en ' + TH[sf.co].name + '; edite el existente o cambie el nombre.' });
+      if (!sf.acct.trim()) return this.setState({ sErr: 'Escriba la cuenta de proveedor.' });
+      if (!(qtyN > 0)) return this.setState({ sErr: 'Las unidades contratadas deben ser un número mayor que cero.' });
+      if (!(usedN >= 0) || usedN > qtyN) return this.setState({ sErr: 'Las asignadas no pueden ser negativas ni superar las contratadas.' });
+      if (!(priceN > 0)) return this.setState({ sErr: 'El precio unitario debe ser mayor que cero.' });
+      const isUse = sf.unit === 'Consumo' || sf.mode === 'Por consumo';
+      if (!isUse && (!sf.end || sf.end <= sf.start)) return this.setState({ sErr: 'El vencimiento debe ser posterior al inicio.' });
+      const notice = parseInt(sf.notice, 10) || 0;
+      const n = all.filter((r) => r[1] === sf.co).length + 1;
+      const id = (sf.co === 'cat' ? 'SW-C' : 'SW-B') + String(n).padStart(2, '0');
+      const row = [id, sf.co, name, sf.tipo, sf.prov, sf.acct.trim(), sf.unit, qtyN, usedN, priceN, sf.cur, isUse ? 'Mensual' : sf.period, sf.start, isUse ? null : sf.end,
+        isUse ? 'Por consumo' : sf.mode, isUse ? 0 : notice, sf.gl || (GL_OPTS[sf.co][0].v || null), sf.line, 'Creado en SIGI · pendiente de aprobación.'];
+      this.setState((s) => ({
+        extra: s.extra.concat([row]), form: false, sf: this.emptySf(s.co && s.co !== 'all' ? s.co : 'cat'), f: this.noFilter(),
+        open: Object.assign({}, s.open, { [id]: true }), sMsg: id + ' · ' + name + ' creado en ' + TH[sf.co].name + ' · pendiente de aprobación.'
+      }));
+    };
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
+      label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k, open: {}, f: this.noFilter() })
+    }));
+    return {
+      th, nav: this.nav('Software.dc.html', th), cos, kpis, types, renewals, rows, empty: rows.length === 0, f,
+      opt: {
+        tipo: [{ v: '', l: 'Todos' }].concat(TIPOS.map(([t]) => ({ v: t, l: t }))),
+        prov: [{ v: '', l: 'Todos' }].concat(uniq(items.map((p) => p.prov)).sort().map((v) => ({ v, l: v }))),
+        sit: [{ v: '', l: 'Todas' }, { v: 'ren', l: 'Renueva en 90 días' }, { v: 'free', l: 'Más de 10 % sin asignar' }, { v: 'nogl', l: 'Sin cuenta contable' }]
+      },
+      listInfo: rows.length + ' productos · RD$ ' + money(sum(filtered, 'annualRD')) + ' / año',
+      setQ: setF('q'), setTipo: setF('tipo'), setProv: setF('prov'), setSit: setF('sit'), clear: () => this.setState({ f: this.noFilter() }),
+      storeLabel: this.state.store === 'on' ? 'Guardado en este navegador · ' + this.state.extra.length + ' creados' : 'Sin guardado en esta vista · se pierde al recargar',
+      storeBg: this.state.store === 'on' ? '#E7F5EF' : '#FFF4D6', storeFg: this.state.store === 'on' ? '#075B3F' : '#6B4A00',
+      hasCreated: this.state.extra.length > 0, resetLabel: this.state.confirmReset ? 'Confirmar: borrar ' + this.state.extra.length + ' creados' : 'Borrar lo creado',
+      resetBorder: this.state.confirmReset ? '#A8481A' : th.border, resetFg: this.state.confirmReset ? '#A8481A' : th.ink,
+      resetCreated: () => (this.state.confirmReset ? this.setState({ extra: [], confirmReset: false, sMsg: 'Se borraron los productos creados en SIGI.' }) : this.setState({ confirmReset: true })),
+      showForm: this.state.form, sf, sErr: this.state.sErr, sMsg: this.state.sMsg, fTh: TH[sf.co], sfPreview, saveForm,
+      provOpts: PROVS, glOpts: GL_OPTS[sf.co], lineOpts: LINES[sf.co],
+      openForm: () => this.setState({ form: true, sErr: '', sMsg: '', sf: this.emptySf(co === 'all' ? 'cat' : co) }), closeForm: () => this.setState({ form: false }),
+      sfCo: (e) => this.setSf({ co: e.target.value, gl: '', line: e.target.value === 'cat' ? 'SW-040' : 'BSW-002' }), sfName: (e) => this.setSf({ name: e.target.value }),
+      sfTipo: (e) => this.setSf({ tipo: e.target.value }), sfProv: (e) => this.setSf({ prov: e.target.value }), sfAcct: (e) => this.setSf({ acct: e.target.value }),
+      sfUnit: (e) => this.setSf({ unit: e.target.value, mode: e.target.value === 'Consumo' ? 'Por consumo' : this.state.sf.mode }), sfQty: (e) => this.setSf({ qty: e.target.value }),
+      sfUsed: (e) => this.setSf({ used: e.target.value }), sfPrice: (e) => this.setSf({ price: e.target.value }), sfCur: (e) => this.setSf({ cur: e.target.value }),
+      sfPeriod: (e) => this.setSf({ period: e.target.value }), sfStart: (e) => this.setSf({ start: e.target.value }), sfEnd: (e) => this.setSf({ end: e.target.value }),
+      sfMode: (e) => this.setSf({ mode: e.target.value }), sfNotice: (e) => this.setSf({ notice: e.target.value }), sfGl: (e) => this.setSf({ gl: e.target.value }),
+      sfLine: (e) => this.setSf({ line: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

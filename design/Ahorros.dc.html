@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Ahorros vs presupuesto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+table.t .r{text-align:right}
+button,select{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Ahorros · Ambiente <b>{{th.name}}</b></span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Ahorros generados vs. presupuesto</h1>
+<span style="font-size: 14px; color: {{th.muted}}">{{period}} · Corte 31 oct 2026 · RD$ millones · Vista: <b style="color: {{th.ink}}">ejecución + proyección</b></span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos ilustrativos</span>
+<button style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Registrar iniciativa</button>
+</div>
+</header>
+
+<section aria-labelledby="h-emp" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-emp" style="margin: 0; font-size: 17px; font-weight: 600">Ahorro por empresa y consolidado</h2>
+<span style="font-size: 13px; color: {{th.muted}}">Clic en una tarjeta para cambiar de ambiente</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px">
+<sc-for list="{{compare}}" as="c" hint-placeholder-count="3">
+<button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="text-align: left; background: #FFFFFF; border: {{c.ring}}; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; color: {{th.ink}}; font-size: 14px">
+<span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px"><span style="width: 14px; height: 14px; border-radius: 3px; background: {{c.color}}"></span>{{c.name}}</span><span class="mono" style="font-size: 13px; color: {{th.muted}}">Vigente {{c.bud}}</span></span>
+<span style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 30px; font-weight: 600; color: {{c.ink}}">{{c.net}}</span><span style="font-size: 13px; color: {{th.muted}}">neto · {{c.pct}} del vigente</span></span>
+<span style="display: flex; width: 100%; height: 12px; background: {{th.track}}; border-radius: 6px; overflow: hidden"><span style="display: block; width: {{c.wR}}%; background: {{c.color}}"></span><span style="display: block; width: {{c.wG}}%; background: {{c.soft}}"></span></span>
+<span style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: {{th.muted}}">Realizado</span><span class="mono" style="font-weight: 600">{{c.R}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: {{th.muted}}">En gestión</span><span class="mono" style="font-weight: 600">{{c.G}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: {{th.muted}}">Bruto</span><span class="mono" style="font-weight: 600">{{c.gross}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: {{th.muted}}">Excesos</span><span class="mono" style="font-weight: 600; color: {{th.risk}}">{{c.ex}}</span></span>
+</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-mod" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-mod" style="margin: 0; font-size: 17px; font-weight: 600">Ahorro bruto por módulo y empresa</h2>
+<span style="font-size: 13px; color: {{th.muted}}">RD$ M en el ejercicio · realizado + en gestión</span>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 640px">
+<thead><tr style="color: {{th.muted}}"><th>Módulo</th><th class="r">El Catador</th><th class="r">Bona</th><th class="r">Consolidado</th><th style="width: 260px">Participación</th></tr></thead>
+<tbody>
+<sc-for list="{{modRows}}" as="m" hint-placeholder-count="4">
+<tr><td style="font-weight: {{m.weight}}">{{m.name}}</td><td class="r mono">{{m.cat}}</td><td class="r mono">{{m.bona}}</td><td class="r mono" style="font-weight: 600">{{m.all}}</td><td><span style="display: flex; height: 10px; background: {{th.track}}; border-radius: 5px; overflow: hidden"><span style="display: block; width: {{m.wC}}%; background: #807451"></span><span style="display: block; width: {{m.wB}}%; background: #1A5632"></span></span></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; gap: 20px; font-size: 13px; color: {{th.muted}}">
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; background: #807451; border-radius: 2px"></span>El Catador</span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; background: #1A5632; border-radius: 2px"></span>Bona</span>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section aria-labelledby="h-wf" style="flex: 3 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-wf" style="margin: 0; font-size: 17px; font-weight: 600">Del presupuesto vigente a la proyección de cierre · {{th.name}}</h2>
+<span style="font-size: 13px; color: {{th.muted}}">RD$ M · eje truncado en {{wf.lo}} para mostrar las variaciones</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: end">
+<sc-for list="{{wf.cols}}" as="w" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span class="mono" style="font-size: 14px; font-weight: 600; color: {{w.ink}}">{{w.value}}</span>
+<div style="position: relative; width: 100%; max-width: 96px; height: 240px; border-bottom: 1px solid {{th.border}}"><div style="position: absolute; left: 0; right: 0; bottom: {{w.bottom}}px; height: {{w.h}}px; background: {{w.color}}; border-radius: 4px"></div></div>
+<span style="font-size: 13px; text-align: center; color: {{th.muted}}">{{w.label}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-pal" style="flex: 2 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="h-pal" style="margin: 0; font-size: 17px; font-weight: 600">Ahorro por palanca</h2>
+<span style="font-size: 13px; color: {{th.muted}}">En el ejercicio · RD$ M · {{th.name}}</span>
+</div>
+<sc-for list="{{levers}}" as="l" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 14px"><span>{{l.name}}</span><span class="mono" style="font-weight: 600">{{l.value}}</span></div>
+<div style="height: 10px; background: {{th.track}}; border-radius: 5px; overflow: hidden"><div style="width: {{l.w}}%; height: 100%; background: {{th.save}}"></div></div>
+</div>
+</sc-for>
+</section>
+</div>
+
+<section aria-labelledby="h-ini" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="h-ini" style="margin: 0; font-size: 17px; font-weight: 600">Iniciativas de ahorro · {{th.name}}</h2>
+<span style="font-size: 13px; color: {{th.muted}}">Línea base y costo nuevo anualizados · ahorro del ejercicio prorrateado desde la fecha efectiva</span>
+</div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 1160px">
+<thead><tr style="color: {{th.muted}}"><th>ID</th><th>Empresa</th><th>Iniciativa</th><th>Módulo</th><th>Palanca</th><th class="r">Línea base</th><th class="r">Costo nuevo</th><th class="r">Ahorro anual</th><th class="r">En ejercicio</th><th>Efectiva</th><th>Estado</th><th>Evidencia</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<tr>
+<td class="mono" style="color: {{th.muted}}">{{r.id}}</td>
+<td style="color: {{th.muted}}">{{r.coName}}</td>
+<td style="font-weight: 500">{{r.name}}</td>
+<td>{{r.mod}}</td>
+<td style="color: {{th.muted}}">{{r.lever}}</td>
+<td class="r mono">{{r.base}}</td>
+<td class="r mono">{{r.nuevo}}</td>
+<td class="r mono">{{r.anual}}</td>
+<td class="r mono" style="font-weight: 600; color: {{th.saveInk}}">{{r.ej}}</td>
+<td class="mono">{{r.eff}}</td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{r.bg}}; color: {{r.fg}}; white-space: nowrap">{{r.status}}</span></td>
+<td style="color: {{th.link}}">{{r.ev}}</td>
+</tr>
+</sc-for>
+<tr style="background: {{th.soft}}"><td></td><td></td><td style="font-weight: 700">Total</td><td></td><td></td><td></td><td></td><td class="r mono" style="font-weight: 700">{{tot.anual}}</td><td class="r mono" style="font-weight: 700; color: {{th.saveInk}}">{{tot.ej}}</td><td></td><td></td><td></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="h-met" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-met" style="margin: 0; font-size: 17px; font-weight: 600">Cómo se reconoce un ahorro</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: {{th.soft}}; border-radius: 8px"><b style="font-size: 14px">Línea base</b><span style="font-size: 13px; line-height: 19px; color: {{th.muted}}">Costo contratado o tarifa presupuestada para el mismo alcance (servicio, cantidad, período). Se congela al aprobar la iniciativa.</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: {{th.soft}}; border-radius: 8px"><b style="font-size: 14px">Realizado</b><span style="font-size: 13px; line-height: 19px; color: {{th.muted}}">Diferencia ya reflejada en factura o contrato firmado, con evidencia adjunta y aprobación registrada.</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: {{th.soft}}; border-radius: 8px"><b style="font-size: 14px">En gestión</b><span style="font-size: 13px; line-height: 19px; color: {{th.muted}}">Propuesta aprobada internamente, pendiente de proveedor o firma. Entra en la proyección, no en el realizado.</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; background: {{th.soft}}; border-radius: 8px"><b style="font-size: 14px">Consolidado</b><span style="font-size: 13px; line-height: 19px; color: {{th.muted}}">Suma de las empresas sin duplicar costos compartidos. Cada empresa conserva su ejercicio fiscal; el efecto cambiario se informa aparte.</span></div>
+</div>
+<div class="mono" style="font-size: 13px; padding: 12px 14px; background: {{th.nav}}; color: {{th.navText}}; border-radius: 8px; line-height: 20px">{{formula}}</div>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { co: null };
+  }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navActive: '#1E3550', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', primary: '#1D3557', primary2: '#5B84B1', primary3: '#A9C1DA', budget: '#B8C2CE', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', save: '#0B7A55', saveSoft: '#8FD3B8', saveBg: '#E7F5EF', saveBorder: '#A8DCC6', saveInk: '#075B3F', risk: '#A8481A', track: '#EEF1F4', link: '#0F5E73' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navActive: '#4a4f4f', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', primary: '#262727', primary2: '#807451', primary3: '#d6cda5', budget: '#d6cda5', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', save: '#807451', saveSoft: '#d6cda5', saveBg: '#f4f0e2', saveBorder: '#d6cda5', saveInk: '#5e5539', risk: '#A8481A', track: '#efeeea', link: '#6b6143' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navActive: '#BC2F2C', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', primary: '#000000', primary2: '#BC2F2C', primary3: '#E8A9A7', budget: '#D6D6D6', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', save: '#1A5632', saveSoft: '#9CC7AC', saveBg: '#E8F2EC', saveBorder: '#9CC7AC', saveInk: '#1A5632', risk: '#BC2F2C', track: '#EEEEEE', link: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { label: 'Solicitudes y aprobaciones' },
+      { label: 'Centro de importaciones' },
+      { label: 'Documentos y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.navActive
+    }));
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const TH = this.themes();
+    const th = TH[co];
+    const f2 = (v) => v.toFixed(2);
+    const INI = [
+      ['AH-01', 'cat', 'Renegociación Internet dedicado · sucursales', 'Telecom', 'Precio', 4.83, 3.22, 1.61, 1.45, 'jul 2026', 'Realizado', 'done', 'Contrato v2 firmado'],
+      ['AH-02', 'cat', 'Recuperación de licencias no asignadas · 64', 'Software', 'Cantidad', 12.40, 10.80, 1.60, 1.10, 'jun 2026', 'Realizado', 'done', 'Informe de asignaciones'],
+      ['AH-03', 'bona', 'Baja de líneas inactivas · 38', 'Flotas', 'Cantidad', 6.75, 5.63, 1.12, 0.92, 'may 2026', 'Realizado', 'done', 'Cartas de baja (38)'],
+      ['AH-04', 'bona', 'Consolidación de circuitos · 4 sucursales', 'Telecom', 'Arquitectura', 1.44, 0.72, 0.72, 0.48, 'abr 2026', 'Realizado', 'done', 'Acta de cambio'],
+      ['AH-05', 'cat', 'Plan de datos compartidos · Logística', 'Flotas', 'Plan / tarifa', 1.95, 1.35, 0.60, 0.35, 'sep 2026', 'Realizado', 'done', 'Adenda de plan'],
+      ['AH-06', 'cat', 'Renegociación MPLS, SD-WAN y enlace internacional', 'Telecom', 'Precio', 9.11, 6.23, 2.88, 1.20, 'nov 2026', 'En negociación', 'neg', 'Propuesta operador'],
+      ['AH-07', 'cat', 'Ajuste Microsoft 365 en renovación · −36', 'Software', 'Cantidad', 9.15, 8.33, 0.82, 0.82, 'nov 2026', 'En aprobación', 'appr', 'Solicitud de cambio'],
+      ['AH-08', 'bona', 'Baja de líneas sin uso y ajuste de planes', 'Flotas', 'Cantidad', 5.63, 4.95, 0.68, 0.28, 'ago 2026', 'En validación', 'appr', 'Reporte de consumo'],
+      ['AH-09', 'bona', 'Migración de troncales a SIP', 'Telecom', 'Arquitectura', 1.31, 0.35, 0.96, 0.40, 'nov 2026', 'Propuesta', 'prop', 'Diseño técnico'],
+      ['AH-10', 'bona', 'Depuración de cargos duplicados en factura', 'Telecom', 'Conciliación', 1.20, 0.00, 1.20, 0.50, 'ago 2026', 'En negociación', 'neg', 'Conciliación sep']
+    ];
+    const BUD = { cat: 98.6, bona: 54.4, all: 153.0 };
+    const EXC = { cat: 0.30, bona: 0.20, all: 0.50 };
+    const stats = (k) => {
+      const rs = INI.filter((r) => k === 'all' || r[1] === k);
+      const R = rs.filter((r) => r[11] === 'done').reduce((a, r) => a + r[8], 0);
+      const G = rs.filter((r) => r[11] !== 'done').reduce((a, r) => a + r[8], 0);
+      return { rs, R, G, gross: R + G, ex: EXC[k], net: R + G - EXC[k], bud: BUD[k] };
+    };
+    const S = stats(co);
+    const tone = { done: ['#E7F5EF', '#075B3F'], neg: ['#FFF4D6', '#6B4A00'], appr: ['#E6EEF7', '#1D3557'], prop: ['#EEF1F4', '#3E4A58'] };
+    const rows = S.rs.map(([id, c, name, mod, lever, base, nuevo, anual, ej, eff, status, t, ev]) => ({
+      id, coName: TH[c].name, name, mod, lever, base: f2(base), nuevo: f2(nuevo), anual: f2(anual), ej: f2(ej), eff, status, ev, bg: tone[t][0], fg: tone[t][1]
+    }));
+    const tot = { anual: f2(S.rs.reduce((a, r) => a + r[7], 0)), ej: f2(S.gross) };
+    const lm = {};
+    S.rs.forEach((r) => { lm[r[4]] = (lm[r[4]] || 0) + r[8]; });
+    const lmax = Math.max.apply(null, Object.keys(lm).map((k) => lm[k]));
+    const levers = Object.keys(lm).sort((a, b) => lm[b] - lm[a]).map((k) => ({ name: k, value: f2(lm[k]), w: ((lm[k] / lmax) * 100).toFixed(1) }));
+    const sAll = { cat: stats('cat'), bona: stats('bona'), all: stats('all') };
+    const gmax = Math.max(sAll.all.gross, 0.01);
+    const compare = ['cat', 'bona', 'all'].map((k) => {
+      const s = sAll[k];
+      const T = TH[k];
+      return {
+        name: T.name, color: k === 'all' ? '#0B7A55' : (k === 'cat' ? '#807451' : '#1A5632'), soft: k === 'all' ? '#8FD3B8' : (k === 'cat' ? '#d6cda5' : '#9CC7AC'),
+        ink: T.saveInk, bud: s.bud.toFixed(1), net: f2(s.net), pct: ((s.net / s.bud) * 100).toFixed(1) + ' %',
+        R: f2(s.R), G: f2(s.G), gross: f2(s.gross), ex: '(' + f2(s.ex) + ')',
+        wR: ((s.R / gmax) * 100).toFixed(1), wG: ((s.G / gmax) * 100).toFixed(1),
+        on: k === co, ring: k === co ? '2px solid ' + T.on : '1px solid ' + th.border,
+        pick: () => this.setState({ co: k })
+      };
+    });
+    const mods = ['Telecom', 'Flotas', 'Software'];
+    const modSum = (k, m) => INI.filter((r) => (k === 'all' || r[1] === k) && (!m || r[3] === m)).reduce((a, r) => a + r[8], 0);
+    const mmax = Math.max.apply(null, mods.map((m) => modSum('all', m)));
+    const modName = { Telecom: 'Telecomunicaciones', Flotas: 'Flotas móviles', Software: 'Software y suscripciones' };
+    const modRows = mods.map((m) => ({
+      name: modName[m], weight: 500, cat: f2(modSum('cat', m)), bona: f2(modSum('bona', m)), all: f2(modSum('all', m)),
+      wC: ((modSum('cat', m) / mmax) * 100).toFixed(1), wB: ((modSum('bona', m) / mmax) * 100).toFixed(1)
+    })).concat([{ name: 'Total bruto', weight: 700, cat: f2(modSum('cat')), bona: f2(modSum('bona')), all: f2(modSum('all')), wC: '0', wB: '0' }]);
+    const B = S.bud, P = S.bud - S.net, afterG = B - S.R - S.G;
+    const lo = Math.floor(afterG - 1.2 * (S.R + S.G));
+    const sc = 240 / (B - lo);
+    const px = (v) => Math.max(3, Math.round(v * sc));
+    const wf = {
+      lo,
+      cols: [
+        { label: 'Presupuesto vigente', value: B.toFixed(1), bottom: 0, h: px(B - lo), color: th.budget, ink: th.ink },
+        { label: 'Ahorros realizados', value: '−' + f2(S.R), bottom: Math.round((B - S.R - lo) * sc), h: px(S.R), color: th.save, ink: th.saveInk },
+        { label: 'Ahorros en gestión', value: '−' + f2(S.G), bottom: Math.round((afterG - lo) * sc), h: px(S.G), color: th.saveSoft, ink: th.saveInk },
+        { label: 'Excesos', value: '+' + f2(S.ex), bottom: Math.round((afterG - lo) * sc), h: px(S.ex), color: th.risk, ink: th.risk },
+        { label: 'Proyección de cierre', value: f2(P), bottom: 0, h: px(P - lo), color: th.primary, ink: th.ink }
+      ]
+    };
+    const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
+      label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k })
+    }));
+    const period = { all: 'Consolidado · El Catador abr 2026–mar 2027 · Bona ene–dic 2026', cat: 'El Catador · Ejercicio abr 2026 – mar 2027', bona: 'Bona · Ejercicio ene – dic 2026' }[co];
+    return {
+      th, nav: this.nav('Ahorros.dc.html', th), cos, period, compare, modRows, wf, levers, rows, tot,
+      formula: 'Ahorro neto ' + th.name + ' = Σ ahorros (' + f2(S.R) + ' + ' + f2(S.G) + ') − excesos ' + f2(S.ex) + ' = vigente ' + B.toFixed(1) + ' − proyección ' + f2(P) + ' = ' + f2(S.net)
+    };
+  }
+}
+</script>
+</body>
+</html>
