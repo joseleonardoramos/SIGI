@@ -8,6 +8,7 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "admin:crear": "node scripts/crear-admin.mjs",
+    "test:funciones": "node --env-file=.env scripts/probar-funcion-usuarios.mjs",
     "web:start": "docker compose up -d --build",
     "web:stop": "docker compose down"
   },

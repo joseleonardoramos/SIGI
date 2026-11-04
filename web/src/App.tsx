@@ -51,7 +51,7 @@ export default function App() {
         {vista === 'inicio' && <Inicio accesos={accesos} esAdmin={esAdmin} />}
         {vista === 'empresas' && esAdmin && <Empresas />}
         {vista === 'usuarios' && esAdmin && <Usuarios yo={session.user.id} />}
-        {vista === 'clave' && <CambiarClave />}
+        {vista === 'clave' && <CambiarClave email={session.user.email ?? ''} />}
       </main>
     </div>
   )
@@ -75,7 +75,8 @@ function Inicio({ accesos, esAdmin }: { accesos: Acceso[]; esAdmin: boolean }) {
   )
 }
 
-function CambiarClave() {
+function CambiarClave({ email }: { email: string }) {
+  const [actual, setActual] = useState('')
   const [clave, setClave] = useState('')
   const [repetir, setRepetir] = useState('')
   const [error, setError] = useState('')
@@ -89,9 +90,13 @@ function CambiarClave() {
       setError('Use al menos 12 caracteres, con letras y números.')
       return
     }
+    // Confirma que quien cambia la contraseña la conoce: una sesión abierta y desatendida no basta.
+    const verificada = await supabase.auth.signInWithPassword({ email, password: actual })
+    if (verificada.error) { setError('La contraseña actual no es correcta.'); return }
     const { error } = await supabase.auth.updateUser({ password: clave })
     if (error) { setError(await mensajeError(error)); return }
     setError('')
+    setActual('')
     setClave('')
     setRepetir('')
     setOk(true)
@@ -101,6 +106,7 @@ function CambiarClave() {
     <section>
       <h2>Cambiar contraseña</h2>
       <form className="tarjeta" onSubmit={guardar}>
+        <label>Contraseña actual<input type="password" autoComplete="current-password" required value={actual} onChange={(e) => setActual(e.target.value)} /></label>
         <label>Nueva contraseña<input type="password" autoComplete="new-password" required value={clave} onChange={(e) => setClave(e.target.value)} /></label>
         <label>Repetir contraseña<input type="password" autoComplete="new-password" required value={repetir} onChange={(e) => setRepetir(e.target.value)} /></label>
         {error && <p className="error" role="alert">{error}</p>}

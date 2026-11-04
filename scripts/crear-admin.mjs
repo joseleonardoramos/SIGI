@@ -18,7 +18,14 @@ const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': '
 async function pedir(ruta, opciones = {}) {
   const r = await fetch(url + ruta, { ...opciones, headers: { ...headers, ...opciones.headers } })
   const texto = await r.text()
-  return { ok: r.ok, status: r.status, cuerpo: texto ? JSON.parse(texto) : null }
+  let cuerpo = null
+  try {
+    cuerpo = texto ? JSON.parse(texto) : null
+  } catch {
+    // Página de error u otra respuesta que no es JSON (por ejemplo, Supabase apagado detrás de un proxy).
+    cuerpo = { respuesta: texto.slice(0, 200) }
+  }
+  return { ok: r.ok, status: r.status, cuerpo }
 }
 
 const creado = await pedir('/auth/v1/admin/users', {

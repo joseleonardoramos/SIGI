@@ -2,7 +2,7 @@
 -- Todo ocurre dentro de una transacción que se deshace al final.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(24);
 
 -- Usuarios de prueba: admin (global), captura y consulta de la empresa A.
 insert into auth.users (id, email) values
@@ -102,6 +102,15 @@ update personas set activo = false, baja_motivo = 'Salida de la empresa' where i
 select throws_ok(
   $$ insert into ausencias (empresa_id, persona_id, tipo, desde, hasta) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000e1', 'Viaje', '2026-12-01', '2026-12-02') $$,
   'P0001', 'La persona está dada de baja o no existe; no acepta ausencias nuevas.', 'Una persona dada de baja no acepta ausencias nuevas');
+
+update empresas set activo = false, baja_motivo = 'Cierre' where id = '00000000-0000-0000-0000-00000000000a';
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
+select throws_ok(
+  $$ insert into servicios_telecom (empresa_id, sucursal, tipo, detalle, monto) values ('00000000-0000-0000-0000-00000000000a', 'Tras la baja', 'Internet', 'X', 1) $$,
+  '42501', null, 'Captura no registra en una empresa dada de baja');
+select is(
+  (select count(*)::int from servicios_telecom where empresa_id = '00000000-0000-0000-0000-00000000000a'),
+  3, 'El historial de una empresa dada de baja se sigue consultando');
 
 reset role;
 select throws_ok(

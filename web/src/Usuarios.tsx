@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { supabase, mensajeError } from './supabase'
 
 type Usuario = { id: string; email: string; ultimo_acceso: string | null }
-type Empresa = { id: string; nombre: string }
+type Empresa = { id: string; nombre: string; activo: boolean }
 type Membresia = { usuario_id: string; empresa_id: string | null; rol: string }
 
 // Contraseña temporal de 16 caracteres con letras y números (sin caracteres confusos).
@@ -28,7 +28,8 @@ export default function Usuarios({ yo }: { yo: string }) {
   async function cargar() {
     const [u, e, m] = await Promise.all([
       supabase.rpc('listar_usuarios'),
-      supabase.from('empresas').select('id, nombre').eq('activo', true).order('nombre'),
+      // Incluye las dadas de baja: así se pueden retirar los accesos que quedaron en ellas.
+      supabase.from('empresas').select('id, nombre, activo').order('activo', { ascending: false }).order('nombre'),
       supabase.from('membresias').select('usuario_id, empresa_id, rol').eq('activo', true),
     ])
     const fallo = u.error ?? e.error ?? m.error
@@ -90,7 +91,7 @@ export default function Usuarios({ yo }: { yo: string }) {
           <thead>
             <tr>
               <th>Usuario</th><th>Último acceso</th><th>Administrador</th>
-              {empresas.map((e) => <th key={e.id}>{e.nombre}</th>)}
+              {empresas.map((e) => <th key={e.id}>{e.nombre}{!e.activo && ' (dada de baja)'}</th>)}
             </tr>
           </thead>
           <tbody>
