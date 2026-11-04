@@ -200,9 +200,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -223,7 +223,7 @@ class Component extends DCLogic {
       ['AH-04', 'bona', 'Consolidación de circuitos · 4 sucursales', 'Telecom', 'Arquitectura', 1.44, 0.72, 0.72, 0.48, 'abr 2026', 'Realizado', 'done', 'Acta de cambio'],
       ['AH-05', 'cat', 'Plan de datos compartidos · Logística', 'Flotas', 'Plan / tarifa', 1.95, 1.35, 0.60, 0.35, 'sep 2026', 'Realizado', 'done', 'Adenda de plan'],
       ['AH-06', 'cat', 'Renegociación MPLS, SD-WAN y enlace internacional', 'Telecom', 'Precio', 9.11, 6.23, 2.88, 1.20, 'nov 2026', 'En negociación', 'neg', 'Propuesta operador'],
-      ['AH-07', 'cat', 'Ajuste Microsoft 365 en renovación · −36', 'Software', 'Cantidad', 9.15, 8.33, 0.82, 0.82, 'nov 2026', 'En aprobación', 'appr', 'Solicitud de cambio'],
+      ['AH-07', 'cat', 'Ajuste Microsoft 365 en renovación · −36', 'Software', 'Cantidad', 9.15, 8.33, 0.82, 0.82, 'nov 2026', 'En trámite', 'appr', 'Cambio de contrato'],
       ['AH-08', 'bona', 'Baja de líneas sin uso y ajuste de planes', 'Flotas', 'Cantidad', 5.63, 4.95, 0.68, 0.28, 'ago 2026', 'En validación', 'appr', 'Reporte de consumo'],
       ['AH-09', 'bona', 'Migración de troncales a SIP', 'Telecom', 'Arquitectura', 1.31, 0.35, 0.96, 0.40, 'nov 2026', 'Propuesta', 'prop', 'Diseño técnico'],
       ['AH-10', 'bona', 'Depuración de cargos duplicados en factura', 'Telecom', 'Conciliación', 1.20, 0.00, 1.20, 0.50, 'ago 2026', 'En negociación', 'neg', 'Conciliación sep']

@@ -53,6 +53,22 @@ button{cursor:pointer}
 </div>
 </header>
 
+<sc-if value="{{pOpen}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-pform" style="background: #FFFFFF; border: 2px solid {{th.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-pform" style="margin: 0; font-size: 17px; font-weight: 600">{{pTitle}}</h2><button type="button" onClick="{{pCancel}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre de la partida<input type="text" value="{{pForm.name}}" onChange="{{pSet.name}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Categoría<select value="{{pForm.ci}}" onChange="{{pSet.ci}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{pCatOpts}}" as="o" hint-placeholder-count="5"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cuenta contable<input type="text" value="{{pForm.acct}}" onChange="{{pSet.acct}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Distribución<input type="text" value="{{pForm.dist}}" onChange="{{pSet.dist}}" placeholder="Uniforme · Trimestral · Puntual · nov" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Monto (millones RD$, año seleccionado)<input type="number" min="0" step="0.01" value="{{pForm.amt}}" onChange="{{pSet.amt}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</div>
+<sc-if value="{{pErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{pErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" onClick="{{pSave}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Guardar partida</button><button type="button" onClick="{{pCancel}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 14px; font-weight: 600">Cancelar</button></div>
+<span style="font-size: 12px; color: {{th.muted}}">El monto se guarda como peso dentro de la categoría, así que se ajusta en cada año. Una partida que supera la categoría queda marcada como fuera de presupuesto.</span>
+</form>
+</sc-if>
+
 <section aria-label="Selección de ejercicio" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 14px 16px">
 <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: {{th.muted}}; font-weight: 600">Año fiscal<select value="{{fy}}" onChange="{{setFy}}" style="height: 44px; min-width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}; background: #FFFFFF"><sc-for list="{{fyOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
 <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: {{th.muted}}; font-weight: 600">Comparar con<select value="{{cmp}}" onChange="{{setCmp}}" style="height: 44px; min-width: 220px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}; background: #FFFFFF"><sc-for list="{{cmpOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
@@ -118,15 +134,19 @@ button{cursor:pointer}
 <div role="group" aria-label="Tipo de gasto" style="display: flex; border: 1px solid {{th.border}}; border-radius: 8px; overflow: hidden">
 <sc-for list="{{expTabs}}" as="x" hint-placeholder-count="3"><button onClick="{{x.pick}}" aria-pressed="{{x.on}}" style="height: 40px; padding: 0 14px; border: none; font-size: 13px; font-weight: 600; background: {{x.bg}}; color: {{x.fg}}">{{x.label}}</button></sc-for>
 </div>
+<button onClick="{{pNew}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600">+ Nueva partida</button>
 <button onClick="{{exportOpex}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Exportar OPEX + ahorro</button>
 <button onClick="{{exportCapex}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Exportar CAPEX + ahorro</button>
 <button onClick="{{exportAll}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600">Exportar todo (CSV)</button>
 </div>
 </div>
 <sc-if value="{{msg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.saveBg}}; color: {{th.saveInk}}">{{msg}}</p></sc-if>
+<sc-if value="{{pMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.saveBg}}; color: {{th.saveInk}}">{{pMsg}}</p></sc-if>
+<p style="margin: 0; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}; color: {{th.ink}}">{{overMsg}}</p>
+<sc-for list="{{overList}}" as="o" hint-placeholder-count="1"><div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px"><span>{{o.nm}} · exceso {{o.dF}} M</span><button onClick="{{o.toggle}}" aria-pressed="{{o.dirOn}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 12px; font-weight: 600">{{o.label}}</button></div></sc-for>
 <div style="overflow-x: auto">
 <table class="t" style="min-width: 1200px">
-<thead><tr style="color: {{th.muted}}"><th>Partida</th><th>Cuenta</th><th>Tipo</th><th class="r">Presupuesto</th><th class="r">Reservado</th><th class="r">Comprometido</th><th class="r">Ejecutado</th><th class="r">Disponible</th><th class="r">Proyección</th><th class="r">Ahorro / (exceso)</th><th style="width: 140px">Ejecución</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>Partida</th><th>Cuenta</th><th>Tipo</th><th class="r">Presupuesto</th><th class="r">Reservado</th><th class="r">Comprometido</th><th class="r">Ejecutado</th><th class="r">Disponible</th><th class="r">Proyección</th><th class="r">Ahorro / (exceso)</th><th style="width: 140px">Ejecución</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{expRows}}" as="e" hint-placeholder-count="10">
 <tr style="background: {{e.rowBg}}">
@@ -135,7 +155,7 @@ button{cursor:pointer}
 <td><span style="font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; background: {{e.tBg}}; color: {{e.tFg}}">{{e.type}}</span></td>
 <td class="r mono" style="font-weight: {{e.weight}}">{{e.bud}}</td><td class="r mono">{{e.res}}</td><td class="r mono">{{e.com}}</td><td class="r mono" style="font-weight: {{e.weight}}">{{e.exe}}</td><td class="r mono">{{e.disp}}</td><td class="r mono">{{e.proj}}</td>
 <td class="r mono" style="font-weight: 600; color: {{e.savColor}}">{{e.sav}}</td>
-<td><span style="display: flex; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; width: {{e.wE}}%; background: {{th.primary}}"></span><span style="display: block; width: {{e.wC}}%; background: {{th.primary2}}"></span></span></td>
+<td><span style="display: flex; height: 8px; background: {{th.track}}; border-radius: 4px; overflow: hidden"><span style="display: block; width: {{e.wE}}%; background: {{th.primary}}"></span><span style="display: block; width: {{e.wC}}%; background: {{th.primary2}}"></span></span></td><td><sc-if value="{{e.can}}" hint-placeholder-val="{{true}}"><button onClick="{{e.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></sc-if></td>
 </tr>
 </sc-for>
 </tbody>
@@ -196,7 +216,7 @@ button{cursor:pointer}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { co: null, fy: null, cmp: null, exp: 'ALL', msg: '' };
+    this.state = { co: null, fy: null, cmp: null, exp: 'ALL', msg: '', pdata: this.readStore('sigi.presupuesto.v1') || {}, pOpen: false, pForm: {}, pErr: '', pMsg: '' };
   }
   themes() {
     return {
@@ -219,9 +239,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -241,6 +261,11 @@ class Component extends DCLogic {
   componentDidMount() {
     this.onStorage = (e) => { if (e.key === 'sigi.gastos.v1') this.forceUpdate(); };
     try { window.addEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
+  }
+  // Partidas editadas o creadas: se guardan en este navegador.
+  componentDidUpdate(prevProps, prev) {
+    if (prev.pdata === this.state.pdata) return;
+    try { window.localStorage.setItem('sigi.presupuesto.v1', JSON.stringify(this.state.pdata)); } catch (err) { /* sin almacenamiento */ }
   }
   componentWillUnmount() {
     try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
@@ -319,6 +344,13 @@ class Component extends DCLogic {
     const A0 = this.cats(sel), B = this.cats(other);
     // Gastos registrados en SIGI (pantalla Gastos y evidencias) afectan la versión vigente: compromiso pendiente y ejecutado por partida.
     const gastos = sel.status === 'Vigente' ? (((this.readStore('sigi.gastos.v1') || {}).items) || []).filter((g) => g.co === co) : [];
+    // Partidas: base + creadas en SIGI, con ediciones por id. El peso (share) es la fracción de su categoría, como en la base.
+    const pdata = this.state.pdata || {};
+    const pEd = pdata.edits || {};
+    const PL = P[co].concat((pdata.extra || []).filter((x) => x.co === co).map((x) => x.row)).map(([id, name, ci, share, acct, dist, vSav]) => {
+      const e = pEd[id];
+      return e ? [id, e.name, e.ci, e.share, e.acct, e.dist, vSav] : [id, name, ci, share, acct, dist, vSav];
+    });
     const dCom = {}, dExe = {};
     gastos.forEach((g) => {
       const fx = g.cur === 'US$' ? g.rate : 1;
@@ -330,7 +362,7 @@ class Component extends DCLogic {
     });
     const A = A0.map((r, i) => {
       if (!gastos.length) return r;
-      const ids = P[co].filter((p) => p[2] === i).map((p) => p[0]);
+      const ids = PL.filter((p) => p[2] === i).map((p) => p[0]);
       const e = ids.reduce((a, id) => a + (dExe[id] || 0), 0), c = ids.reduce((a, id) => a + (dCom[id] || 0), 0);
       return [r[0], r[1] + e, r[2] + c, r[3], r[4], r[5]];
     });
@@ -354,7 +386,7 @@ class Component extends DCLogic {
     let strip;
     if (sel.status === 'Vigente') strip = [card('', 'Vigente aprobado', f1(tb)), card('−', 'Reservas activas', f1(tr)), card('−', 'Compromisos', f1(tc)), card('−', 'Ejecución reconocida', f1(te)), card('=', 'Disponible', f1(tb - tr - tc - te), true), card('', 'Ahorro neto proyectado', f2(ts))];
     else if (sel.status === 'Cerrado') strip = [card('', 'Presupuesto final', f1(tb)), card('−', 'Ejecutado al cierre', f1(te)), card('=', 'Ahorro / (exceso) del ejercicio', savF(ts), true)];
-    else strip = [card('', 'Presupuesto propuesto', f1(tb)), card('', 'Variación vs. vigente', (((tb - sumCol(this.cats(vigente), 0)) / sumCol(this.cats(vigente), 0)) * 100).toFixed(1) + ' %'), card('', 'Estado', 'Pendiente de aprobación', true)];
+    else strip = [card('', 'Presupuesto propuesto', f1(tb)), card('', 'Variación vs. vigente', (((tb - sumCol(this.cats(vigente), 0)) / sumCol(this.cats(vigente), 0)) * 100).toFixed(1) + ' %'), card('', 'Estado', 'Creada en SIGI', true)];
 
     const pct = (a, b) => (a === null || b === null ? '—' : b === 0 ? 'n/a' : ((a - b) / b * 100 >= 0 ? '+' : '') + ((a - b) / b * 100).toFixed(1) + ' %');
     const maxB = Math.max.apply(null, A.map((r) => r[0]).concat(B.map((r) => r[0])));
@@ -370,7 +402,7 @@ class Component extends DCLogic {
     const tA = [0, 5, 4].map((j) => sumCol(A, j)), tB = [0, 5, 4].map((j) => sumCol(B, j));
     cmpRows.push({ name: 'Total', type: '', weight: 700, rowBg: th.soft, aB: f1(tA[0]), aE: f1(tA[1]), aS: savF(tA[2]), aSC: savC(tA[2]), bB: f1(tB[0]), bE: f1(tB[1]), bS: savF(tB[2]), bSC: savC(tB[2]), dB: pct(tA[0], tB[0]), dBC: th.ink, dE: pct(tA[1], tB[1]), wA: '0', wB: '0' });
 
-    const parts = P[co].map(([id, name, ci, share, acct, dist, vSav]) => {
+    const parts = PL.map(([id, name, ci, share, acct, dist, vSav]) => {
       const c = A0[ci];
       const bud = c[0] * share;
       const isV = sel.status === 'Vigente';
@@ -381,10 +413,47 @@ class Component extends DCLogic {
       const proj = sav === null ? null : (isV ? bud - sav : exe);
       return { id, name, ci, acct, dist, type: types[ci], bud, exe, com, res, disp: exe === null ? null : bud - exe - com - res, sav, proj };
     });
+    // Alta y edición de partidas. Una partida que supera el presupuesto de su categoría queda marcada como fuera de presupuesto.
+    const pOpen = !!this.state.pOpen;
+    const pForm = this.state.pForm || {};
+    const pSet = Object.fromEntries(['name', 'ci', 'acct', 'dist', 'amt'].map((k) => [k, (e) => this.setState((s) => ({ pForm: Object.assign({}, s.pForm, { [k]: e.target.value }), pErr: '' }))]));
+    const pNew = () => this.setState({ pOpen: true, pForm: { co, id: '', name: '', ci: '0', acct: '', dist: 'Uniforme', amt: '' }, pErr: '', pMsg: '' });
+    const openPEdit = (p) => this.setState({ pOpen: true, pForm: { co, id: p.id, name: p.name, ci: String(p.ci), acct: p.acct, dist: p.dist, amt: p.bud.toFixed(2) }, pErr: '', pMsg: '' });
+    const pCancel = () => this.setState({ pOpen: false, pForm: {}, pErr: '' });
+    const pSave = () => {
+      const f = this.state.pForm;
+      const amt = parseFloat(f.amt);
+      const ci = parseInt(f.ci, 10);
+      if (!f.name.trim()) return this.setState({ pErr: 'Escriba el nombre de la partida.' });
+      if (!(amt > 0)) return this.setState({ pErr: 'El monto debe ser mayor que cero (en millones RD$).' });
+      if (!f.acct.trim()) return this.setState({ pErr: 'Escriba la cuenta contable.' });
+      if (!/^(Uniforme|Trimestral|Puntual · (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic))$/i.test(f.dist.trim())) return this.setState({ pErr: 'Distribución: Uniforme, Trimestral o Puntual · mes (por ejemplo Puntual · nov).' });
+      if (!(A0[ci][0] > 0)) return this.setState({ pErr: 'La categoría no tiene presupuesto en este año.' });
+      const share = amt / A0[ci][0];
+      const rec = { name: f.name.trim(), ci, share, acct: f.acct.trim(), dist: f.dist.trim() };
+      const others = parts.filter((p) => p.ci === ci && p.id !== f.id).reduce((a, p) => a + p.bud, 0);
+      const over = others + amt - A0[ci][0];
+      const warn = over > 0.005 ? ' Queda fuera de presupuesto por ' + f2(over) + ' M.' : '';
+      this.setState((s) => {
+        const pd = s.pdata || {};
+        if (f.id) return { pdata: Object.assign({}, pd, { edits: Object.assign({}, pd.edits, { [f.id]: rec }) }), pOpen: false, pForm: {}, pMsg: f.id + ' actualizada.' + warn };
+        const id = 'PAR-' + String((pd.extra || []).length + 1).padStart(3, '0');
+        return { pdata: Object.assign({}, pd, { extra: (pd.extra || []).concat([{ co: f.co, row: [id, rec.name, ci, share, rec.acct, rec.dist, 0] }]) }), pOpen: false, pForm: {}, pMsg: id + ' creada.' + warn };
+      });
+    };
+    const catSum = names.map((nm, i) => parts.filter((p) => p.ci === i).reduce((a, p) => a + p.bud, 0));
+    // "Aprobado por Dirección" por categoría y año: solo informativo, lo marca el Administrador.
+    const dirKey = (i) => co + '|' + sel.k + '|' + i;
+    const overList = names.map((nm, i) => ({ nm, i, d: catSum[i] - A0[i][0] })).filter((o) => o.d > 0.005).map((o) => ({
+      nm: o.nm, dF: f2(o.d), dirOn: !!(pdata.dir || {})[dirKey(o.i)],
+      label: (pdata.dir || {})[dirKey(o.i)] ? 'Aprobado por Dirección (quitar)' : 'Marcar aprobado por Dirección',
+      toggle: () => this.setState((s) => { const pd = s.pdata || {}; return { pdata: Object.assign({}, pd, { dir: Object.assign({}, pd.dir, { [dirKey(o.i)]: !(pd.dir || {})[dirKey(o.i)] }) }) }; })
+    }));
+    const overMsg = overList.length ? 'Fuera de presupuesto: ' + overList.map((o) => o.nm + ' +' + o.dF + ' M').join(' · ') : 'Todas las partidas caben en el presupuesto de su categoría.';
     const expFilter = this.state.exp;
     const shown = parts.filter((p) => expFilter === 'ALL' || p.type === expFilter);
     const rowOf = (p, bold) => ({
-      id: p.id, name: p.name, acct: p.acct, type: p.type, weight: bold ? 700 : 500, rowBg: bold ? th.soft : '#FFFFFF',
+      id: p.id, name: p.name, acct: p.acct, type: p.type, weight: bold ? 700 : 500, rowBg: bold ? th.soft : '#FFFFFF', can: !bold, edit: () => openPEdit(p),
       tBg: p.type === 'CAPEX' ? th.primary2 : th.primary, tFg: '#FFFFFF',
       bud: f2(p.bud), res: f2(p.res), com: f2(p.com), exe: f2(p.exe), disp: f2(p.disp), proj: f2(p.proj), sav: savF(p.sav), savColor: savC(p.sav),
       wE: p.exe === null ? '0' : Math.min(100, (p.exe / p.bud) * 100).toFixed(1), wC: p.com === null ? '0' : Math.min(100, ((p.com + p.res) / p.bud) * 100).toFixed(1)
@@ -444,7 +513,7 @@ class Component extends DCLogic {
       ['27 oct', 'Compromiso', 'BCAP-002', 'OC-B-2026-0187', '1,140.0', 'Compras', 'com'],
       ['22 oct', 'Reserva', 'BFLO-002', 'Solicitud SOL-B-0233', '310.0', 'Flotas', 'res'],
       ['15 oct', 'Ejecución', 'BFLO-001', 'Factura FB-20877 (sep)', '600.0', 'Integración ERP', 'exe'],
-      ['09 oct', 'Ajuste', 'BMAN-001', 'Excepción aprobada EXC-B-014', '200.0', 'Finanzas', 'adj']
+      ['09 oct', 'Ajuste', 'BMAN-001', 'Excepción registrada EXC-B-014', '200.0', 'Finanzas', 'adj']
     ]).map(([date, type, line, doc, amt, who, t]) => ({ date, type, line, doc, amt, who, bg: mtone[t][0], fg: mtone[t][1] }));
     const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     const gMoves = [];
@@ -483,6 +552,9 @@ class Component extends DCLogic {
       calendar: co === 'cat' ? 'abril – marzo' : 'enero – diciembre',
       portfolio, strip, cmpRows, cmpTitle: lbl(sel) + ' vs. ' + lbl(other), selLabel: th.name + ' ' + sel.k, cmpLabel: th.name + ' ' + other.k,
       expTabs, expRows, msg: this.state.msg,
+      pOpen, pForm, pErr: this.state.pErr, pMsg: this.state.pMsg, pSet, pSave, pNew, pCancel, overMsg, overList,
+      pTitle: pForm.id ? 'Editar partida ' + pForm.id : 'Nueva partida (fuera de presupuesto si supera su categoría)',
+      pCatOpts: names.map((n, i) => ({ v: String(i), l: n })),
       exportOpex: () => download('OPEX'), exportCapex: () => download('CAPEX'), exportAll: () => download('ALL'),
       months: fiscal, matrix, moves: allMoves, calc,
       gastoNote: gastos.length ? 'Incluye ' + gastos.length + ' gasto(s) registrados en SIGI por RD$ ' + gastoTotal.toFixed(2) + ' M (compromisos y facturas).' : '',

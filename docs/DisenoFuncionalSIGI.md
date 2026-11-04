@@ -1,7 +1,7 @@
 # SIGI: Sistema Integral de Gestión de Infraestructura
 ## Recomendaciones y requerimientos consolidados con backend Supabase
 
-**Versión:** 3.0. **Fecha:** 2 de noviembre de 2026.
+**Versión:** 3.1. **Fecha:** 4 de noviembre de 2026.
 **Estado:** propuesta de diseño para revisión. No se ha desplegado infraestructura ni modificado los libros fuente.
 
 ## 1. Decisión tecnológica y alcance
@@ -21,9 +21,9 @@ Se mantienen los requerimientos funcionales previamente definidos. Esta versión
 | Software y suscripciones | Productos, licencias contratadas y asignadas, costos, vigencias y renovaciones |
 | Activos de infraestructura | Servidores, redes, almacenamiento, seguridad, UPS, garantías y reposición |
 | Contratos y proveedores | Cuentas de facturación, tarifas, documentos, vencimientos y condiciones |
-| Solicitudes y aprobaciones | Altas, bajas, compras, cambios, excepciones y segregación de funciones |
+| Personal y ausencias | Personal por empresa, vacaciones, permisos e incapacidades, con fechas y quién está fuera |
 | Proyectos | Aperturas, remodelaciones, inversiones y servicios recurrentes derivados |
-| Documentos y auditoría | Evidencias, cartas, historial, trazabilidad e importaciones |
+| Documentos y auditoría | Evidencias, cartas, bitácora de altas, ediciones y bajas, trazabilidad e importaciones |
 
 Flotas se refiere a telefonía móvil. Categorías y subcategorías serán configurables sin cambios de código. El ERP seguirá siendo la autoridad contable; SIGI será el sistema de planificación y control operativo.
 
@@ -35,7 +35,7 @@ Flotas se refiere a telefonía móvil. Categorías y subcategorías serán confi
 | Datos | PostgreSQL en Supabase | Registro transaccional, integridad y consultas consolidadas |
 | Identidad | Supabase Auth | Autenticación y vínculo con membresías internas |
 | Autorización | Políticas RLS y permisos de base de datos | Aislamiento por empresa y ámbito autorizado |
-| Operaciones críticas | Funciones PostgreSQL/RPC | Reservas, compromisos, aprobaciones y ejecución atómicos |
+| Operaciones críticas | Funciones PostgreSQL/RPC | Reservas, compromisos, ejecución y reversos atómicos |
 | Integraciones | Supabase Edge Functions en TypeScript | Validación de solicitudes, secretos y llamadas a sistemas externos |
 | Archivos | Supabase Storage privado | Evidencias y archivos importados, con acceso restringido |
 | Documentos existentes | SharePoint/OneDrive como fuentes externas | Lectura/importación autorizada, no backend obligatorio |
@@ -52,7 +52,7 @@ Diseño modular sobre una base de datos compartida, sin microservicios inicialme
 - Validar permisos en servidor y en funciones críticas, además de la interfaz.
 - Nunca exponer claves privilegiadas en el navegador. Una clave pública no reemplaza las políticas RLS.
 - Funciones privilegiadas con permisos mínimos, contexto controlado y validación explícita del usuario y la empresa.
-- Separar solicitante, aprobador y ejecutor; registrar actor, fecha, motivo y evidencia.
+- Registrar actor, fecha, motivo y evidencia de cada alta, edición y baja. Nada se borra físicamente: las bajas son lógicas y conservan el historial.
 - Documentos privados y enlaces temporales cuando corresponda; no almacenar secretos en partidas o comentarios.
 - Revisar que vistas, exportaciones, procesos en segundo plano y reportes respeten el mismo aislamiento.
 - Copias y restauración tanto de base de datos como de archivos; verificar cobertura del plan elegido. No asumir que el respaldo de uno cubre el otro.
@@ -81,17 +81,17 @@ Importaciones: archivo → almacenamiento privado → lote en staging → valida
 
 El presupuesto de Gastos es la vista y control del OPEX, no un gasto adicional a los presupuestos de software, flotas y telecomunicaciones. Cada partida existe una sola vez y puede consultarse por módulo, cuenta, departamento o empresa. Las inversiones se mantienen separadas como CAPEX según reglas de Finanzas; no se clasifican únicamente por nombre de producto.
 
-Se alimenta de módulos operativos, partidas directas y distribuciones aprobadas. Otros gastos puede ser una categoría planificada: no equivale automáticamente a gasto fuera de presupuesto. El gasto no presupuestado debe identificarse expresamente y someterse a autorización.
+Se alimenta de módulos operativos, partidas directas y distribuciones vigentes. Otros gastos puede ser una categoría planificada: no equivale automáticamente a gasto fuera de presupuesto. El gasto no presupuestado debe identificarse expresamente y someterse a autorización.
 
 ### 4.2 Reglas de imputación
 
 Clave funcional: empresa + ejercicio + versión + departamento/centro de costo + cuenta contable + concepto + período. Cuenta del proveedor y cuenta contable son dimensiones diferentes.
 
-- Matriz configurable de combinaciones válidas de empresa, departamento, cuenta y categoría, con vigencia y aprobador.
+- Matriz configurable de combinaciones válidas de empresa, departamento, cuenta y categoría, con vigencia y responsable.
 - No deducir departamento de segmentos del código contable sin catálogo oficial.
 - Clasificar por naturaleza del gasto, no solo por proveedor. Una licencia facturada por un operador no debe duplicarse en telecomunicaciones.
 - Distinguir departamento gestor, beneficiario y centro de costo imputado.
-- Repartos compartidos con base explícita, vigencia y aprobación; las asignaciones deben reconciliarse con el gasto original.
+- Repartos compartidos con base explícita y vigencia; las asignaciones deben reconciliarse con el gasto original.
 - Mantener jerarquías para consolidar, sin sumar simultáneamente padres y detalles.
 - No asumir que las reglas de Catador aplican a Bona.
 
@@ -113,23 +113,23 @@ Plantillas: licencias por usuarios y departamento; flotas con datos/renta y equi
 - Activo, garantía, mantenimiento y proyecto.
 - Presupuesto, versión, partida, programación, supuesto y movimiento presupuestario.
 - Factura, detalle, nota de crédito, distribución y conciliación ERP.
-- Solicitud, validación, aprobación, orden y evidencia de ejecución.
+- Compromiso (orden o contrato), factura, pago y evidencia de ejecución.
 - Documento, lote de importación, registro de origen, incidencia de calidad y auditoría.
 
 Identificadores internos estables; un teléfono no es clave primaria. Cada dato importado conserva archivo, versión, hoja, fila/celda, fecha, fórmula original, valor y resultado de validación. Impedir asignaciones activas incompatibles.
 
 ## 6. Reglas operativas y aceptación general
 
-Flujo: solicitud → validación → propuesta → aprobación → gestión con proveedor → confirmación → actualización → cierre. Elegibilidad del proveedor no sustituye autorización interna. Bloquear validación definitiva si faltan fechas o evidencia vigente. Reglas de cambiazo y ventanas deben configurarse por empresa y versión del procedimiento, no fijarse como constantes universales.
+Flujo: compromiso → factura → pago → cierre, con evidencia en cada paso. Dirección puede marcar «Aprobado por Dirección» como dato informativo; no bloquea ni crea flujos de aprobación. Bloquear validación definitiva si faltan fechas o evidencia vigente. Reglas de cambiazo y ventanas deben configurarse por empresa y versión del procedimiento, no fijarse como constantes universales.
 
 Catálogo técnico y disponibilidad son fuentes diferentes. No afirmar existencias actuales con inventarios históricos. Las cartas se generan como borradores desde la plantilla de la empresa, para revisión y firma autorizada. La gama técnica y la clasificación por precio se conservan por separado; límites y tratamiento de centavos deben definirse explícitamente antes de automatizar.
 
-Seguridad: ningún usuario puede acceder a otra empresa sin membresía; pruebas de RLS también sobre archivos, vistas y RPC. Ninguna aprobación puede ser autoasignada desde el cliente. Ninguna operación concurrente debe descontar saldo dos veces. Ninguna importación con error se transforma silenciosamente en cero.
+Seguridad: ningún usuario puede acceder a otra empresa sin membresía; pruebas de RLS también sobre archivos, vistas y RPC. Solo el Administrador puede marcar «Aprobado por Dirección», dar de alta empresas y asignar roles; la marca es informativa y no bloquea registros. Ninguna operación concurrente debe descontar saldo dos veces. Ninguna importación con error se transforma silenciosamente en cero.
 
 ## 7. Implementación priorizada
 
 1. Supabase, migraciones, catálogos, Auth, RLS, Storage privado y auditoría.
-2. Motor presupuestario, staging, calidad de datos, versiones, aprobaciones y control de saldo.
+2. Motor presupuestario, staging, calidad de datos, versiones y control de saldo.
 3. Telecomunicaciones, flotas, software, facturas y panel gerencial.
 4. Activos, proyectos, reposición, aperturas, reparto avanzado e integraciones autorizadas.
 
@@ -170,7 +170,7 @@ Todas las filas siguientes son recomendaciones de diseño. P0: indispensable par
 | PRE-06 | Constructor de costos | Cantidad por precio unitario, periodicidad, descuentos, impuestos, incremento y contingencia separados; fórmula y supuestos auditables. | P0 |
 | PRE-07 | Versiones y escenarios | Borrador, revisión, aprobado, vigente y cerrado; escenarios base, optimista y conservador; comparaciones y reforecast sin alterar el original. | P0 |
 | PRE-08 | Control de ejecución | Presupuesto original y vigente, reserva, compromiso pendiente, ejecución, pago y disponible; movimientos parciales, cancelaciones y notas de crédito. | P0 |
-| PRE-09 | Excepciones presupuestarias | Solicitudes fuera de presupuesto, saldo negativo, ampliación y transferencia; motivo, evidencia y aprobación antes de asumir nueva autorización. | P0 |
+| PRE-09 | Partidas fuera de presupuesto | Saldo negativo, ampliación y transferencia; se registran con motivo y evidencia, muestran el exceso y pueden marcarse como «Aprobado por Dirección» (informativo, sin flujo de aprobación). | P0 |
 | PRE-10 | Renovaciones y recurrencias | Licencias, dominios, certificados, soporte, nube y alquileres; vencimiento, aviso configurable, renovación automática/manual y fecha límite de cancelación. | P0 |
 | PRE-11 | Software por demanda | SKU, unidad de cobro, cantidad contratada/asignada, precio y vigencia; crecimiento por departamento y costo incremental de nuevos ingresos. | P1 |
 | PRE-12 | Flotas desglosadas | Datos, renta, equipos, roaming y cargos adicionales; presupuesto por línea y agrupación; diferenciar compra puntual de distribución mensual. | P0 |
@@ -185,7 +185,7 @@ Todas las filas siguientes son recomendaciones de diseño. P0: indispensable par
 | PRE-21 | Consolidación sin doble conteo | Sumar solo partidas base; evitar repetir resúmenes, CAPEX planificado/ejecutado o el mismo gasto en software y telecomunicaciones. | P0 |
 | PRE-22 | Reportes y alertas | Presupuesto contra ejecución mensual y acumulada, proyección de cierre, desviaciones, vencimientos y calidad de importación. | P0 |
 | PRE-23 | Costos compartidos | Distribución por empresa/área con porcentaje o unidades y vigencia; mantener origen y asignaciones sin duplicar gasto consolidado. | P1 |
-| PRE-24 | Trazabilidad y segregación | Autor, revisor, aprobador, evidencia, historial y permisos por empresa; no autoaprobar ni sobrescribir versiones aprobadas. | P0 |
+| PRE-24 | Trazabilidad | Autor, fecha, motivo y evidencia de cada cambio; bitácora de altas, ediciones y bajas; permisos por empresa; no sobrescribir versiones vigentes. | P0 |
 
 ### Reglas específicas de cálculo
 
@@ -196,7 +196,7 @@ Todas las filas siguientes son recomendaciones de diseño. P0: indispensable par
 - Para comparar empresas con ejercicios distintos, usar fechas calendario equivalentes o mostrar explícitamente el período fiscal de cada una.
 - No mezclar importes netos y brutos; el tratamiento de impuestos recuperables y no recuperables se define con Finanzas.
 - Los factores observados en fórmulas no se convierten automáticamente en tasas tributarias oficiales.
-- No inferir moneda, aprobación ni ejecución a partir de formato, color, nombre de hoja o celda vacía.
+- No inferir moneda, aprobación de Dirección ni ejecución a partir de formato, color, nombre de hoja o celda vacía.
 - Un vacío es dato no informado; cero es un valor explícito. Ambos deben distinguirse en almacenamiento e interfaz.
 - Los márgenes de contingencia se registran por separado y no se acumulan varias veces al consolidar detalles y resúmenes.
 
@@ -205,7 +205,7 @@ Todas las filas siguientes son recomendaciones de diseño. P0: indispensable par
 Entidades propuestas, adicionales o especializadas respecto al modelo anterior:
 
 - CalendarioFiscal y PeriodoFiscal: empresa, fechas reales, orden y estado de cierre.
-- Presupuesto y VersionPresupuesto: ejercicio, escenario, estado, aprobaciones y moneda de reporte.
+- Presupuesto y VersionPresupuesto: ejercicio, escenario, estado y moneda de reporte.
 - PartidaPresupuestaria: categoría, cuenta, centro de costo, recurso/proyecto vinculado y responsable.
 - ProgramacionMensual: partida, período, importe original y convertido, tasa y criterio de distribución.
 - SupuestoCosto: unidad, cantidad, precio, recurrencia, margen, incremento y vigencia.
@@ -215,7 +215,7 @@ Entidades propuestas, adicionales o especializadas respecto al modelo anterior:
 - Renovacion: contrato, fecha, modalidad, preaviso y partida.
 - LoteImportacion y RegistroOrigen: archivo, versión, hoja, celda/fila, fórmula, valor almacenado y clasificación de fila.
 - IncidenciaCalidad: tipo, severidad, impacto, estado, revisor y resolución.
-- EvidenciaAprobacion: decisión, rol, fecha, comentario y documento.
+- Bitácora: acción, entidad, valor anterior, valor nuevo, usuario, fecha y motivo. Incluye la marca «Aprobado por Dirección» (quién y cuándo).
 
 Restricciones: identificadores internos estables, importación idempotente, precisión decimal para dinero, transacciones atómicas para reservar saldo y concurrencia controlada. El detalle presupuestario debe ser la fuente de los resúmenes, no al revés.
 
@@ -224,7 +224,7 @@ Restricciones: identificadores internos estables, importación idempotente, prec
 1. Portafolio de presupuestos por empresa, ejercicio y estado.
 2. Editor de partidas con vista anual y matriz mensual.
 3. Constructor de costos y simulador de escenarios.
-4. Bandeja de aprobaciones, transferencias y excepciones.
+4. Partidas fuera de presupuesto, transferencias y excepciones, con la marca «Aprobado por Dirección».
 5. Seguimiento de ejecución y documentos vinculados.
 6. Calendario de renovaciones y compromisos futuros.
 7. Plan de reposición, aperturas y demanda de licencias.
@@ -243,7 +243,35 @@ Filtros comunes: empresa, período, categoría, centro de costo, sucursal, prove
 - Costo de licencias por departamento y costo incremental por nuevo ingreso.
 - Costo de telecomunicaciones por sucursal y flotas por área.
 - Renovaciones pendientes y exposición financiera futura.
-- Partidas sin cuenta, moneda, aprobación o programación completa.
+- Partidas sin cuenta, moneda o programación completa.
 - Importes en cuarentena y discrepancias pendientes de resolver.
 
 Si el presupuesto es cero, la desviación porcentual se muestra como no aplicable y se destaca el gasto no presupuestado, sin dividir entre cero.
+
+
+---
+
+## 8. Roles, personal y bitácora (versión 3.1)
+
+**Roles.** Una persona puede tener roles distintos en empresas distintas. Cada membresía es una combinación de usuario, empresa y rol.
+
+| Rol | Alcance | Puede |
+|---|---|---|
+| Administrador | Global: todas las empresas. Es el Gerente de infraestructura. | Crear empresas, asignar roles, dar de alta y de baja cuentas, servicios, líneas y personal, y marcar «Aprobado por Dirección». |
+| Captura | Empresas asignadas | Registrar y editar datos de operación. |
+| Consulta | Empresas asignadas | Ver. |
+
+No hay flujos de aprobación. SIGI es un sistema de control para la gerencia de infraestructura: registra datos para obtener indicadores de la operación.
+
+**Historial.** Nada se borra físicamente. Las bajas son lógicas: la cuenta, servicio, línea o persona queda inactiva con fecha, motivo y usuario. Las correcciones se registran como un movimiento nuevo (nota de crédito o reverso). Toda alta, edición, baja y marca de «Aprobado por Dirección» queda en la bitácora con el valor anterior y el nuevo.
+
+**Marca «Aprobado por Dirección».** Dato informativo que se puede poner en un gasto, en una partida fuera de presupuesto o en una categoría con exceso. Guarda quién la marcó y cuándo. Solo la marca el Administrador, y puede quitarse; el cambio queda en la bitácora. No bloquea registros.
+
+**Personal y ausencias.** Registro de personas por empresa y área, con cargo y estado activo o inactivo. Registro de ausencias: vacaciones, permisos, incapacidades y viajes, con persona, tipo, fecha de inicio, fecha de fin, días hábiles (calculados), quién lo cubre (opcional), nota y estado.
+
+Reglas:
+- Una persona no puede tener dos ausencias que se traslapen, salvo las canceladas.
+- Los estados se calculan por fechas: Programada, En curso y Finalizada. Cancelada se marca a mano y el registro se conserva.
+- El panel gerencial muestra «Personal fuera hoy» con los nombres de quienes tienen una ausencia en curso.
+- Una persona dada de baja deja de aceptar ausencias nuevas, pero su historial se conserva.
+- Reportes: quién está fuera hoy, ausencias de los próximos 30 días e historial por persona.

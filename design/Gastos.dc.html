@@ -133,7 +133,7 @@ button{cursor:pointer}
 <sc-if value="{{g.open}}" hint-placeholder-val="{{false}}">
 <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 6px 12px 16px 48px; background: {{th.soft}}">
 <div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
-<b style="font-size: 13px">Historial y evidencias</b>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px"><b style="font-size: 13px">Historial y evidencias</b><button onClick="{{g.toggleDir}}" aria-pressed="{{g.dirOn}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: {{g.dirBg}}; color: {{g.dirFg}}; font-size: 12px; font-weight: 600">{{g.dirLabel}}</button><span style="font-size: 12px; color: {{th.muted}}">Solo el Administrador. Informativo: no bloquea registros.</span></div>
 <sc-for list="{{g.steps}}" as="s" hint-placeholder-count="2">
 <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 12px; border-radius: 8px; background: #FFFFFF; border-left: 4px solid {{s.color}}; font-size: 13px">
 <b>{{s.type}}</b><span>{{s.detail}}</span><span class="mono" style="font-weight: 600">{{s.amountF}}</span>
@@ -204,7 +204,7 @@ class Component extends DCLogic {
       co: null, open: {}, f: { q: '', origin: '', status: '' }, kf: '',
       form: false, gf: this.emptyGf('cat'), gErr: '', msg: '',
       act: {}, sf: this.emptySf(), sErr: '',
-      items: (saved && saved.items) || [], store: saved === undefined ? 'off' : 'on', confirmReset: false
+      items: (saved && saved.items) || [], dirs: (saved && saved.dirs) || {}, store: saved === undefined ? 'off' : 'on', confirmReset: false
     };
     if (draft) this.applyDraft(draft, true);
   }
@@ -232,9 +232,9 @@ class Component extends DCLogic {
     try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
   }
   componentDidUpdate(prevProps, prev) {
-    if (prev.items === this.state.items) return;
+    if (prev.items === this.state.items && prev.dirs === this.state.dirs) return;
     try {
-      window.localStorage.setItem('sigi.gastos.v1', JSON.stringify({ items: this.state.items }));
+      window.localStorage.setItem('sigi.gastos.v1', JSON.stringify({ items: this.state.items, dirs: this.state.dirs }));
     } catch (err) {
       if (this.state.store !== 'off') this.setState({ store: 'off' });
     }
@@ -273,9 +273,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -301,11 +301,20 @@ class Component extends DCLogic {
     ];
     const swStore = this.readStore('sigi.software.v1') || {};
     (swStore.extra || []).forEach((r) => SW.push([r[0], r[1], r[2], r[4], r[5], r[17]]));
+    // Los productos editados en Software reemplazan a los base por id.
+    const swEd = swStore.edits || {};
+    SW.forEach((s, i) => { const e = swEd[s[0]]; if (e) SW[i] = [s[0], e[1], e[2], e[4], e[5], e[17]]; });
     const catStore = this.readStore('sigi.catalogos.v1') || {};
     const PROVS = ['CLARO', 'ALTICE', 'WIND', 'Microsoft (vía distribuidor)', 'Amazon Web Services', 'Adobe', 'Fortinet (vía distribuidor)', '[Autoridad certificadora]', '[Proveedor ERP]', '[Proveedor de seguridad]', '[Consultor de infraestructura]', '[Arrendador de equipos]']
       .concat((catStore.extraProv || []).map((p) => p[1]));
     const CC = [['101', 'Dirección de Ventas'], ['112', 'Experiencia B2C'], ['113', 'Experiencia EVM'], ['114', 'Experiencia LDV'], ['115', 'Experiencia BMPC'], ['116', 'Experiencia CDC'], ['118', 'Experiencia STGO'], ['119', 'Enriquillo'], ['120', 'Butcher Arroyo Hondo'], ['121', 'Butcher Piantini'], ['122', 'Experiencia Gustavo Mejía Ricart'], ['140', 'Cartera B2C'], ['150', 'Digital'], ['161', 'Off Trade Norte'], ['162', 'Off Trade SD'], ['206', 'Mercadeo'], ['311', 'Almacén CDSD'], ['312', 'Distribución CDSD'], ['317', 'Almacén Evaristo (CDEVM)'], ['320', 'Almacén Punta Cana (CDPC)'], ['370', 'Compras e Importación'], ['401', 'Gerencia General'], ['411', 'Finanzas'], ['412', 'Administración'], ['413', 'Tecnología'], ['430', 'Recursos Humanos']];
     Object.keys(catStore.extraCc || {}).forEach((k) => CC.push([k, catStore.extraCc[k]]));
+    // Partidas creadas o renombradas en Presupuestos.
+    const pd = this.readStore('sigi.presupuesto.v1') || {};
+    ['cat', 'bona'].forEach((k) => {
+      PARTIDAS[k] = PARTIDAS[k].map(([id, n]) => [id, (pd.edits || {})[id] ? pd.edits[id].name : n])
+        .concat((pd.extra || []).filter((x) => x.co === k).map((x) => [x.row[0], x.row[1]]));
+    });
     return { PARTIDAS, SW, PROVS, CC };
   }
   samples() {
@@ -402,7 +411,9 @@ class Component extends DCLogic {
       };
       const t = TH[g.co];
       return {
-        id: g.id, desc: g.desc, refLabel: g.refLabel, coName: t.name, sampleTag: g.sample ? ' · ejemplo' : '', origin: g.origin, prov: g.prov, partida: g.partida,
+        id: g.id, dirOn: !!this.state.dirs[g.id], toggleDir: () => this.setState((s) => ({ dirs: Object.assign({}, s.dirs, { [g.id]: !s.dirs[g.id] }) })),
+        dirLabel: this.state.dirs[g.id] ? 'Aprobado por Dirección (quitar)' : 'Marcar aprobado por Dirección',
+        dirBg: this.state.dirs[g.id] ? '#E7F5EF' : '#FFFFFF', dirFg: this.state.dirs[g.id] ? '#075B3F' : th.ink, desc: g.desc, refLabel: g.refLabel, coName: t.name, sampleTag: g.sample ? ' · ejemplo' : '', origin: g.origin, prov: g.prov, partida: g.partida,
         comF: g.cur + ' ' + m2(g.com), invF: g.cur + ' ' + m2(g.inv), paidF: g.cur + ' ' + m2(g.paid), dueF: g.cur + ' ' + m2(g.inv - g.paid), dueColor: g.inv > g.paid ? th.risk : th.muted,
         status: g.status, sBg: sTone[g.status][0], sFg: sTone[g.status][1], flags: g.flags.join(' · '),
         open, chev: open ? '▾' : '▸', rowBg: open ? th.soft : '#FFFFFF',

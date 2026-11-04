@@ -54,6 +54,30 @@ button{cursor:pointer}
 </div>
 </header>
 
+<sc-if value="{{tMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: {{tTh.saveBg}}; color: {{tTh.saveInk}}; font-size: 13px">{{tMsg}}</p></sc-if>
+
+<sc-if value="{{tEditing}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-tedit" style="background: #FFFFFF; border: 2px solid {{tTh.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-tedit" style="margin: 0; font-size: 17px; font-weight: 600">Editar servicio {{tf.id}}</h2><button type="button" onClick="{{tCancel}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{tTh.border}}; background: #FFFFFF; color: {{tTh.ink}}; font-size: 16px">×</button></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Tipo<select value="{{tf.tipo}}" onChange="{{tSet.tipo}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{tTh.ink}}"><sc-for list="{{tOpt.tipo}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Proveedor<select value="{{tf.op}}" onChange="{{tSet.op}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{tTh.ink}}"><sc-for list="{{tOpt.op}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Detalle<input type="text" value="{{tf.detail}}" onChange="{{tSet.detail}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Velocidad<input type="text" value="{{tf.speed}}" onChange="{{tSet.speed}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Cuenta proveedor<input type="text" value="{{tf.acct}}" onChange="{{tSet.acct}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Cuenta contable<input type="text" value="{{tf.gl}}" onChange="{{tSet.gl}}" placeholder="11-000-63-0115" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">No. circuito<input type="text" value="{{tf.circuit}}" onChange="{{tSet.circuit}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Moneda<select value="{{tf.cur}}" onChange="{{tSet.cur}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{tTh.ink}}"><sc-for list="{{tOpt.cur}}" as="o" hint-placeholder-count="2"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Monto<input type="number" min="0" step="0.01" value="{{tf.amount}}" onChange="{{tSet.amount}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Estatus<select value="{{tf.status}}" onChange="{{tSet.status}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{tTh.ink}}"><sc-for list="{{tOpt.status}}" as="o" hint-placeholder-count="5"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Vence<input type="text" value="{{tf.exp}}" onChange="{{tSet.exp}}" placeholder="mar 2027" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{tTh.muted}}">Comentarios<input type="text" value="{{tf.note}}" onChange="{{tSet.note}}" style="height: 40px; border: 1px solid {{tTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{tTh.ink}}"></label>
+</div>
+<sc-if value="{{tErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{tErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" onClick="{{tSave}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{tTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Guardar cambios</button><button type="button" onClick="{{tCancel}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid {{tTh.border}}; background: #FFFFFF; color: {{tTh.ink}}; font-size: 14px; font-weight: 600">Cancelar</button></div>
+</form>
+</sc-if>
+
 <section aria-label="Indicadores de telecomunicaciones" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px">
 <sc-for list="{{kpis}}" as="k" hint-placeholder-count="7">
 <div style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 26px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></div>
@@ -111,7 +135,7 @@ button{cursor:pointer}
 <div style="padding: 4px 12px 16px 52px; display: flex; flex-direction: column; gap: 8px; background: {{th.soft}}">
 <div style="overflow-x: auto">
 <table class="t" style="background: #FFFFFF; border: 1px solid {{th.track}}; min-width: 1360px">
-<thead><tr style="color: {{th.muted}}"><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{s.svcs}}" as="v" hint-placeholder-count="4">
 <tr>
@@ -125,7 +149,7 @@ button{cursor:pointer}
 <td class="mono nw">{{v.speed}}</td>
 <td class="mono">{{v.cur}}</td>
 <td class="r mono nw">{{v.amountF}}</td>
-<td style="color: {{th.muted}}; min-width: 220px">{{v.note}}</td>
+<td style="color: {{th.muted}}; min-width: 220px">{{v.note}}</td><td><button onClick="{{v.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></td>
 </tr>
 </sc-for>
 </tbody>
@@ -160,7 +184,7 @@ button{cursor:pointer}
 </div>
 <div style="overflow-x: auto">
 <table class="t" style="min-width: 1720px">
-<thead><tr style="color: {{th.muted}}"><th>Sucursal</th><th>Ubicación</th><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>Sucursal</th><th>Ubicación</th><th>Proveedor</th><th>Cuenta proveedor</th><th>Cuenta contable</th><th>No. circuito</th><th>Estatus</th><th>Detalle</th><th>Tipo</th><th>Velocidad</th><th>Moneda</th><th class="r">Monto</th><th>Comentarios</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
 <tr>
@@ -176,7 +200,7 @@ button{cursor:pointer}
 <td class="mono nw">{{r.speed}}</td>
 <td class="mono">{{r.cur}}</td>
 <td class="r mono nw">{{r.amountF}}</td>
-<td style="color: {{th.muted}}; min-width: 240px">{{r.note}}</td>
+<td style="color: {{th.muted}}; min-width: 240px">{{r.note}}</td><td><button onClick="{{r.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></td>
 </tr>
 </sc-for>
 </tbody>
@@ -200,7 +224,21 @@ button{cursor:pointer}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { co: null, open: {}, f: this.noFilter(), page: 0 };
+    const saved = this.readStore('sigi.telecom.v1') || {};
+    this.state = { co: null, open: {}, f: this.noFilter(), page: 0, edits: saved.edits || {}, tEdit: '', tf: {}, tErr: '', tMsg: '' };
+  }
+  // Ediciones de servicios: se guardan en este navegador y reemplazan los datos base.
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+  componentDidUpdate(prevProps, prev) {
+    if (prev.edits === this.state.edits) return;
+    try { window.localStorage.setItem('sigi.telecom.v1', JSON.stringify({ edits: this.state.edits })); } catch (err) { /* sin almacenamiento */ }
   }
   // Deja el gasto prellenado para la pantalla Gastos y evidencias.
   draft(d) {
@@ -231,9 +269,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -243,7 +281,6 @@ class Component extends DCLogic {
     }));
   }
   telecomData() {
-    if (this._tel) return this._tel;
     const FX = 60.5;
     // [tipo, detalle, velocidad, moneda, monto mensual]
     const SVC = {
@@ -344,14 +381,14 @@ class Component extends DCLogic {
           circuit: key === 'cat|Almacén Los Alcarrizos|INT' ? '809-524-3744' : (['809', '829', '849'][n % 3] + '-' + String(200 + (n * 37) % 790) + '-' + String(1000 + (n * 7919) % 9000)),
           exp: EXP[co][type], status: STATUS[key] || STATUS[co + '|' + type] || 'Activo', note: NOTE[key] || ''
         };
+        Object.assign(s, this.state.edits[s.id] || {});
         services.push(s);
         return s;
       });
       const net = svcs.filter((s) => s.tipo === 'Internet' || s.tipo === 'Internet Móvil').length;
       return { co, cc, name: cc ? name + ' · CC ' + cc : name, city, corp: tpl.indexOf('dc') === 0, svcs, cost: svcs.reduce((a, s) => a + s.rate, 0), backup: net >= 2 };
     });
-    this._tel = { sites, services };
-    return this._tel;
+    return { sites, services };
   }
   renderVals() {
     const co = this.state.co || this.props.company || 'all';
@@ -367,7 +404,7 @@ class Component extends DCLogic {
     const money2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const total = svc.reduce((a, s) => a + s.rate, 0);
     const tone = { 'Activo': ['#E7F5EF', '#075B3F'], 'En renegociación': ['#FFF4D6', '#6B4A00'], 'Upgrade solicitado': ['#E6EEF7', '#1D3557'], 'Migración a SIP': ['#E6EEF7', '#1D3557'], 'Baja programada': ['#FBE9DF', '#8A3A12'] };
-    const deco = (s) => Object.assign({}, s, {
+    const deco = (s) => Object.assign({}, s, { edit: () => openTEdit(s),
       amountF: '$' + money2(s.amount), coShort: co === 'all' ? '· ' + TH[s.co].name : '',
       glF: s.gl || (s.glRaw ? s.glRaw + ' · revisar' : 'Sin cuenta · revisar'),
       glBg: s.gl ? th.soft : '#FBE9DF', glFg: s.gl ? th.ink : '#8A3A12',
@@ -434,12 +471,39 @@ class Component extends DCLogic {
     const uniq = (arr) => arr.filter((v, i) => arr.indexOf(v) === i);
     const opts = (label, vals) => [{ v: '', l: label }].concat(vals.map((v) => ({ v, l: v })));
     const setF = (key) => (e) => this.setState({ f: Object.assign({}, this.state.f, { [key]: e.target.value }), page: 0 });
+    // Editar un servicio: el registro editado reemplaza al base por id.
+    const FIELDS = ['tipo', 'detail', 'speed', 'op', 'acct', 'circuit', 'gl', 'cur', 'amount', 'status', 'exp', 'note'];
+    const tOpt = {
+      tipo: TIPOS.map((v) => ({ v, l: v })), op: ['CLARO', 'ALTICE', 'WIND'].map((v) => ({ v, l: v })),
+      cur: ['RD$', 'US$'].map((v) => ({ v, l: v })), status: Object.keys(tone).map((v) => ({ v, l: v }))
+    };
+    const openTEdit = (s) => this.setState({
+      tEdit: s.id, tErr: '', tMsg: '',
+      tf: { id: s.id, tipo: s.tipo, detail: s.detail, speed: s.speed, op: s.op, acct: s.acct, circuit: s.circuit, gl: s.gl || s.glRaw || '', cur: s.cur, amount: String(s.amount), status: s.status, exp: s.exp, note: s.note }
+    });
+    const tSave = () => {
+      const f = this.state.tf;
+      const amount = parseFloat(f.amount);
+      const gl = f.gl.trim();
+      if (!f.detail.trim()) return this.setState({ tErr: 'Escriba el detalle del servicio.' });
+      if (!(amount > 0)) return this.setState({ tErr: 'El monto debe ser mayor que cero.' });
+      if (!f.acct.trim()) return this.setState({ tErr: 'Escriba la cuenta del proveedor.' });
+      if (gl && !/^(11-\d{3}-63-0115|\d{4}-\d{3})$/.test(gl)) return this.setState({ tErr: 'La cuenta contable debe tener formato 11-000-63-0115 o 0000-000, o quedar vacía.' });
+      const rate = f.cur === 'US$' ? Math.round(amount * 60.5 * 100) / 100 : amount;
+      this.setState((st) => ({
+        edits: Object.assign({}, st.edits, { [f.id]: { tipo: f.tipo, detail: f.detail.trim(), speed: f.speed.trim(), op: f.op, acct: f.acct.trim(), circuit: f.circuit.trim(), gl: gl || null, glRaw: '', cur: f.cur, amount, rate, status: f.status, exp: f.exp.trim(), note: f.note.trim() } }),
+        tEdit: '', tf: {}, tErr: '', tMsg: f.id + ' actualizado.'
+      }));
+    };
+    const tCancel = () => this.setState({ tEdit: '', tf: {}, tErr: '' });
+    const tSet = Object.fromEntries(FIELDS.map((k) => [k, (e) => this.setState((st) => ({ tf: Object.assign({}, st.tf, { [k]: e.target.value }), tErr: '' }))]));
     const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([key, label]) => ({
       label, on: key === co, bg: key === co ? TH[key].on : '#FFFFFF', fg: key === co ? '#FFFFFF' : th.ink,
       pick: () => this.setState({ co: key, f: this.noFilter(), page: 0, open: {} })
     }));
     return {
-      th, nav: this.nav('Telecom.dc.html', th), cos, kpis, groups, statusCards, sites: siteRows,
+      th, nav: this.nav('Telecom.dc.html', th), cos,
+      tEditing: !!this.state.tEdit, tf: this.state.tf, tErr: this.state.tErr, tMsg: this.state.tMsg, tSet, tOpt, tSave, tCancel, tTh: th, kpis, groups, statusCards, sites: siteRows,
       siteCount: sts.length + ' ubicaciones · total RD$ ' + money(total) + ' / mes',
       expandAll: () => { const o = {}; sts.forEach((s) => { o[s.co + '|' + s.name] = true; }); this.setState({ open: o }); },
       collapseAll: () => this.setState({ open: {} }),

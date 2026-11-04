@@ -107,7 +107,7 @@ button{cursor:pointer}
 <sc-if value="{{gfErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{gfErr}}</p></sc-if>
 <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
 <button type="button" onClick="{{saveGl}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{glTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Crear cuenta</button>
-<span style="font-size: 12px; color: {{th.muted}}">Queda como “Pendiente de aprobación” hasta que Contabilidad la confirme; no se puede imputar antes.</span>
+<span style="font-size: 12px; color: {{th.muted}}">Queda registrada como Nueva; la bitácora guarda quién la creó y cuándo.</span>
 </div>
 </form>
 </sc-if>
@@ -224,7 +224,7 @@ button{cursor:pointer}
 <sc-if value="{{provMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #E7F5EF; color: #075B3F; font-size: 13px">{{provMsg}}</p></sc-if>
 <div style="overflow-x: auto">
 <table class="t" style="min-width: 860px">
-<thead><tr style="color: {{th.muted}}"><th>ID</th><th>Proveedor</th><th>RNC</th><th>Categorías y tipos</th><th>Cuentas El Catador</th><th>Cuentas Bona</th><th>Estado</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>ID</th><th>Proveedor</th><th>RNC</th><th>Categorías y tipos</th><th>Cuentas El Catador</th><th>Cuentas Bona</th><th>Estado</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{provs}}" as="p" hint-placeholder-count="10">
 <tr style="background: {{p.rowBg}}">
@@ -234,7 +234,7 @@ button{cursor:pointer}
 <td><span style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{p.tags}}" as="g" hint-placeholder-count="2"><span style="font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{th.soft}}; border: 1px solid {{th.border}}; white-space: nowrap">{{g}}</span></sc-for></span></td>
 <td class="mono nw" style="color: {{p.catColor}}">{{p.catAcc}}</td>
 <td class="mono nw" style="color: {{p.bonaColor}}">{{p.bonaAcc}}</td>
-<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{p.sBg}}; color: {{p.sFg}}; white-space: nowrap">{{p.status}}</span></td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{p.sBg}}; color: {{p.sFg}}; white-space: nowrap">{{p.status}}</span></td><td><button onClick="{{p.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></td>
 </tr>
 </sc-for>
 </tbody>
@@ -245,7 +245,7 @@ button{cursor:pointer}
 <div style="flex: 2 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
 <sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
 <form aria-labelledby="h-new" style="background: #FFFFFF; border: 2px solid {{th.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-new" style="margin: 0; font-size: 17px; font-weight: 600">Nuevo proveedor</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-new" style="margin: 0; font-size: 17px; font-weight: 600">{{pfTitle}}</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
 <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre o razón social<input type="text" value="{{pf.name}}" onChange="{{pfName}}" placeholder="[NOMBRE DEL PROVEEDOR]" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
 <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">RNC o cédula (9 u 11 dígitos; vacío si es extranjero)<input type="text" value="{{pf.rnc}}" onChange="{{pfRnc}}" placeholder="000000000" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 12px; font-size: 14px; color: {{th.ink}}"></label>
 <fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 10px 12px; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 14px">
@@ -267,8 +267,8 @@ button{cursor:pointer}
 </sc-for>
 </fieldset>
 <sc-if value="{{pfErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{pfErr}}</p></sc-if>
-<button type="button" onClick="{{saveForm}}" style="height: 44px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Crear proveedor</button>
-<span style="font-size: 12px; color: {{th.muted}}">Se valida RNC y nombre duplicados. El alta queda pendiente hasta que un aprobador distinto del solicitante la confirme.</span>
+<button type="button" onClick="{{saveForm}}" style="height: 44px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">{{pfSave}}</button>
+<span style="font-size: 12px; color: {{th.muted}}">Se valida RNC y nombre duplicados.</span>
 </form>
 </sc-if>
 
@@ -302,7 +302,7 @@ class Component extends DCLogic {
     const s = saved || {};
     this.state = {
       co: null, sel: 'PRV-001', q: '', cat: '', glCo: 'cat', view: 'list', openG: { '63-0115': true }, gq: '', gc: '', dqf: '',
-      form: false, pf: this.emptyPf(), pfErr: '', provMsg: '', extraProv: s.extraProv || [],
+      form: false, pf: this.emptyPf(), pfErr: '', provMsg: '', extraProv: s.extraProv || [], edits: s.edits || {}, pEdit: '',
       glForm: false, gf: this.emptyGf(), gfErr: '', glMsg: '', extraGl: s.extraGl || [], extraBona: s.extraBona || [], extraCc: s.extraCc || {},
       store: saved === undefined ? 'off' : 'on', confirmReset: false
     };
@@ -318,9 +318,9 @@ class Component extends DCLogic {
   }
   componentDidUpdate(prevProps, prev) {
     const s = this.state;
-    if (prev.extraProv === s.extraProv && prev.extraGl === s.extraGl && prev.extraBona === s.extraBona && prev.extraCc === s.extraCc) return;
+    if (prev.extraProv === s.extraProv && prev.extraGl === s.extraGl && prev.extraBona === s.extraBona && prev.extraCc === s.extraCc && prev.edits === s.edits) return;
     try {
-      window.localStorage.setItem('sigi.catalogos.v1', JSON.stringify({ extraProv: s.extraProv, extraGl: s.extraGl, extraBona: s.extraBona, extraCc: s.extraCc }));
+      window.localStorage.setItem('sigi.catalogos.v1', JSON.stringify({ extraProv: s.extraProv, extraGl: s.extraGl, extraBona: s.extraBona, extraCc: s.extraCc, edits: s.edits }));
     } catch (err) {
       if (s.store !== 'off') this.setState({ store: 'off' });
     }
@@ -353,9 +353,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -365,7 +365,7 @@ class Component extends DCLogic {
     }));
   }
   catalogCat() {
-    // Listado de cuentas de El Catador tal como se recibió. Estado: A activa, N nueva, I inactiva, S sin código, P pendiente de aprobación.
+    // Listado de cuentas de El Catador tal como se recibió. Estado: A activa, N nueva, I inactiva, S sin código, P creada en SIGI.
     const C = [
       ['63-0110', 'Alquiler de equipos informática', 'OPEX', 'Alquileres de equipos', [
         ['11-112-63-0110', 'Alquiler de equipos informatica Experiencia B2C', 'A'], ['11-311-63-0110', 'Alquiler de equipos informatica Almacén CDSD', 'A'],
@@ -429,7 +429,7 @@ class Component extends DCLogic {
       '317': 'Almacén Evaristo · Almacén CDEVM · Almacén EVM', '119': 'Butcher Enriquillo · Experiencia Enriquillo · Enriquillo',
       '122': 'Experiencia Gustavo Mejia Ricart · Experiencia Gustavo M Ricart', '320': 'Almacen Punta Cana · CDPC', '118': 'Experiencia STGO · STGO', '500': 'Canastas · Canasta'
     };
-    // Cuentas creadas en SIGI (pendientes de aprobación) se agregan al catálogo recibido.
+    // Cuentas creadas en SIGI (creadas en SIGI) se agregan al catálogo recibido.
     const groups = C.map(([a, c, t, s, rows]) => [a, c, t, s, rows.slice()]);
     this.state.extraGl.forEach((x) => {
       let g = groups.find((gr) => gr[0] === x.acct);
@@ -476,7 +476,7 @@ class Component extends DCLogic {
         ['cat', 'HON-0045', 'Honorarios · diseño de red sucursales', '[cuenta de honorarios por recibir]', 'RD$', '1 orden']]],
       ['PRV-012', '[Arrendador de equipos]', '[RNC]', ['Alquileres'], 'Activo', [
         ['cat', 'ARR-3310', 'Alquiler de equipos informática', '11-[CC]-63-0110 por centro de costo', 'RD$', '13 centros de costo']]]
-    ].concat(this.state.extraProv);
+    ].concat(this.state.extraProv).map((p) => this.state.edits[p[0]] || p);
     const BONA = [
       ['6205-010', 'Internet y Metro Ethernet', 'OPEX', 'Telecomunicaciones', 'Internet / Metro Ethernet', 'CLARO · ALTICE · WIND'],
       ['6205-011', 'Telefonía', 'OPEX', 'Telecomunicaciones', 'Telefonía', 'CLARO · ALTICE'],
@@ -513,13 +513,13 @@ class Component extends DCLogic {
     const visible = P.filter((p) => (co === 'all' || p[5].some((a) => a[0] === co)) && (!this.state.cat || p[3].indexOf(this.state.cat) >= 0) &&
       (!q || [p[0], p[1], p[2]].concat(p[5].map((a) => a[1])).join(' ').toLowerCase().indexOf(q) >= 0));
     const accOf = (p, k) => p[5].filter((a) => a[0] === k).map((a) => a[1]).join(' · ') || 'No habilitado';
-    const sTone = { 'Activo': ['#E7F5EF', '#075B3F'], 'En revisión': ['#FFF4D6', '#6B4A00'], 'Pendiente de aprobación': ['#FFF4D6', '#6B4A00'] };
+    const sTone = { 'Activo': ['#E7F5EF', '#075B3F'], 'En revisión': ['#FFF4D6', '#6B4A00'], 'Creada en SIGI': ['#FFF4D6', '#6B4A00'] };
     const sel = P.find((p) => p[0] === this.state.sel) || P[0];
     const provs = visible.map((p) => ({
       id: p[0], name: p[1], rnc: p[2], tags: p[3], status: p[4], sBg: sTone[p[4]][0], sFg: sTone[p[4]][1],
       catAcc: accOf(p, 'cat'), bonaAcc: accOf(p, 'bona'),
       catColor: accOf(p, 'cat') === 'No habilitado' ? th.muted : th.ink, bonaColor: accOf(p, 'bona') === 'No habilitado' ? th.muted : th.ink,
-      on: p[0] === sel[0], rowBg: p[0] === sel[0] ? th.soft : '#FFFFFF', pick: () => this.setState({ sel: p[0] })
+      on: p[0] === sel[0], rowBg: p[0] === sel[0] ? th.soft : '#FFFFFF', pick: () => this.setState({ sel: p[0] }), edit: () => openEdit(p)
     }));
     const det = {
       name: sel[1], sub: sel[0] + ' · RNC ' + sel[2] + ' · ' + sel[3].join(', ') + ' · ' + sel[4],
@@ -531,7 +531,7 @@ class Component extends DCLogic {
 
     const glCo = co === 'all' ? this.state.glCo : co;
     const glTh = TH[glCo];
-    const ST = { A: ['Activa', '#E7F5EF', '#075B3F'], N: ['Nueva', '#E6EEF7', '#1D3557'], I: ['Inactiva', '#EEEEEE', '#4D4D4D'], S: ['Sin código', '#FBE9DF', '#8A3A12'], P: ['Pendiente de aprobación', '#FFF4D6', '#6B4A00'] };
+    const ST = { A: ['Activa', '#E7F5EF', '#075B3F'], N: ['Nueva', '#E6EEF7', '#1D3557'], I: ['Inactiva', '#EEEEEE', '#4D4D4D'], S: ['Sin código', '#FBE9DF', '#8A3A12'], P: ['Creada en SIGI', '#FFF4D6', '#6B4A00'] };
     const all = [];
     C.forEach(([acct, concept, type, sigi, rows]) => rows.forEach(([code, desc, st]) => {
       const cc = code ? code.split('-')[1] : '';
@@ -557,7 +557,7 @@ class Component extends DCLogic {
       const rows = all.filter((r) => r.acct === acct && match(r));
       const tot = all.filter((r) => r.acct === acct);
       const open = !!openG[acct];
-      const PL = { N: ['nueva', 'nuevas'], I: ['inactiva', 'inactivas'], S: ['sin código', 'sin código'], P: ['pendiente de aprobación', 'pendientes de aprobación'] };
+      const PL = { N: ['nueva', 'nuevas'], I: ['inactiva', 'inactivas'], S: ['sin código', 'sin código'], P: ['creada en SIGI', 'creadas en SIGI'] };
       const flags = ['N', 'I', 'S', 'P'].map((s) => { const n = tot.filter((r) => r.st === s).length; return n ? n + ' ' + PL[s][n > 1 ? 1 : 0] : ''; }).filter(Boolean).join(' · ');
       return {
         acct, concept, type, open, chev: open ? '▾' : '▸', bg: open ? th.soft : '#FFFFFF',
@@ -605,7 +605,7 @@ class Component extends DCLogic {
         if (!/^\d{4}-\d{3}$/.test(code)) return this.setState({ gfErr: 'La cuenta de Bona debe tener el formato 0000-000.' });
         if (BONA.some((b) => b[0] === code)) return this.setState({ gfErr: 'La cuenta ' + code + ' ya existe en el catálogo de Bona.' });
         if (!gf.desc.trim()) return this.setState({ gfErr: 'Escriba la descripción de la cuenta.' });
-        return this.setState((s) => ({ extraBona: s.extraBona.concat([[code, gf.desc.trim(), gf.type, gf.sigi, gf.sub, '—', 'P']]), glForm: false, gf: this.emptyGf(), glMsg: 'Cuenta ' + code + ' creada en Bona · pendiente de aprobación.' }));
+        return this.setState((s) => ({ extraBona: s.extraBona.concat([[code, gf.desc.trim(), gf.type, gf.sigi, gf.sub, '—', 'P']]), glForm: false, gf: this.emptyGf(), glMsg: 'Cuenta ' + code + ' creada en Bona.' }));
       }
       if (!/^\d{2}-\d{4}$/.test(acctPart)) return this.setState({ gfErr: 'La cuenta del concepto debe tener el formato 00-0000 (por ejemplo 63-0120).' });
       if (newConcept && !gf.cname.trim()) return this.setState({ gfErr: 'Escriba el nombre del nuevo concepto.' });
@@ -623,42 +623,60 @@ class Component extends DCLogic {
       this.setState((s) => ({
         extraGl: s.extraGl.concat([entry]), extraCc: newCc ? Object.assign({}, s.extraCc, { [ccPart]: gf.ccName.trim() }) : s.extraCc,
         glForm: false, gf: this.emptyGf(), dqf: '', gc: '', gq: '', view: 'list', openG: Object.assign({}, s.openG, { [acctPart]: true }),
-        glMsg: 'Cuenta ' + code + ' creada · pendiente de aprobación de Contabilidad.'
+        glMsg: 'Cuenta ' + code + ' creada.'
       }));
     };
 
     // Formulario de nuevo proveedor
     const pf = this.state.pf;
+    const pEdit = this.state.pEdit;
     const glChoices = {
       cat: C.map(([a, c]) => '11-[CC]-' + a + ' · ' + c).concat(['[Concepto pendiente de catálogo]']),
       bona: BONA.map((b) => b[0] + ' · ' + b[1])
     };
     const formTags = CATS.map((t) => ({ label: t, on: !!pf.tags[t], toggle: () => this.setPf({ tags: Object.assign({}, pf.tags, { [t]: !pf.tags[t] }) }) }));
     const formCos = ['cat', 'bona'].map((k) => ({
-      name: TH[k].name, color: TH[k].primary2, on: !!pf.cos[k], gl: glChoices[k], acct: pf.acct[k], glv: pf.gl[k] || glChoices[k][0],
+      name: TH[k].name, color: TH[k].primary2, on: !!pf.cos[k], gl: [pf.gl[k]].concat(glChoices[k]).filter((v, i, a) => v && a.indexOf(v) === i), acct: pf.acct[k], glv: pf.gl[k] || glChoices[k][0],
       toggle: () => this.setPf({ cos: Object.assign({}, pf.cos, { [k]: !pf.cos[k] }) }),
       setAcct: (e) => this.setPf({ acct: Object.assign({}, pf.acct, { [k]: e.target.value }) }),
       setGl: (e) => this.setPf({ gl: Object.assign({}, pf.gl, { [k]: e.target.value }) })
     }));
+    // Abre el mismo formulario con los datos del proveedor; al guardar, el registro se reemplaza en edits.
+    const openEdit = (p) => {
+      const acct = (k) => p[5].find((a) => a[0] === k) || [];
+      this.setState({
+        form: true, pEdit: p[0], pfErr: '', provMsg: '',
+        pf: {
+          name: p[1], rnc: /^\d+$/.test(p[2]) ? p[2] : '', tags: Object.fromEntries(p[3].map((t) => [t, true])),
+          cos: { cat: !!acct('cat')[0], bona: !!acct('bona')[0] }, acct: { cat: acct('cat')[1] || '', bona: acct('bona')[1] || '' },
+          gl: { cat: acct('cat')[3] || '', bona: acct('bona')[3] || '' }
+        }
+      });
+    };
     const saveForm = () => {
       const name = pf.name.trim();
       const rnc = pf.rnc.replace(/[\s-]/g, '');
       const tags = CATS.filter((t) => pf.tags[t]);
       const cosOn = ['cat', 'bona'].filter((k) => pf.cos[k]);
+      const old = P.find((p) => p[0] === pEdit) || [];
       if (!name) return this.setState({ pfErr: 'Escriba el nombre o razón social.' });
-      if (P.some((p) => p[1].toLowerCase() === name.toLowerCase())) return this.setState({ pfErr: 'Ya existe un proveedor con el nombre ' + name + '.' });
+      if (P.some((p) => p[0] !== pEdit && p[1].toLowerCase() === name.toLowerCase())) return this.setState({ pfErr: 'Ya existe un proveedor con el nombre ' + name + '.' });
       if (rnc && !/^(\d{9}|\d{11})$/.test(rnc)) return this.setState({ pfErr: 'El RNC debe tener 9 dígitos (o 11 si es cédula).' });
-      if (rnc && P.some((p) => p[2] === rnc)) return this.setState({ pfErr: 'El RNC ' + rnc + ' ya está registrado.' });
+      if (rnc && P.some((p) => p[0] !== pEdit && p[2] === rnc)) return this.setState({ pfErr: 'El RNC ' + rnc + ' ya está registrado.' });
       if (!tags.length) return this.setState({ pfErr: 'Seleccione al menos una categoría.' });
       if (!cosOn.length) return this.setState({ pfErr: 'Habilite al menos una empresa.' });
       const missing = cosOn.filter((k) => !pf.acct[k].trim());
       if (missing.length) return this.setState({ pfErr: 'Escriba la cuenta de proveedor para ' + missing.map((k) => TH[k].name).join(' y ') + '.' });
-      const id = 'PRV-' + String(13 + this.state.extraProv.length).padStart(3, '0');
-      const accts = cosOn.map((k) => [k, pf.acct[k].trim(), tags.join(' · '), pf.gl[k] || glChoices[k][0], 'RD$', '0 servicios']);
-      this.setState((s) => ({
-        extraProv: s.extraProv.concat([[id, name, rnc || '[extranjero]', tags, 'Pendiente de aprobación', accts]]),
-        form: false, pf: this.emptyPf(), sel: id, q: '', cat: '', provMsg: id + ' · ' + name + ' creado · pendiente de aprobación.'
-      }));
+      const id = pEdit || 'PRV-' + String(13 + this.state.extraProv.length).padStart(3, '0');
+      // Al editar se conservan la descripción de servicios, moneda y cantidad de cada cuenta.
+      const accts = cosOn.map((k) => {
+        const o = (old[5] || []).find((a) => a[0] === k) || [];
+        return [k, pf.acct[k].trim(), o[2] || tags.join(' · '), pf.gl[k] || glChoices[k][0], o[4] || 'RD$', o[5] || '0 servicios'];
+      });
+      const tuple = [id, name, rnc || '[extranjero]', tags, old[4] || 'Creada en SIGI', accts];
+      this.setState((s) => (pEdit
+        ? { edits: Object.assign({}, s.edits, { [id]: tuple }), form: false, pf: this.emptyPf(), pEdit: '', sel: id, q: '', cat: '', provMsg: name + ' actualizado.' }
+        : { extraProv: s.extraProv.concat([tuple]), form: false, pf: this.emptyPf(), sel: id, q: '', cat: '', provMsg: id + ' · ' + name + ' creado.' }));
     };
     const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
       label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k })
@@ -671,7 +689,7 @@ class Component extends DCLogic {
       hasCreated: created > 0, resetLabel: this.state.confirmReset ? 'Confirmar: borrar ' + created + ' registros' : 'Borrar lo creado',
       resetBorder: this.state.confirmReset ? '#A8481A' : th.border, resetFg: this.state.confirmReset ? '#A8481A' : th.ink,
       resetCreated: () => (this.state.confirmReset
-        ? this.setState({ extraProv: [], extraGl: [], extraBona: [], extraCc: {}, confirmReset: false, sel: 'PRV-001', provMsg: '', glMsg: 'Se borraron los registros creados en SIGI.' })
+        ? this.setState({ extraProv: [], extraGl: [], extraBona: [], extraCc: {}, edits: {}, confirmReset: false, sel: 'PRV-001', provMsg: '', glMsg: 'Se borraron los registros creados en SIGI y las ediciones.' })
         : this.setState({ confirmReset: true })),
       th, glTh, nav: this.nav('Catalogos.dc.html', th), cos, provs, det,
       q: this.state.q, cat: this.state.cat, catOpts: [{ v: '', l: 'Todas' }].concat(CATS.map((c) => ({ v: c, l: c }))),
@@ -694,7 +712,8 @@ class Component extends DCLogic {
       openGlForm: () => this.setState({ glForm: true, gfErr: '', glMsg: '' }), closeGlForm: () => this.setState({ glForm: false }), saveGl,
       showForm: this.state.form, pf, pfErr: this.state.pfErr, formTags, formCos,
       pfName: (e) => this.setPf({ name: e.target.value }), pfRnc: (e) => this.setPf({ rnc: e.target.value }),
-      openForm: () => this.setState({ form: true, pfErr: '', provMsg: '' }), closeForm: () => this.setState({ form: false }), saveForm
+      openForm: () => this.setState({ form: true, pfErr: '', provMsg: '', pEdit: '', pf: this.emptyPf() }), closeForm: () => this.setState({ form: false, pEdit: '' }), saveForm,
+      pEdit, pfTitle: pEdit ? 'Editar proveedor' : 'Nuevo proveedor', pfSave: pEdit ? 'Guardar cambios' : 'Crear proveedor'
     };
   }
 }

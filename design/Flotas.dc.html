@@ -50,9 +50,30 @@ button{cursor:pointer}
 <sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
 </div>
 <span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos ilustrativos</span>
-<button style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Nueva solicitud</button>
+<button style="height: 44px; padding: 0 16px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Nueva línea</button>
 </div>
 </header>
+
+<sc-if value="{{fMsg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: {{fTh.saveBg}}; color: {{fTh.saveInk}}; font-size: 13px">{{fMsg}}</p></sc-if>
+
+<sc-if value="{{fEditing}}" hint-placeholder-val="{{false}}">
+<form aria-labelledby="h-fedit" style="background: #FFFFFF; border: 2px solid {{fTh.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-fedit" style="margin: 0; font-size: 17px; font-weight: 600">Editar línea {{ff.id}}</h2><button type="button" onClick="{{fCancel}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{fTh.border}}; background: #FFFFFF; color: {{fTh.ink}}; font-size: 16px">×</button></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Número<input type="text" value="{{ff.num}}" onChange="{{fSet.num}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Usuario asignado<input type="text" value="{{ff.who}}" onChange="{{fSet.who}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Área<input type="text" value="{{ff.area}}" onChange="{{fSet.area}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Departamento<input type="text" value="{{ff.dept}}" onChange="{{fSet.dept}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Datos<select value="{{ff.datos}}" onChange="{{fSet.datos}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{fTh.ink}}"><sc-for list="{{fOpt.datos}}" as="o" hint-placeholder-count="2"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Cantidad<input type="text" value="{{ff.qty}}" onChange="{{fSet.qty}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Costo mensual (RD$)<input type="number" min="0" step="0.01" value="{{ff.cost}}" onChange="{{fSet.cost}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{fTh.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{fTh.muted}}">Estado<select value="{{ff.status}}" onChange="{{fSet.status}}" style="height: 40px; border: 1px solid {{fTh.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{fTh.ink}}"><sc-for list="{{fOpt.status}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+</div>
+<sc-if value="{{fErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{fErr}}</p></sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" onClick="{{fSave}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Guardar cambios</button><button type="button" onClick="{{fCancel}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid {{fTh.border}}; background: #FFFFFF; color: {{fTh.ink}}; font-size: 14px; font-weight: 600">Cancelar</button></div>
+<span style="font-size: 12px; color: {{fTh.muted}}">Para dar de baja una línea, cambie el estado a "Cancelada". No se borra: queda registrada en el listado.</span>
+</form>
+</sc-if>
 
 <section aria-label="Indicadores de flota" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
 <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
@@ -126,7 +147,7 @@ button{cursor:pointer}
 <div style="padding: 4px 12px 14px 68px; display: flex; flex-direction: column; gap: 8px">
 <div style="overflow-x: auto">
 <table class="t" style="background: #FFFFFF; border: 1px solid {{th.track}}; min-width: 1420px">
-<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{d.preview}}" as="l" hint-placeholder-count="5">
 <tr>
@@ -142,7 +163,7 @@ button{cursor:pointer}
 <td class="mono">{{l.qty}}</td>
 <td class="r mono nw">{{l.priceF}}</td>
 <td class="mono nw">{{l.swapDate}}</td>
-<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td><td><button onClick="{{l.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></td>
 </tr>
 </sc-for>
 </tbody>
@@ -181,7 +202,7 @@ button{cursor:pointer}
 </div>
 <div style="overflow-x: auto">
 <table class="t" style="min-width: 1560px">
-<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th></tr></thead>
+<thead><tr style="color: {{th.muted}}"><th>Cuenta proveedor</th><th>Número</th><th>Fecha creación</th><th>Tarjeta SIM</th><th>Status</th><th>Nombre</th><th>Área</th><th>Departamento</th><th>Datos</th><th>Cantidad</th><th class="r">Precio</th><th>Fecha cambiazo</th><th>Alerta SIGI</th><th></th></tr></thead>
 <tbody>
 <sc-for list="{{rows}}" as="l" hint-placeholder-count="12">
 <tr>
@@ -197,7 +218,7 @@ button{cursor:pointer}
 <td class="mono">{{l.qty}}</td>
 <td class="r mono nw">{{l.priceF}}</td>
 <td class="mono nw">{{l.swapDate}}</td>
-<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td>
+<td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; white-space: nowrap">{{l.status}}</span></td><td><button onClick="{{l.edit}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar</button></td>
 </tr>
 </sc-for>
 </tbody>
@@ -221,7 +242,21 @@ button{cursor:pointer}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { co: null, openA: {}, openD: {}, f: this.noFilter(), page: 0 };
+    const saved = this.readStore('sigi.flotas.v1') || {};
+    this.state = { co: null, openA: {}, openD: {}, f: this.noFilter(), page: 0, edits: saved.edits || {}, fEdit: '', ff: {}, fErr: '', fMsg: '' };
+  }
+  // Ediciones de líneas (incluye cancelar): se guardan en este navegador y reemplazan los datos base.
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+  componentDidUpdate(prevProps, prev) {
+    if (prev.edits === this.state.edits) return;
+    try { window.localStorage.setItem('sigi.flotas.v1', JSON.stringify({ edits: this.state.edits })); } catch (err) { /* sin almacenamiento */ }
   }
   // Deja el gasto prellenado para la pantalla Gastos y evidencias.
   draft(d) {
@@ -252,9 +287,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -264,7 +299,6 @@ class Component extends DCLogic {
     }));
   }
   fleetData() {
-    if (this._fleet) return this._fleet;
     // [datos, cantidad, precio base]
     const PLANS = { E: ['SI', '30GB', 4350], C: ['SI', '15GB', 2180], D: ['SI', '5GB', 1240], V: ['NO', '—', 690] };
     const ORG = [
@@ -314,19 +348,43 @@ class Component extends DCLogic {
         });
       }
     }));
-    this._fleet = lines;
-    return lines;
+    return lines.map((l) => Object.assign(l, this.state.edits[l.id] || {}));
   }
   renderVals() {
     const co = this.state.co || this.props.company || 'all';
     const TH = this.themes();
     const th = TH[co];
-    const all = this.fleetData().filter((l) => co === 'all' || l.co === co);
+    // Las líneas canceladas salen de los totales y del dashboard, pero siguen en el listado.
+    const every = this.fleetData().filter((l) => co === 'all' || l.co === co);
+    const all = every.filter((l) => l.status !== 'Cancelada');
     const money = (v) => Math.round(v).toLocaleString('en-US');
     const money2 = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const kk = (v) => (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 });
-    const tone = { 'Sin alerta': ['#EEF1F4', '#3E4A58'], 'Sin uso 90 días': ['#FBE9DF', '#8A3A12'], 'Cambiazo elegible': ['#E6EEF7', '#1D3557'] };
-    const deco = (l) => Object.assign({}, l, {
+    const tone = { 'Sin alerta': ['#EEF1F4', '#3E4A58'], 'Sin uso 90 días': ['#FBE9DF', '#8A3A12'], 'Cambiazo elegible': ['#E6EEF7', '#1D3557'], 'Cancelada': ['#EEEEEE', '#4D4D4D'] };
+    // Editar o cancelar una línea: el registro editado reemplaza al base por id.
+    const FFIELDS = ['num', 'who', 'area', 'dept', 'datos', 'qty', 'cost', 'status'];
+    const fOpt = {
+      datos: ['SI', 'NO'].map((v) => ({ v, l: v })), status: Object.keys(tone).map((v) => ({ v, l: v }))
+    };
+    const openFEdit = (l) => this.setState({
+      fEdit: l.id, fErr: '', fMsg: '',
+      ff: { id: l.id, num: l.num, who: l.who, area: l.area, dept: l.dept, datos: l.datos, qty: String(l.qty), cost: String(l.cost), status: l.status }
+    });
+    const fSave = () => {
+      const f = this.state.ff;
+      const cost = parseFloat(f.cost);
+      if (!f.who.trim()) return this.setState({ fErr: 'Escriba el nombre del usuario, o "VACANTE · departamento".' });
+      if (!f.area.trim() || !f.dept.trim()) return this.setState({ fErr: 'Indique el área y el departamento.' });
+      if (!(cost >= 0)) return this.setState({ fErr: 'El costo mensual debe ser cero o mayor.' });
+      this.setState((st) => ({
+        edits: Object.assign({}, st.edits, { [f.id]: { num: f.num.trim(), who: f.who.trim(), area: f.area.trim(), dept: f.dept.trim(), datos: f.datos, qty: f.qty.trim(), cost, status: f.status } }),
+        fEdit: '', ff: {}, fErr: '',
+        fMsg: f.id + (f.status === 'Cancelada' ? ' cancelada: ya no suma al costo del dashboard; sigue en el listado.' : ' actualizada.')
+      }));
+    };
+    const fCancel = () => this.setState({ fEdit: '', ff: {}, fErr: '' });
+    const fSet = Object.fromEntries(FFIELDS.map((k) => [k, (e) => this.setState((st) => ({ ff: Object.assign({}, st.ff, { [k]: e.target.value }), fErr: '' }))]));
+    const deco = (l) => Object.assign({}, l, { edit: () => openFEdit(l),
       priceF: '$' + money2(l.cost), areaU: l.area.toUpperCase(), deptU: l.dept.toUpperCase(), coShort: co === 'all' ? ' · ' + TH[l.co].name : '',
       psBg: l.provStatus === 'ACTIVE' ? '#E7F5EF' : '#EEF1F4', psFg: l.provStatus === 'ACTIVE' ? '#075B3F' : '#3E4A58',
       bg: tone[l.status][0], fg: tone[l.status][1]
@@ -390,7 +448,7 @@ class Component extends DCLogic {
     const areaBars = byArea.map(([name, ls]) => ({ name, lines: ls.length, cost: kk(sum(ls, 'cost')), w: ((sum(ls, 'cost') / bmax) * 100).toFixed(1), c: sum(ls, 'cost') }))
       .sort((a, b) => b.c - a.c);
     const q = f.q.trim().toLowerCase();
-    const filtered = all.filter((l) => (!f.area || l.area === f.area) && (!f.dept || l.dept === f.dept) && (!f.datos || l.datos === f.datos) &&
+    const filtered = every.filter((l) => (!f.area || l.area === f.area) && (!f.dept || l.dept === f.dept) && (!f.datos || l.datos === f.datos) &&
       (!f.prov || l.prov === f.prov) && (!f.ps || l.provStatus === f.ps) && (!f.status || l.status === f.status) &&
       (!q || [l.num, l.who, l.sim, l.acct, l.dept, l.area].join(' ').toLowerCase().indexOf(q) >= 0));
     const per = 25;
@@ -408,7 +466,8 @@ class Component extends DCLogic {
       pick: () => this.setState({ co: key, openA: {}, openD: {}, f: this.noFilter(), page: 0 })
     }));
     return {
-      th, nav: this.nav('Flotas.dc.html', th), cos, kpis, split, areas, areaBars,
+      th, nav: this.nav('Flotas.dc.html', th), cos,
+      fEditing: !!this.state.fEdit, ff: this.state.ff, fErr: this.state.fErr, fMsg: this.state.fMsg, fSet, fOpt, fSave, fCancel, fTh: th, kpis, split, areas, areaBars,
       expandAll: () => { const o = {}; areaGroups.forEach(([k]) => { o[k] = true; }); this.setState({ openA: o }); },
       collapseAll: () => this.setState({ openA: {}, openD: {} }),
       f, rows: filtered.slice(page * per, page * per + per).map(deco), empty: filtered.length === 0,

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SIGI · Personal y ausencias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#131A22;background:#F4F6F8}
+a{color:inherit}a:hover{opacity:0.85}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:600;font-size:12px;padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.12);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:middle}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: {{th.ground}}; color: {{th.ink}}">
+
+<nav aria-label="Módulos de SIGI" style="flex: 1 1 248px; box-sizing: border-box; background: {{th.nav}}; color: {{th.navText}}; padding: 24px 16px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 16px 8px">
+<div style="width: 36px; height: 36px; border-radius: 8px; background: {{th.logo}}; color: {{th.logoFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">{{th.mark}}</div>
+<div style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; letter-spacing: 0.04em">SIGI</span><span style="font-size: 12px; color: {{th.navMuted}}">{{th.name}}</span></div>
+</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="14">
+<sc-if value="{{item.section}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: {{item.muted}}; padding: 16px 12px 6px">{{item.label}}</div></sc-if>
+<sc-if value="{{item.active}}" hint-placeholder-val="{{false}}"><a href="{{item.href}}" aria-current="page" style="display: block; padding: 10px 12px; border-radius: 8px; background: {{item.activeBg}}; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.link}}" hint-placeholder-val="{{true}}"><a href="{{item.href}}" style="display: block; padding: 10px 12px; border-radius: 8px; color: {{item.text}}; font-size: 14px; text-decoration: none; min-height: 20px">{{item.label}}</a></sc-if>
+<sc-if value="{{item.plain}}" hint-placeholder-val="{{false}}"><span style="display: block; padding: 10px 12px; color: {{item.muted}}; font-size: 14px">{{item.label}}</span></sc-if>
+</sc-for>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; color: {{th.muted}}"><a href="Main.dc.html" style="color: {{th.link}}">Panel gerencial</a> · Personal y ausencias · Hoy {{hoyF}}</span>
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Personal y ausencias</h1>
+<span style="font-size: 14px; color: {{th.muted}}">Quién está de vacaciones, permiso o incapacidad, y cuándo regresa. Nada se borra: las cancelaciones y bajas quedan en la bitácora.</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<div role="group" aria-label="Empresa" style="display: flex; border: 1px solid {{th.border}}; border-radius: 10px; overflow: hidden; background: #FFFFFF">
+<sc-for list="{{cos}}" as="c" hint-placeholder-count="3"><button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="height: 44px; padding: 0 18px; border: none; font-size: 14px; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button></sc-for>
+</div>
+<span style="font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #FFF4D6; color: #6B4A00; font-weight: 600">Datos de ejemplo</span>
+</div>
+</header>
+
+<sc-if value="{{msg}}" hint-placeholder-val="{{false}}"><p role="status" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: {{th.saveBg}}; color: {{th.saveInk}}; font-size: 13px">{{msg}}</p></sc-if>
+
+<section aria-label="Indicadores" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13px; color: {{th.muted}}; font-weight: 600">{{k.label}}</span><span class="mono" style="font-size: 26px; font-weight: 600; color: {{k.color}}">{{k.value}}</span><span style="font-size: 12px; color: {{th.muted}}">{{k.sub}}</span></div>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-fuera" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-fuera" style="margin: 0; font-size: 17px; font-weight: 600">Fuera hoy y próximas ausencias</h2>
+<sc-for list="{{fuera}}" as="a" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr) auto; gap: 8px 12px; align-items: center; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}">
+<span style="display: flex; flex-direction: column"><b style="font-size: 14px">{{a.nombre}}</b><span style="font-size: 12px; color: {{th.muted}}">{{a.cargo}} · {{a.coName}} · {{a.area}}</span></span>
+<span style="font-size: 13px">{{a.tipo}}</span>
+<span class="mono" style="font-size: 13px">{{a.desdeF}} → {{a.hastaF}} · regresa {{a.regresaF}}</span>
+<span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{a.bg}}; color: {{a.fg}}; white-space: nowrap">{{a.estado}}</span>
+</div>
+</sc-for>
+<sc-if value="{{sinFuera}}" hint-placeholder-val="{{false}}"><p style="margin: 0; font-size: 14px; color: {{th.muted}}">Nadie está fuera hoy ni tiene ausencias en los próximos 30 días.</p></sc-if>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<form aria-labelledby="h-nausencia" style="flex: 2 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-nausencia" style="margin: 0; font-size: 17px; font-weight: 600">Registrar ausencia</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Persona<select value="{{fa.persona}}" onChange="{{setA.persona}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opPersonas}}" as="o" hint-placeholder-count="3"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Tipo<select value="{{fa.tipo}}" onChange="{{setA.tipo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><sc-for list="{{opTipos}}" as="o" hint-placeholder-count="5"><option value="{{o.v}}">{{o.l}}</option></sc-for></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Desde<input type="date" value="{{fa.desde}}" onChange="{{setA.desde}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Hasta<input type="date" value="{{fa.hasta}}" onChange="{{setA.hasta}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Quién lo cubre (opcional)<input type="text" value="{{fa.cobertura}}" onChange="{{setA.cobertura}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nota (opcional)<input type="text" value="{{fa.nota}}" onChange="{{setA.nota}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+</div>
+<span style="font-size: 13px; color: {{th.muted}}">Días hábiles: <b class="mono" style="color: {{th.ink}}">{{diasPreview}}</b></span>
+<sc-if value="{{errA}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{errA}}</p></sc-if>
+<button type="button" onClick="{{saveA}}" style="height: 44px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Registrar ausencia</button>
+</form>
+
+<form aria-labelledby="h-nper" style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-nper" style="margin: 0; font-size: 17px; font-weight: 600">Agregar persona</h2>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Nombre<input type="text" value="{{fp.nombre}}" onChange="{{setP.nombre}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Cargo<input type="text" value="{{fp.cargo}}" onChange="{{setP.cargo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Empresa<select value="{{fp.co}}" onChange="{{setP.co}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="cat">El Catador</option><option value="bona">Bona</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Área<input type="text" value="{{fp.area}}" onChange="{{setP.area}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 10px; font-size: 14px; color: {{th.ink}}"></label>
+<sc-if value="{{errP}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{errP}}</p></sc-if>
+<button type="button" onClick="{{saveP}}" style="height: 44px; border-radius: 8px; border: none; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 14px; font-weight: 600">Agregar persona</button>
+</form>
+</div>
+
+<section aria-labelledby="h-pers" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-pers" style="margin: 0; font-size: 17px; font-weight: 600">Personal</h2>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 760px">
+<thead><tr style="color: {{th.muted}}"><th>Nombre</th><th>Cargo</th><th>Empresa</th><th>Área</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+<sc-for list="{{personasV}}" as="p" hint-placeholder-count="3">
+<tr><td style="font-weight: 600">{{p.nombre}}</td><td>{{p.cargo}}</td><td>{{p.coName}}</td><td>{{p.area}}</td><td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}">{{p.estado}}</span></td><td><button onClick="{{p.toggle}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">{{p.accion}}</button></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="h-aus" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px"><h2 id="h-aus" style="margin: 0; font-size: 17px; font-weight: 600">Todas las ausencias</h2><span class="mono" style="font-size: 13px; color: {{th.muted}}">{{listInfo}}</span></div>
+<div style="overflow-x: auto">
+<table class="t" style="min-width: 900px">
+<thead><tr style="color: {{th.muted}}"><th>Persona</th><th>Tipo</th><th>Desde</th><th>Hasta</th><th>Días hábiles</th><th>Cubre</th><th>Nota</th><th>Estado</th><th></th></tr></thead>
+<tbody>
+<sc-for list="{{ausV}}" as="a" hint-placeholder-count="4">
+<tr><td style="font-weight: 600">{{a.nombre}}</td><td>{{a.tipo}}</td><td class="mono">{{a.desdeF}}</td><td class="mono">{{a.hastaF}}</td><td class="mono">{{a.dias}}</td><td>{{a.cobertura}}</td><td style="color: {{th.muted}}">{{a.nota}}</td><td><span style="font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: {{a.bg}}; color: {{a.fg}}">{{a.estado}}</span></td><td><sc-if value="{{a.puedeCancelar}}" hint-placeholder-val="{{true}}"><button onClick="{{a.cancelar}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Cancelar</button></sc-if></td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="h-bit" style="background: #FFFFFF; border: 1px solid {{th.border}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-bit" style="margin: 0; font-size: 17px; font-weight: 600">Bitácora de esta pantalla</h2>
+<sc-for list="{{bitV}}" as="b" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 110px 180px minmax(0, 1fr); gap: 10px; font-size: 13px; padding: 8px 10px; border-bottom: 1px solid {{th.track}}"><span class="mono" style="color: {{th.muted}}">{{b.fecha}}</span><span style="font-weight: 600">{{b.accion}}</span><span>{{b.detalle}}</span></div>
+</sc-for>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"company":{"editor":"enum","options":["all","cat","bona"],"default":"all"},"$preview":{"width":1440,"height":2600}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const saved = this.readStore('sigi.personal.v1');
+    this.state = { co: null, d: saved || this.seed(), fa: this.emptyA(), fp: this.emptyP(), errA: '', errP: '', msg: '' };
+  }
+  readStore(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+  componentDidUpdate(prevProps, prev) {
+    if (prev.d === this.state.d) return;
+    try { window.localStorage.setItem('sigi.personal.v1', JSON.stringify(this.state.d)); } catch (err) { /* sin almacenamiento */ }
+  }
+  // Datos de ejemplo con nombres ficticios, para mostrar el formato.
+  seed() {
+    return {
+      personas: [
+        { id: 'PER-001', nombre: 'María Pérez (ejemplo)', cargo: 'Coordinadora de Telecomunicaciones', co: 'cat', area: 'Tecnología', activo: true },
+        { id: 'PER-002', nombre: 'José Martínez (ejemplo)', cargo: 'Técnico de Flotas', co: 'cat', area: 'Logística', activo: true },
+        { id: 'PER-003', nombre: 'Ana Reyes (ejemplo)', cargo: 'Analista de Presupuesto', co: 'bona', area: 'Finanzas', activo: true }
+      ],
+      ausencias: [
+        { id: 'AUS-001', persona: 'PER-001', tipo: 'Vacaciones', desde: '2026-11-02', hasta: '2026-11-13', nota: 'Ejemplo', cobertura: 'José Martínez (ejemplo)', cancelada: false },
+        { id: 'AUS-002', persona: 'PER-003', tipo: 'Permiso', desde: '2026-11-18', hasta: '2026-11-19', nota: 'Ejemplo', cobertura: '', cancelada: false }
+      ],
+      bitacora: [{ fecha: '2026-11-04', accion: 'Datos de ejemplo', detalle: 'Personas y ausencias de muestra; se pueden cancelar.' }]
+    };
+  }
+  emptyA() { return { persona: '', tipo: 'Vacaciones', desde: '', hasta: '', nota: '', cobertura: '' }; }
+  emptyP() { return { nombre: '', cargo: '', co: 'cat', area: '' }; }
+  coN(c) { return c === 'cat' ? 'El Catador' : (c === 'bona' ? 'Bona' : 'Consolidado'); }
+  themes() {
+    return {
+      all: { name: 'Consolidado', mark: 'SI', ground: '#F4F6F8', nav: '#0F1B2A', navText: '#D5DEE8', navMuted: '#9FB0C2', logo: '#2BA88A', logoFg: '#0F1B2A', ink: '#131A22', muted: '#5A6573', border: '#DDE2E8', soft: '#F7F9FB', track: '#EEF1F4', accent: '#0F5E73', accentFg: '#FFFFFF', on: '#1D3557', link: '#0F5E73', saveBg: '#E7F5EF', saveInk: '#075B3F' },
+      cat: { name: 'El Catador', mark: 'EC', ground: '#efeeea', nav: '#262727', navText: '#efeeea', navMuted: '#d6cda5', logo: '#807451', logoFg: '#FFFFFF', ink: '#262727', muted: '#4a4f4f', border: '#d6cda5', soft: '#f6f4ee', track: '#efeeea', accent: '#807451', accentFg: '#FFFFFF', on: '#262727', link: '#6b6143', saveBg: '#f4f0e2', saveInk: '#5e5539' },
+      bona: { name: 'Bona', mark: 'B', ground: '#F4F4F4', nav: '#000000', navText: '#FFFFFF', navMuted: '#BDBDBD', logo: '#BC2F2C', logoFg: '#FFFFFF', ink: '#000000', muted: '#4D4D4D', border: '#E0E0E0', soft: '#F7F7F7', track: '#EEEEEE', accent: '#BC2F2C', accentFg: '#FFFFFF', on: '#BC2F2C', link: '#1A5632', saveBg: '#E8F2EC', saveInk: '#1A5632' }
+    };
+  }
+  nav(active, th) {
+    const raw = [
+      { section: true, label: 'Control' },
+      { href: 'Main.dc.html', label: 'Panel gerencial' },
+      { href: 'Presupuestos.dc.html', label: 'Presupuestos' },
+      { href: 'Gastos.dc.html', label: 'Gastos y evidencias' },
+      { href: 'Ahorros.dc.html', label: 'Ahorros' },
+      { section: true, label: 'Operación' },
+      { href: 'Telecom.dc.html', label: 'Telecomunicaciones' },
+      { href: 'Flotas.dc.html', label: 'Flotas móviles' },
+      { href: 'Software.dc.html', label: 'Software y suscripciones' },
+      { label: 'Activos de infraestructura' },
+      { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
+      { label: 'Proyectos y aperturas' },
+      { section: true, label: 'Gobierno' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
+      { label: 'Centro de importaciones' },
+      { label: 'Bitácora y auditoría' },
+      { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
+    ];
+    return raw.map((r) => ({
+      label: r.label, href: r.href || '', section: !!r.section,
+      active: r.href === active, link: !!r.href && r.href !== active, plain: !r.section && !r.href,
+      text: th.navText, muted: th.navMuted, activeBg: th.on
+    }));
+  }
+  renderVals() {
+    const co = this.state.co || this.props.company || 'all';
+    const th = this.themes()[co];
+    const HOY = '2026-11-04';
+    const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const fmt = (s) => { if (!s) return '—'; const [y, m, dd] = s.split('-'); return dd + ' ' + MON[+m - 1] + ' ' + y; };
+    const add = (s, n) => new Date(Date.parse(s + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+    const esHabil = (s) => { const w = new Date(s + 'T00:00:00Z').getUTCDay(); return w !== 0 && w !== 6; };
+    const habiles = (a, b) => { let n = 0; for (let s = a; s <= b; s = add(s, 1)) if (esHabil(s)) n++; return n; };
+    const regreso = (h) => { let s = add(h, 1); while (!esHabil(s)) s = add(s, 1); return s; };
+    const d = this.state.d;
+    const personas = d.personas;
+    const pOf = (id) => personas.find((p) => p.id === id) || { nombre: id, cargo: '', co: 'cat', area: '' };
+    const inCo = (c) => co === 'all' || c === co;
+    const estadoA = (a) => (a.cancelada ? 'Cancelada' : (a.hasta < HOY ? 'Finalizada' : (a.desde <= HOY ? 'En curso' : 'Programada')));
+    const tone = { 'En curso': ['#FFF4D6', '#6B4A00'], 'Programada': ['#E6EEF7', '#1D3557'], 'Finalizada': ['#EEF1F4', '#3E4A58'], 'Cancelada': ['#FBE9DF', '#8A3A12'] };
+    const ausTodas = d.ausencias.map((a) => {
+      const p = pOf(a.persona); const est = estadoA(a);
+      return Object.assign({}, a, { nombre: p.nombre, coP: p.co, est, estado: est, bg: tone[est][0], fg: tone[est][1], desdeF: fmt(a.desde), hastaF: fmt(a.hasta), dias: habiles(a.desde, a.hasta), puedeCancelar: est === 'Programada' || est === 'En curso', cancelar: () => this.cancelar(a.id) });
+    });
+    const ausV = ausTodas.filter((a) => inCo(a.coP)).sort((x, y) => (x.desde < y.desde ? -1 : 1));
+    const enCurso = ausTodas.filter((a) => a.est === 'En curso' && inCo(a.coP));
+    const prox = ausTodas.filter((a) => a.est === 'Programada' && a.desde <= add(HOY, 30) && inCo(a.coP));
+    const fuera = enCurso.concat(prox).map((a) => { const p = pOf(a.persona); return Object.assign({}, a, { cargo: p.cargo, area: p.area, coName: this.coN(p.co), regresaF: fmt(regreso(a.hasta)) }); });
+    const pers = personas.filter((p) => inCo(p.co));
+    const kpis = [
+      { label: 'Fuera hoy', value: String(enCurso.length), sub: enCurso.length ? enCurso.map((a) => a.nombre).join(', ') : 'Nadie', color: enCurso.length ? th.ink : th.muted },
+      { label: 'Próximos 30 días', value: String(prox.length), sub: 'Ausencias programadas', color: th.ink },
+      { label: 'Personas activas', value: String(pers.filter((p) => p.activo).length), sub: 'Registradas en ' + th.name, color: th.ink },
+      { label: 'Ausencias registradas', value: String(ausV.length), sub: 'Incluye canceladas y finalizadas', color: th.ink }
+    ];
+    const pV = pers.map((p) => Object.assign({}, p, {
+      coName: this.coN(p.co), estado: p.activo ? 'Activo' : 'Inactivo', bg: p.activo ? '#E7F5EF' : '#EEF1F4', fg: p.activo ? '#075B3F' : '#3E4A58',
+      accion: p.activo ? 'Dar de baja' : 'Reactivar', toggle: () => this.toggleP(p.id)
+    }));
+    const opPersonas = personas.filter((p) => p.activo).map((p) => ({ v: p.id, l: p.nombre + ' · ' + this.coN(p.co) }));
+    const fa = this.state.fa;
+    const fp = this.state.fp;
+    const diasPreview = fa.desde && fa.hasta && fa.hasta >= fa.desde ? habiles(fa.desde, fa.hasta) + ' días' : '—';
+    const setA = Object.fromEntries(['persona', 'tipo', 'desde', 'hasta', 'cobertura', 'nota'].map((k) => [k, (e) => this.setState((s) => ({ fa: Object.assign({}, s.fa, { [k]: e.target.value }), errA: '' }))]));
+    const setP = Object.fromEntries(['nombre', 'cargo', 'co', 'area'].map((k) => [k, (e) => this.setState((s) => ({ fp: Object.assign({}, s.fp, { [k]: e.target.value }), errP: '' }))]));
+    const saveA = () => {
+      const f = this.state.fa;
+      if (!f.persona) return this.setState({ errA: 'Seleccione a la persona.' });
+      if (!f.desde || !f.hasta) return this.setState({ errA: 'Indique las fechas de inicio y fin.' });
+      if (f.hasta < f.desde) return this.setState({ errA: 'La fecha de fin debe ser igual o posterior a la de inicio.' });
+      const choca = d.ausencias.some((a) => a.persona === f.persona && !a.cancelada && a.desde <= f.hasta && a.hasta >= f.desde);
+      if (choca) return this.setState({ errA: 'Esa persona ya tiene una ausencia en esas fechas. Cancele la anterior si fue un error.' });
+      const id = 'AUS-' + String(d.ausencias.length + 1).padStart(3, '0');
+      const detalle = pOf(f.persona).nombre + ' · ' + f.tipo + ' ' + fmt(f.desde) + ' → ' + fmt(f.hasta);
+      this.setState((s) => ({ d: Object.assign({}, s.d, { ausencias: s.d.ausencias.concat([{ id, persona: f.persona, tipo: f.tipo, desde: f.desde, hasta: f.hasta, nota: f.nota.trim(), cobertura: f.cobertura.trim(), cancelada: false }]), bitacora: [{ fecha: HOY, accion: 'Alta de ausencia', detalle: id + ' · ' + detalle }].concat(s.d.bitacora) }), fa: this.emptyA(), errA: '', msg: id + ' registrada.' }));
+    };
+    const saveP = () => {
+      const f = this.state.fp;
+      if (!f.nombre.trim()) return this.setState({ errP: 'Escriba el nombre.' });
+      const id = 'PER-' + String(d.personas.length + 1).padStart(3, '0');
+      this.setState((s) => ({ d: Object.assign({}, s.d, { personas: s.d.personas.concat([{ id, nombre: f.nombre.trim(), cargo: f.cargo.trim(), co: f.co, area: f.area.trim(), activo: true }]), bitacora: [{ fecha: HOY, accion: 'Alta de persona', detalle: id + ' · ' + f.nombre.trim() }].concat(s.d.bitacora) }), fp: this.emptyP(), errP: '', msg: id + ' agregada.' }));
+    };
+    const bitV = d.bitacora.slice(0, 15);
+    const listInfo = ausV.length + ' registros · ' + ausV.filter((a) => a.est === 'Cancelada').length + ' cancelados';
+    return {
+      th, hoyF: fmt(HOY), nav: this.nav('Personal.dc.html', th), msg: this.state.msg,
+      cos: [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({ label, on: k === co, bg: k === co ? this.themes()[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k }) })),
+      kpis, fuera, sinFuera: fuera.length === 0, personasV: pV, ausV, listInfo, bitV,
+      opPersonas, opTipos: ['Vacaciones', 'Permiso', 'Incapacidad', 'Viaje', 'Otro'].map((v) => ({ v, l: v })),
+      fa, fp, errA: this.state.errA, errP: this.state.errP, diasPreview, setA, setP, saveA, saveP
+    };
+  }
+  toggleP(id) {
+    this.setState((s) => {
+      const p = s.d.personas.find((x) => x.id === id);
+      const accion = p.activo ? 'Baja de persona' : 'Reactivación de persona';
+      return { d: Object.assign({}, s.d, { personas: s.d.personas.map((x) => (x.id === id ? Object.assign({}, x, { activo: !x.activo }) : x)), bitacora: [{ fecha: '2026-11-04', accion, detalle: id + ' · ' + p.nombre + ' (no se borra; queda en el historial)' }].concat(s.d.bitacora) }), msg: '' };
+    });
+  }
+  cancelar(id) {
+    this.setState((s) => {
+      const a = s.d.ausencias.find((x) => x.id === id);
+      return { d: Object.assign({}, s.d, { ausencias: s.d.ausencias.map((x) => (x.id === id ? Object.assign({}, x, { cancelada: true }) : x)), bitacora: [{ fecha: '2026-11-04', accion: 'Cancelación de ausencia', detalle: id + ' · ' + a.tipo + ' ' + a.desde + ' → ' + a.hasta + ' (queda en el historial)' }].concat(s.d.bitacora) }), msg: id + ' cancelada; permanece en el historial.' };
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -275,9 +275,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -336,7 +336,13 @@ class Component extends DCLogic {
     const excess = D.cats.reduce((a, r) => a + (r[4] < 0 ? -r[4] : 0), 0);
     const gross = D.R + D.G;
     const tot = { bud: f1(t.bud), exe: f1(t.exe), com: f1(t.com), res: f1(t.res), disp: f1(disp), proj: f2(proj), sav: f2(t.sav), pct: ((t.exe / t.bud) * 100).toFixed(1) + ' %' };
+    // Quién está fuera hoy, desde la pantalla Personal y ausencias (solo ausencias no canceladas).
+    const pst = (() => { try { return JSON.parse(window.localStorage.getItem('sigi.personal.v1')) || {}; } catch (err) { return {}; } })();
+    const hoyP = '2026-11-04';
+    const personaDe = (id) => (pst.personas || []).find((p) => p.id === id) || {};
+    const fueraHoy = (pst.ausencias || []).filter((a) => !a.cancelada && a.desde <= hoyP && a.hasta >= hoyP && (co === 'all' || personaDe(a.persona).co === co));
     const kpis = [
+      { label: 'Personal fuera hoy', value: String(fueraHoy.length), sub: fueraHoy.length ? fueraHoy.map((a) => personaDe(a.persona).nombre || a.persona).join(', ') : 'Nadie de vacaciones ni con permiso', color: th.ink },
       { label: 'Presupuesto vigente', value: f1(t.bud), sub: 'Original ' + f1(D.orig) + ' · +' + f1(D.ampl) + ' ampliaciones', color: th.ink },
       { label: 'Ejecutado', value: f1(t.exe), sub: ((t.exe / t.bud) * 100).toFixed(1) + ' % del vigente' + (co === 'all' ? '' : ' · ' + D.elapsed + ' % del año'), color: th.primary },
       { label: 'Comprometido + reservas', value: f1(t.com + t.res), sub: 'Compromisos ' + f1(t.com) + ' · Reservas ' + f1(t.res), color: th.ink },
@@ -385,7 +391,7 @@ class Component extends DCLogic {
     ];
     const tone = { ok: ['#E7F5EF', '#075B3F'], warn: ['#FFF4D6', '#6B4A00'], risk: ['#FBE9DF', '#8A3A12'], info: ['#E6EEF7', '#1D3557'] };
     const renewals = [
-      ['cat', 'Microsoft 365 E3 · 420 licencias', '15 nov 2026', 'US$ 151.2 K', 'Ajuste en aprobación', 'warn'],
+      ['cat', 'Microsoft 365 E3 · 420 licencias', '15 nov 2026', 'US$ 151.2 K', 'Ajuste en trámite', 'warn'],
       ['bona', 'Soporte FortiGate · 4 equipos', '30 nov 2026', 'US$ 6.1 K', 'Cotización recibida', 'info'],
       ['cat', 'Dominio corporativo + SSL', '08 dic 2026', 'US$ 0.3 K', 'Sin acción', 'ok'],
       ['cat', 'MPLS y SD-WAN · CLARO', '31 dic 2026', 'RD$ 0.35 M/mes', 'Renegociación', 'warn'],
@@ -394,7 +400,7 @@ class Component extends DCLogic {
     ].filter((r) => co === 'all' || r[0] === co)
       .map(([c, name, date, amount, status, tn]) => ({ coName: TH[c].name, name, date, amount, status, bg: tone[tn][0], fg: tone[tn][1] }));
     const alerts = [
-      ['cat', 'EXCESO', 'El Catador · Mantenimiento y otros OPEX proyecta 8.50 vs 8.20 vigente. Requiere excepción presupuestaria.', 'risk'],
+      ['cat', 'EXCESO', 'El Catador · Mantenimiento y otros OPEX proyecta 8.50 vs 8.20 vigente. Queda registrado como fuera de presupuesto.', 'risk'],
       ['bona', 'EXCESO', 'Bona · Mantenimiento proyecta 4.90 vs 4.70 vigente. Disponible de CAPEX en 0.0.', 'risk'],
       ['cat', 'CALIDAD', 'El Catador · 9 partidas sin cuenta contable por RD$ 1.1 M. No consolidan hasta clasificarse.', 'warn'],
       ['cat', 'CALIDAD', 'El Catador · 13 servicios de telecom sin cuenta válida: CC 117 inactiva, CC 317 sin 63-0115, Don Pepe sin código y Los Alcarrizos con “CANCELADO”.', 'warn'],

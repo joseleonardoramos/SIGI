@@ -59,7 +59,7 @@ button{cursor:pointer}
 
 <sc-if value="{{showForm}}" hint-placeholder-val="{{false}}">
 <form aria-labelledby="h-newsw" style="background: #FFFFFF; border: 2px solid {{fTh.accent}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-newsw" style="margin: 0; font-size: 17px; font-weight: 600">Nuevo software o suscripción</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><h2 id="h-newsw" style="margin: 0; font-size: 17px; font-weight: 600">{{swTitle}}</h2><button type="button" onClick="{{closeForm}}" aria-label="Cerrar formulario" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 16px">×</button></div>
 <fieldset style="border: 1px solid {{th.border}}; border-radius: 8px; padding: 12px; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
 <legend style="font-size: 12px; font-weight: 600; color: {{th.muted}}; padding: 0 4px">Producto</legend>
 <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: {{th.muted}}">Empresa<select value="{{sf.co}}" onChange="{{sfCo}}" style="height: 40px; border: 1px solid {{th.border}}; border-radius: 8px; padding: 0 8px; font-size: 14px; background: #FFFFFF; color: {{th.ink}}"><option value="cat">El Catador</option><option value="bona">Bona</option></select></label>
@@ -89,8 +89,8 @@ button{cursor:pointer}
 <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 13px; padding: 10px 12px; border-radius: 8px; background: {{th.soft}}"><span style="color: {{th.muted}}">Costo estimado</span><b class="mono">{{sfPreview}}</b></div>
 <sc-if value="{{sErr}}" hint-placeholder-val="{{false}}"><p role="alert" style="margin: 0; padding: 10px 12px; border-radius: 8px; background: #FBE9DF; color: #8A3A12; font-size: 13px">{{sErr}}</p></sc-if>
 <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
-<button type="button" onClick="{{saveForm}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">Crear software</button>
-<span style="font-size: 12px; color: {{th.muted}}">Queda pendiente de aprobación; si no hay saldo en la partida se envía como excepción presupuestaria. ¿El proveedor no está? Créelo en <a href="Catalogos.dc.html" style="color: {{th.link}}; font-weight: 600">Proveedores y cuentas</a>.</span>
+<button type="button" onClick="{{saveForm}}" style="height: 44px; padding: 0 18px; border-radius: 8px; border: none; background: {{fTh.accent}}; color: #FFFFFF; font-size: 14px; font-weight: 600">{{swSave}}</button>
+<span style="font-size: 12px; color: {{th.muted}}">Queda registrado; si supera la partida se marca como fuera de presupuesto. ¿El proveedor no está? Créelo en <a href="Catalogos.dc.html" style="color: {{th.link}}; font-weight: 600">Proveedores y cuentas</a>.</span>
 </div>
 </form>
 </sc-if>
@@ -178,6 +178,7 @@ button{cursor:pointer}
 <span style="color: {{th.muted}}">Partida presupuestaria</span><span class="mono">{{p.line}}</span>
 <span style="grid-column: 1 / -1; color: {{th.muted}}">{{p.note}}</span>
 <span style="grid-column: 1 / -1; color: {{th.muted}}">{{p.lastGasto}}</span>
+<button onClick="{{p.edit}}" style="grid-column: 1 / -1; height: 40px; border-radius: 8px; border: 1px solid {{th.border}}; background: #FFFFFF; color: {{th.ink}}; font-size: 13px; font-weight: 600">Editar producto</button>
 <a href="Gastos.dc.html" onClick="{{p.toGasto}}" style="grid-column: 1 / -1; display: inline-flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; background: {{th.accent}}; color: {{th.accentFg}}; font-size: 13px; font-weight: 600; text-decoration: none">Registrar compra o renovación →</a>
 </div>
 </div>
@@ -198,7 +199,7 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     const saved = this.readStore('sigi.software.v1');
-    this.state = { co: null, open: {}, f: this.noFilter(), form: false, sf: this.emptySf('cat'), sErr: '', sMsg: '', extra: (saved && saved.extra) || [], store: saved === undefined ? 'off' : 'on', confirmReset: false };
+    this.state = { co: null, open: {}, f: this.noFilter(), form: false, sf: this.emptySf('cat'), sErr: '', sMsg: '', extra: (saved && saved.extra) || [], edits: (saved && saved.edits) || {}, sEdit: '', store: saved === undefined ? 'off' : 'on', confirmReset: false };
   }
   // Lo creado se guarda en este navegador; el maestro de proveedores y las cuentas se leen de la pantalla Proveedores y cuentas.
   readStore(key) {
@@ -212,7 +213,7 @@ class Component extends DCLogic {
   componentDidMount() {
     this.onStorage = (e) => {
       if (e.key === 'sigi.catalogos.v1' || e.key === 'sigi.gastos.v1') this.forceUpdate();
-      if (e.key === 'sigi.software.v1') { const s = this.readStore('sigi.software.v1'); this.setState({ extra: (s && s.extra) || [] }); }
+      if (e.key === 'sigi.software.v1') { const s = this.readStore('sigi.software.v1'); this.setState({ extra: (s && s.extra) || [], edits: (s && s.edits) || {} }); }
     };
     try { window.addEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
   }
@@ -220,9 +221,9 @@ class Component extends DCLogic {
     try { window.removeEventListener('storage', this.onStorage); } catch (err) { /* sin almacenamiento */ }
   }
   componentDidUpdate(prevProps, prev) {
-    if (prev.extra === this.state.extra) return;
+    if (prev.extra === this.state.extra && prev.edits === this.state.edits) return;
     try {
-      window.localStorage.setItem('sigi.software.v1', JSON.stringify({ extra: this.state.extra }));
+      window.localStorage.setItem('sigi.software.v1', JSON.stringify({ extra: this.state.extra, edits: this.state.edits }));
     } catch (err) {
       if (this.state.store !== 'off') this.setState({ store: 'off' });
     }
@@ -258,9 +259,9 @@ class Component extends DCLogic {
       { href: 'Catalogos.dc.html', label: 'Proveedores y cuentas' },
       { label: 'Proyectos y aperturas' },
       { section: true, label: 'Gobierno' },
-      { label: 'Solicitudes y aprobaciones' },
+      { href: 'Personal.dc.html', label: 'Personal y ausencias' },
       { label: 'Centro de importaciones' },
-      { label: 'Documentos y auditoría' },
+      { label: 'Bitácora y auditoría' },
       { href: 'Arquitectura.dc.html', label: 'Arquitectura técnica' }
     ];
     return raw.map((r) => ({
@@ -272,7 +273,7 @@ class Component extends DCLogic {
   data() {
     // [id, empresa, producto, tipo, proveedor, cuenta proveedor, unidad, contratadas, asignadas, precio unitario mensual, moneda, periodicidad, inicio, fin, modalidad, preaviso días, cuenta contable, partida, nota]
     return [
-      ['SW-C01', 'cat', 'Microsoft 365 E3', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'Usuario', 420, 412, 30, 'US$', 'Anual', '2025-11-15', '2026-11-15', 'Automática', 60, null, 'SW-021', 'Ajuste de −36 licencias en aprobación (AH-07).'],
+      ['SW-C01', 'cat', 'Microsoft 365 E3', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'Usuario', 420, 412, 30, 'US$', 'Anual', '2025-11-15', '2026-11-15', 'Automática', 60, null, 'SW-021', 'Ajuste de −36 licencias en trámite (AH-07).'],
       ['SW-C02', 'cat', 'Power BI Pro', 'SaaS', 'Microsoft (vía distribuidor)', 'MS-EA-77120', 'Usuario', 60, 52, 10, 'US$', 'Anual', '2025-11-15', '2026-11-15', 'Automática', 60, null, 'SW-021', 'Renueva junto con Microsoft 365.'],
       ['SW-C03', 'cat', 'ERP · licencias de usuario y soporte', 'Licencia', '[Proveedor ERP]', 'ERP-2210', 'Usuario', 120, 118, 95, 'US$', 'Anual', '2026-04-01', '2027-04-01', 'Manual', 90, null, 'SW-030', 'Incluye soporte y actualizaciones.'],
       ['SW-C04', 'cat', 'Adobe Acrobat Pro', 'SaaS', 'Adobe', 'ADB-VIP-41007', 'Usuario', 40, 31, 20, 'US$', 'Anual', '2025-12-10', '2026-12-10', 'Automática', 30, null, 'SW-040', '9 licencias libres: candidato a reducir en la renovación.'],
@@ -288,7 +289,7 @@ class Component extends DCLogic {
       ['SW-B04', 'bona', 'Adobe Creative Cloud', 'SaaS', 'Adobe', 'ADB-VIP-55120', 'Usuario', 6, 6, 69.99, 'US$', 'Anual', '2026-01-14', '2027-01-14', 'Automática', 30, '6210-010', 'BSW-002', 'Uso exclusivo de Mercadeo.'],
       ['SW-B05', 'bona', 'FortiGate · licencias y soporte', 'Licencia', 'Fortinet (vía distribuidor)', 'FTN-88317', 'Equipo', 4, 4, 127.08, 'US$', 'Anual', '2025-11-30', '2026-11-30', 'Manual', 60, '6210-020', 'BSW-002', 'Cotización de renovación recibida.'],
       ['SW-B06', 'bona', 'Certificados SSL', 'Certificado', '[Autoridad certificadora]', 'CA-1077', 'Certificado', 2, 2, 15, 'US$', 'Anual', '2025-12-20', '2026-12-20', 'Manual', 30, '6210-040', 'BSW-002', '']
-    ].concat(this.state.extra);
+    ].concat(this.state.extra).map((r) => this.state.edits[r[0]] || r);
   }
   renderVals() {
     const co = this.state.co || this.props.company || 'all';
@@ -323,7 +324,7 @@ class Component extends DCLogic {
       const dl = endT ? endT - notice * 86400000 : null;
       const dEnd = endT ? days(endT) : null;
       const dDl = dl ? days(dl) : null;
-      return { id, c, name, tipo, prov, acct, unit, qty, used, price, cur, period, start, end, mode, notice, gl, line, note, lastGasto, renewedBy: renewed ? renewed.id : '', monthly, annualRD, endT, dl, dEnd, dDl, free: qty - used };
+      return { id, c, name, tipo, prov, acct, unit, qty, used, price, cur, period, start, end, mode, notice, gl, line, note, lastGasto, renewedBy: renewed ? renewed.id : '', monthly, annualRD, endT, dl, dEnd, dDl, free: qty - used, raw: r };
     });
     const f = this.state.f;
     const q = f.q.trim().toLowerCase();
@@ -399,6 +400,7 @@ class Component extends DCLogic {
         perUser: p.unit === 'Consumo' ? 'No aplica' : 'RD$ ' + money(p.price * rd) + ' / mes por ' + p.unit.toLowerCase(),
         freeCost: p.unit === 'Consumo' ? '—' : 'RD$ ' + money(p.free * p.price * 12 * rd) + ' / año', line: p.line, note: (p.renewedBy ? 'Renovado con ' + p.renewedBy + '. ' : '') + (p.note || ''),
         lastGasto: p.lastGasto,
+        edit: () => openSwEdit(p.raw),
         toGasto: () => {
           const next = p.end ? (parseInt(p.end.slice(0, 4), 10) + 1) + p.end.slice(4) : '';
           const amt = p.unit === 'Consumo' ? p.monthly : p.monthly * (p.period === 'Anual' ? 12 : 1);
@@ -433,10 +435,16 @@ class Component extends DCLogic {
     const priceN = parseFloat(sf.price);
     const prevMonthly = (qtyN > 0 && priceN > 0) ? qtyN * priceN : 0;
     const sfPreview = prevMonthly ? sf.cur + ' ' + m2(prevMonthly) + ' / mes · RD$ ' + money(prevMonthly * 12 * (sf.cur === 'US$' ? FX : 1)) + ' / año' : 'Complete cantidad y precio';
+    // Abre el mismo formulario con los datos del producto; al guardar, el registro se reemplaza en edits.
+    const sEdit = this.state.sEdit;
+    const openSwEdit = (r) => this.setState({
+      form: true, sEdit: r[0], sErr: '', sMsg: '',
+      sf: { co: r[1], name: r[2], tipo: r[3], prov: r[4], acct: r[5], unit: r[6], qty: String(r[7]), used: String(r[8]), price: String(r[9]), cur: r[10], period: r[11], start: r[12], end: r[13] || '', mode: r[14], notice: String(r[15]), gl: r[16] || '', line: r[17] }
+    });
     const saveForm = () => {
       const name = sf.name.trim();
       if (!name) return this.setState({ sErr: 'Escriba el nombre del producto.' });
-      if (all.some((r) => r[1] === sf.co && r[2].toLowerCase() === name.toLowerCase())) return this.setState({ sErr: 'Ya existe ' + name + ' en ' + TH[sf.co].name + '; edite el existente o cambie el nombre.' });
+      if (all.some((r) => r[0] !== sEdit && r[1] === sf.co && r[2].toLowerCase() === name.toLowerCase())) return this.setState({ sErr: 'Ya existe ' + name + ' en ' + TH[sf.co].name + '; edite el existente o cambie el nombre.' });
       if (!sf.acct.trim()) return this.setState({ sErr: 'Escriba la cuenta de proveedor.' });
       if (!(qtyN > 0)) return this.setState({ sErr: 'Las unidades contratadas deben ser un número mayor que cero.' });
       if (!(usedN >= 0) || usedN > qtyN) return this.setState({ sErr: 'Las asignadas no pueden ser negativas ni superar las contratadas.' });
@@ -445,13 +453,16 @@ class Component extends DCLogic {
       if (!isUse && (!sf.end || sf.end <= sf.start)) return this.setState({ sErr: 'El vencimiento debe ser posterior al inicio.' });
       const notice = parseInt(sf.notice, 10) || 0;
       const n = all.filter((r) => r[1] === sf.co).length + 1;
-      const id = (sf.co === 'cat' ? 'SW-C' : 'SW-B') + String(n).padStart(2, '0');
+      const id = sEdit || ((sf.co === 'cat' ? 'SW-C' : 'SW-B') + String(n).padStart(2, '0'));
+      const old = sEdit ? all.find((r) => r[0] === sEdit) : null;
       const row = [id, sf.co, name, sf.tipo, sf.prov, sf.acct.trim(), sf.unit, qtyN, usedN, priceN, sf.cur, isUse ? 'Mensual' : sf.period, sf.start, isUse ? null : sf.end,
-        isUse ? 'Por consumo' : sf.mode, isUse ? 0 : notice, sf.gl || (GL_OPTS[sf.co][0].v || null), sf.line, 'Creado en SIGI · pendiente de aprobación.'];
-      this.setState((s) => ({
-        extra: s.extra.concat([row]), form: false, sf: this.emptySf(s.co && s.co !== 'all' ? s.co : 'cat'), f: this.noFilter(),
-        open: Object.assign({}, s.open, { [id]: true }), sMsg: id + ' · ' + name + ' creado en ' + TH[sf.co].name + ' · pendiente de aprobación.'
-      }));
+        isUse ? 'Por consumo' : sf.mode, isUse ? 0 : notice, sf.gl || (GL_OPTS[sf.co][0].v || null), sf.line, old ? old[18] : 'Creado en SIGI.'];
+      this.setState((s) => (sEdit
+        ? { edits: Object.assign({}, s.edits, { [id]: row }), form: false, sEdit: '', open: Object.assign({}, s.open, { [id]: true }), sMsg: id + ' · ' + name + ' actualizado.' }
+        : {
+          extra: s.extra.concat([row]), form: false, sf: this.emptySf(s.co && s.co !== 'all' ? s.co : 'cat'), f: this.noFilter(),
+          open: Object.assign({}, s.open, { [id]: true }), sMsg: id + ' · ' + name + ' creado en ' + TH[sf.co].name + '.'
+        }));
     };
     const cos = [['all', 'Consolidado'], ['cat', 'El Catador'], ['bona', 'Bona']].map(([k, label]) => ({
       label, on: k === co, bg: k === co ? TH[k].on : '#FFFFFF', fg: k === co ? '#FFFFFF' : th.ink, pick: () => this.setState({ co: k, open: {}, f: this.noFilter() })
@@ -469,10 +480,11 @@ class Component extends DCLogic {
       storeBg: this.state.store === 'on' ? '#E7F5EF' : '#FFF4D6', storeFg: this.state.store === 'on' ? '#075B3F' : '#6B4A00',
       hasCreated: this.state.extra.length > 0, resetLabel: this.state.confirmReset ? 'Confirmar: borrar ' + this.state.extra.length + ' creados' : 'Borrar lo creado',
       resetBorder: this.state.confirmReset ? '#A8481A' : th.border, resetFg: this.state.confirmReset ? '#A8481A' : th.ink,
-      resetCreated: () => (this.state.confirmReset ? this.setState({ extra: [], confirmReset: false, sMsg: 'Se borraron los productos creados en SIGI.' }) : this.setState({ confirmReset: true })),
+      resetCreated: () => (this.state.confirmReset ? this.setState({ extra: [], edits: {}, confirmReset: false, sMsg: 'Se borraron los productos creados en SIGI y las ediciones.' }) : this.setState({ confirmReset: true })),
       showForm: this.state.form, sf, sErr: this.state.sErr, sMsg: this.state.sMsg, fTh: TH[sf.co], sfPreview, saveForm,
       provOpts: PROVS, glOpts: GL_OPTS[sf.co], lineOpts: LINES[sf.co],
-      openForm: () => this.setState({ form: true, sErr: '', sMsg: '', sf: this.emptySf(co === 'all' ? 'cat' : co) }), closeForm: () => this.setState({ form: false }),
+      openForm: () => this.setState({ form: true, sErr: '', sMsg: '', sEdit: '', sf: this.emptySf(co === 'all' ? 'cat' : co) }), closeForm: () => this.setState({ form: false, sEdit: '' }),
+      swTitle: sEdit ? 'Editar software o suscripción' : 'Nuevo software o suscripción', swSave: sEdit ? 'Guardar cambios' : 'Crear software',
       sfCo: (e) => this.setSf({ co: e.target.value, gl: '', line: e.target.value === 'cat' ? 'SW-040' : 'BSW-002' }), sfName: (e) => this.setSf({ name: e.target.value }),
       sfTipo: (e) => this.setSf({ tipo: e.target.value }), sfProv: (e) => this.setSf({ prov: e.target.value }), sfAcct: (e) => this.setSf({ acct: e.target.value }),
       sfUnit: (e) => this.setSf({ unit: e.target.value, mode: e.target.value === 'Consumo' ? 'Por consumo' : this.state.sf.mode }), sfQty: (e) => this.setSf({ qty: e.target.value }),

@@ -80,6 +80,15 @@
       "w": 1440,
       "x": 4440,
       "y": 86
+    },
+    "Personal.dc.html": {
+      "expand": "fill",
+      "h": 2600,
+      "is_interactive": true,
+      "title": "Personal y ausencias",
+      "w": 1440,
+      "x": 5960,
+      "y": 86
     }
   },
   "createdOnFiles": {
@@ -94,7 +103,7 @@
     "t1": {
       "kind": "title1",
       "maxW": 6040,
-      "text": "SIGI · Panel gerencial, presupuestos, gastos y ahorros",
+      "text": "SIGI · Panel gerencial, presupuestos, gastos, personal y ahorros",
       "w": 240,
       "x": 0,
       "y": -300
@@ -113,6 +122,7 @@
     "Ahorros.dc.html",
     "Presupuestos.dc.html",
     "Gastos.dc.html",
+    "Personal.dc.html",
     "Telecom.dc.html",
     "Flotas.dc.html",
     "Arquitectura.dc.html",
