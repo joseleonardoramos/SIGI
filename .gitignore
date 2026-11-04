@@ -1,0 +1,17 @@
+# Secretos locales: nunca al repositorio
+.env
+.env.*
+!.env.example
+
+# Dependencias y compilados
+node_modules/
+dist/
+web/dist/
+
+# Datos locales de Supabase (contenedores)
+supabase/.branches/
+supabase/.temp/
+
+# Sistema
+.DS_Store
+Thumbs.db
