@@ -1,0 +1,12 @@
+# Frontend de SIGI en Docker local: http://localhost:8080
+# Requiere un archivo .env en esta carpeta (ver .env.example). Supabase corre aparte: npm run db:start
+services:
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:?Falta VITE_SUPABASE_URL en .env}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:?Falta VITE_SUPABASE_PUBLISHABLE_KEY en .env}
+    ports:
+      - "8080:80"
+    restart: unless-stopped

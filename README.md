@@ -18,17 +18,30 @@ npm run db:stop
 
 Studio local: http://127.0.0.1:54323. Las claves locales se ven con `npx supabase status`; son de desarrollo y no sirven fuera de esta máquina.
 
-## Primer Administrador
+## Frontend en Docker
 
-1. Crea el usuario en Studio → Authentication → Add user (correo y contraseña).
-2. En Studio → SQL Editor:
+1. Copia `.env.example` a `.env` y pon en `VITE_SUPABASE_PUBLISHABLE_KEY` el valor `PUBLISHABLE_KEY` de `npx supabase status`.
+2. Levanta la aplicación en http://localhost:8080:
 
-```sql
-insert into membresias (usuario_id, empresa_id, rol)
-select id, null, 'Administrador' from auth.users where email = 'correo@empresa.com';
+```bash
+npm run web:start
 ```
 
-Después, el Administrador crea las empresas y asigna los roles desde la aplicación.
+Para desarrollar con recarga automática: copia `.env` a `web/.env.local` y ejecuta `npm run dev` dentro de `web/` (http://localhost:5173).
+
+## Primer Administrador
+
+Nadie puede registrarse solo: los usuarios los crea el Administrador. El primero se crea con el script, usando la clave de servicio en el entorno (nunca en un archivo del repositorio):
+
+```bash
+SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY de supabase status> npm run admin:crear -- correo@empresa.com 'Contraseña12345'
+```
+
+Si el usuario ya existe, el script solo le da el rol de Administrador. Después, el Administrador entra a la aplicación y:
+
+- **Empresas:** crea, edita o da de baja (con motivo) cada empresa.
+- **Usuarios y roles:** crea usuarios con una contraseña temporal y elige el rol en cada empresa (Sin acceso, Consulta o Captura) o el rol global de Administrador.
+- Cada usuario cambia su contraseña temporal en «Cambiar contraseña» (mínimo 12 caracteres, con letras y números).
 
 ## Reglas de la base
 

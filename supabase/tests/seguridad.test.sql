@@ -82,7 +82,9 @@ select is(
 -- ===== Administrador =====
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
 
-select is((select count(*)::int from servicios_telecom), 4, 'Administrador ve todas las empresas');
+select is(
+  (select count(*)::int from servicios_telecom where empresa_id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b')),
+  4, 'Administrador ve todas las empresas');
 select throws_ok(
   $$ update servicios_telecom set activo = false where id = '00000000-0000-0000-0000-0000000000f2' $$,
   'P0001', 'La baja requiere un motivo.', 'La baja exige motivo');

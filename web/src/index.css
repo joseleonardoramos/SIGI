@@ -1,0 +1,78 @@
+/* Paleta de El Catador (ver design/). */
+:root {
+  --tinta: #262727;
+  --texto: #4a4f4f;
+  --fondo: #efeeea;
+  --superficie: #ffffff;
+  --acento: #807451;
+  --suave: #d6cda5;
+  --borde: #d9d6cc;
+  --error: #a3261f;
+  --ok: #1a5632;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); }
+h1, h2 { color: var(--tinta); }
+h2 { font-size: 1.3rem; margin: 0 0 16px; }
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--tinta);
+  background: var(--tinta);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: .6; cursor: default; }
+button.secundario { background: transparent; color: var(--tinta); border-color: var(--borde); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+input, select {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: var(--superficie);
+  color: var(--tinta);
+  width: 100%;
+}
+label { display: grid; gap: 4px; font-size: .85rem; }
+
+.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
+.fila { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; margin-bottom: 12px; }
+.fila .ancho { grid-column: span 2; }
+
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login .tarjeta { width: min(380px, 100%); }
+.login h1 { margin: 0; }
+.sub { margin: -8px 0 4px; font-size: .9rem; }
+
+.app header { display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--tinta); color: #fff; flex-wrap: wrap; }
+.app header nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.app header nav button { background: transparent; border-color: transparent; }
+.app header nav button.activo { background: var(--acento); }
+.app header .secundario { color: #fff; border-color: #6b6f6f; }
+.usuario { font-size: .85rem; opacity: .8; }
+.app main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+table { width: 100%; border-collapse: collapse; background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--borde); font-size: .9rem; }
+th { color: var(--tinta); background: #f7f6f2; }
+tr.inactivo td { opacity: .55; }
+.acciones { display: flex; gap: 6px; justify-content: flex-end; }
+.desplazable { overflow-x: auto; }
+
+.error { color: var(--error); margin: 0; }
+.ok { color: var(--ok); }
+.nota { font-size: .85rem; color: var(--texto); }
+code { background: var(--suave); padding: 2px 6px; border-radius: 4px; user-select: all; }
+
+@media (max-width: 640px) {
+  .fila .ancho { grid-column: auto; }
+  .app main { padding: 16px; }
+}
