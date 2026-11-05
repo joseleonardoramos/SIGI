@@ -3,6 +3,9 @@
   "private": true,
   "description": "Sistema Integral de Gestión de Infraestructura",
   "scripts": {
+    "start": "npm run db:start && npm run web:start",
+    "stop": "npm run web:stop && npm run db:stop",
+    "test": "npm run db:test && npm --prefix web test && npm run test:funciones && npm run test:concurrencia && npm run test:respaldo",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
@@ -11,7 +14,9 @@
     "test:funciones": "node --env-file=.env scripts/probar-funcion-usuarios.mjs",
     "web:start": "docker compose up -d --build",
     "web:stop": "docker compose down",
-    "test:concurrencia": "bash scripts/probar-concurrencia.sh"
+    "test:concurrencia": "bash scripts/probar-concurrencia.sh",
+    "respaldar": "bash scripts/respaldar.sh",
+    "test:respaldo": "bash scripts/probar-respaldo.sh"
   },
   "devDependencies": {
     "supabase": "^3.0.0"

@@ -89,6 +89,40 @@ Pantalla **Importar CSV** (Administrador y Captura). Catálogos: servicios de te
 
 Formato: separado por comas o por punto y coma, UTF-8 (también acepta el ANSI de Excel), montos con punto decimal (`1,500.00` o `RD$ 1,500.00`), fechas `AAAA-MM-DD` o `DD/MM/AAAA`. Máximo 5000 filas por archivo.
 
+## Operación
+
+```bash
+npm start        # levanta Supabase local y el frontend (http://localhost:8080)
+npm stop         # los detiene; los datos quedan en los volúmenes de Docker
+npm test         # todas las pruebas: base, frontend, función de usuarios, concurrencia y respaldo
+npm run respaldar -- <carpeta>
+```
+
+**Respaldos.** `npm run respaldar -- <carpeta>` guarda en la carpeta que usted elija la base completa (`base.dump`), los archivos de evidencias (`evidencias.tar`) y sus huellas (`sha256.txt`). No hay carpeta por defecto: sin carpeta, no se guarda nada. Para no escribirla cada vez, defina la variable `SIGI_RESPALDOS` y cada respaldo se guardará en una subcarpeta con la fecha. Los respaldos tienen datos personales: elija un lugar que usted controle. No se guardan sesiones ni tokens de acceso; después de restaurar, cada usuario vuelve a iniciar sesión.
+
+`npm run test:respaldo` respalda en una carpeta temporal, restaura en una base aparte (nueva y encima de datos), comprueba que todo coincida y borra lo temporal. Ejecútelo después de cambiar la base.
+
+**Recuperar un respaldo** (detenga antes el frontend con `npm run web:stop`; en Git Bash de Windows, deje `MSYS_NO_PATHCONV=1` delante para que no cambie las rutas del contenedor):
+
+```bash
+docker cp <carpeta>/base.dump supabase_db_SIGI:/tmp/base.dump
+MSYS_NO_PATHCONV=1 docker exec supabase_db_SIGI pg_restore -U supabase_admin --clean --if-exists -n public -n auth -n storage -d postgres /tmp/base.dump
+MSYS_NO_PATHCONV=1 docker exec -i supabase_storage_SIGI tar -C /mnt -xf - < <carpeta>/evidencias.tar
+```
+
+Se restauran los datos, los usuarios y las evidencias tal como estaban (fechas, autores y bitácora incluidos). Este procedimiento lo prueba `npm run test:respaldo` sobre una base aparte.
+
+**Publicar en el proyecto de Supabase en la nube** (requiere acceso al proyecto; no se ha hecho todavía):
+
+1. `npx supabase login` y `npx supabase link --project-ref <ref del proyecto>`.
+2. `npx supabase db push` aplica las migraciones (incluye la zona horaria y el bucket de evidencias). Si alguna empresa tuviera dos versiones vigentes, cierre una antes.
+3. `npx supabase functions deploy usuarios`.
+4. En el panel de Supabase, Authentication: desactivar el registro libre, contraseña mínima de 12 con letras y números, y poner la URL del sitio.
+5. Crear el primer Administrador con `npm run admin:crear` usando la URL y la clave `service_role` del proyecto (solo en el entorno, nunca en un archivo).
+6. En `.env`, poner la URL y la clave pública del proyecto y ejecutar `npm run web:start`.
+
+En la nube, los respaldos los hace Supabase según el plan contratado; `npm run respaldar` es para la instalación local.
+
 ## Reglas de la base
 
 - **Roles:** Administrador (global), Captura y Consulta (por empresa). Una persona puede tener roles distintos en empresas distintas.

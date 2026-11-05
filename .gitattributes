@@ -1,0 +1,2 @@
+# Los scripts de bash deben quedar con LF también en Windows (bash falla con CRLF).
+*.sh text eol=lf
