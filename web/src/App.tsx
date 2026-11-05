@@ -8,6 +8,7 @@ import Importar from './Importar'
 import Catalogo from './Catalogo'
 import Gastos from './Gastos'
 import Bitacora, { FueraHoy } from './Bitacora'
+import Panel from './Panel'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
@@ -152,7 +153,8 @@ export default function App() {
 function Inicio({ accesos, esAdmin, empresa, personal }: { accesos: Acceso[]; esAdmin: boolean; empresa: string; personal: boolean }) {
   return (
     <section>
-      <h2>Inicio</h2>
+      <h2>Panel gerencial</h2>
+      {empresa && <Panel empresa={empresa} personal={personal} />}
       <div className="tarjetas">
         <div className="tarjeta">
           <h3>Mis accesos</h3>

@@ -16,7 +16,7 @@ insert into tasas_cambio (moneda, vigente_desde, tasa, fuente) values ('US$', '2
 insert into presupuestos_versiones (id, empresa_id, ejercicio, numero, estado) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000a', '2026-2027', 1, 'Vigente'),
   ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-00000000000a', '2025-2026', 1, 'Cerrado'),
-  ('00000000-0000-0000-0000-0000000000b3', '00000000-0000-0000-0000-00000000000a', '2024-2025', 1, 'Vigente');
+  ('00000000-0000-0000-0000-0000000000b3', '00000000-0000-0000-0000-00000000000a', '2024-2025', 1, 'Borrador');
 insert into partidas (id, empresa_id, version_id, codigo, nombre, categoria, distribucion, monto) values
   ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000b1', 'P1', 'Internet', 'Telecom', 'Uniforme', 1000),
   ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000b2', 'P2', 'Cerrada', 'Telecom', 'Uniforme', 1000),
@@ -115,7 +115,7 @@ select is(
 select lives_ok(
   $$ select registrar_compromiso('00000000-0000-0000-0000-00000000000a', 'G-7', 'Partida', 'Anterior', 100, '2026-11-04',
        p_partida => '00000000-0000-0000-0000-0000000000f4') $$,
-  'Compromiso en una versión todavía vigente');
+  'Compromiso en una versión todavía abierta');
 update presupuestos_versiones set estado = 'Cerrado' where id = '00000000-0000-0000-0000-0000000000b3';
 select throws_ok(
   $$ select registrar_movimiento((select id from gastos where codigo = 'G-7'), 'Compromiso', 10, '2026-11-05') $$,

@@ -70,6 +70,13 @@ label.casilla { display: flex; align-items: center; gap: 6px; }
 .fila-controles { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 16px 0 10px; }
 .fila-controles .buscar { min-width: 240px; }
 .detalle { margin-top: 20px; border-color: var(--acento); }
+.indicadores { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.indicador { gap: 4px; padding: 14px 16px; border-left: 4px solid var(--acento); }
+.indicador strong { font-size: 1.25rem; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.indicador.alerta { border-left-color: var(--error); }
+.indicador.alerta strong { color: var(--error); }
+tr.total td { font-weight: 600; background: #f7f6f2; }
+main h3 { margin-top: 20px; }
 .lista { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 
 .login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }

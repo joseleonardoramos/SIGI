@@ -48,5 +48,6 @@ export async function mensajeError(error: unknown): Promise<string> {
     '23514': `Un valor no es válido (${message ?? ''}).`,
     '42501': 'No tiene permiso para esta acción.',
   }
+  if (message?.includes('una_version_vigente')) return 'Ya hay una versión vigente en esta empresa: cierre la anterior o deje esta en Borrador.'
   return (code && traducidos[code]) || message || 'Ocurrió un error.'
 }
