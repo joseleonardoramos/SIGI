@@ -20,6 +20,8 @@ type Fila = {
   flotas_lineas: number
   software_vencen_60: number
   personal_fuera_hoy: number
+  garantias_vencen_60: number
+  reposiciones_pendientes: number
 }
 
 const dinero = (n: number) => Number(n).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -51,6 +53,8 @@ export default function Panel({ empresa, personal }: { empresa: string; personal
     { titulo: 'Telecomunicaciones / mes', valor: `RD$ ${dinero(f.telecom_rd)}`, nota: Number(f.telecom_us) ? `y US$ ${dinero(f.telecom_us)}` : undefined },
     { titulo: 'Flotas / mes', valor: `RD$ ${dinero(f.flotas_mensual)}`, nota: `${f.flotas_lineas} ${Number(f.flotas_lineas) === 1 ? 'línea activa' : 'líneas activas'}` },
     { titulo: 'Software vencido o por vencer', valor: String(f.software_vencen_60), nota: 'Vencido o vence en 60 días', alerta: f.software_vencen_60 > 0 },
+    { titulo: 'Garantías por vencer', valor: String(f.garantias_vencen_60), nota: 'Activos en los próximos 60 días', alerta: f.garantias_vencen_60 > 0 },
+    { titulo: 'Reposiciones pendientes', valor: String(f.reposiciones_pendientes), nota: 'Propuestas o presupuestadas' },
     ...(personal ? [{ titulo: 'Personal fuera hoy', valor: String(f.personal_fuera_hoy) }] : []),
   ]
 

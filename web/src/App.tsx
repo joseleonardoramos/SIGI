@@ -30,6 +30,11 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'flotas', titulo: 'Flotas', ver: todos },
     { id: 'software', titulo: 'Software', ver: todos },
   ] },
+  { seccion: 'Activos y proyectos', entradas: [
+    { id: 'activos', titulo: 'Activos', ver: todos },
+    { id: 'reposiciones', titulo: 'Plan de reposición', ver: todos },
+    { id: 'proyectos', titulo: 'Proyectos y aperturas', ver: todos },
+  ] },
   { seccion: 'Personal', entradas: [
     { id: 'personas', titulo: 'Personal', ver: (p) => p.personal },
     { id: 'ausencias', titulo: 'Ausencias', ver: (p) => p.personal },

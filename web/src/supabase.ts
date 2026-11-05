@@ -48,6 +48,14 @@ export async function mensajeError(error: unknown): Promise<string> {
     '23514': `Un valor no es válido (${message ?? ''}).`,
     '42501': 'No tiene permiso para esta acción.',
   }
-  if (message?.includes('una_version_vigente')) return 'Ya hay una versión vigente en esta empresa: cierre la anterior o deje esta en Borrador.'
+  // Reglas propias de SIGI, reconocidas por el nombre de la restricción que las aplica.
+  const porRegla: Record<string, string> = {
+    una_version_vigente: 'Ya hay una versión vigente en esta empresa: cierre la anterior o deje esta en Borrador.',
+    activos_serial_unico: 'Ese serial ya está registrado en esta empresa.',
+    reposiciones_check: 'Un reemplazo o mantenimiento necesita el activo actual.',
+    proyectos_check: 'La fecha de fin no puede ser anterior al inicio.',
+  }
+  const regla = Object.keys(porRegla).find((r) => message?.includes(`"${r}"`))
+  if (regla) return porRegla[regla]
   return (code && traducidos[code]) || message || 'Ocurrió un error.'
 }

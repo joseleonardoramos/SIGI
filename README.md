@@ -72,6 +72,7 @@ El selector de la cabecera elige la empresa; sus colores (El Catador o Bona) se 
 | Inicio | Panel gerencial de la empresa elegida (vista `panel_empresa`) y consolidado por moneda de reporte |
 | Presupuesto | Versiones, Partidas (con comprometido, ejecutado y disponible), Gastos y evidencias |
 | Operación | Telecomunicaciones, Flotas (cancelar = estado «Cancelada»), Software |
+| Activos y proyectos | Activos (serial único, garantía), Plan de reposición (reemplazo, compra nueva o mantenimiento), Proyectos y aperturas (inversión inicial separada del OPEX mensual) |
 | Personal | Personal, Ausencias (no se traslapan); el Inicio muestra quién está fuera hoy y en 30 días |
 | Catálogos | Proveedores, Cuentas de proveedor, Cuentas contables, Centros de costo, Tasas de cambio (solo el Administrador los edita) |
 | Herramientas | Importar CSV, Bitácora |
