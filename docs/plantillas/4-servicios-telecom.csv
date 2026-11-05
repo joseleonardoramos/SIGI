@@ -1,0 +1,3 @@
+Sucursal,Ubicación,Proveedor,Cuenta Proveedor,Cuenta Contable,No. Circuito,Estatus,Detalle,Tipo,Velocidad,Moneda,Monto,Comentarios
+Oficina principal,Santo Domingo,Altice (ejemplo),550100,11-101-63-0115,CIR-0001,Activo,Fibra dedicada,Metro Ethernet,500 Mbps,RD$,"45,000.00",Enlace principal
+Tienda Santiago,Santiago,Claro (ejemplo),,11-101-63-0115,,Activo,Internet de respaldo,Internet,100 Mbps,RD$,3500,

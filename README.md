@@ -63,6 +63,17 @@ npm run test:concurrencia   # dos sesiones a la vez sobre la misma partida: la s
 npm run test:funciones      # solo el Administrador crea usuarios
 ```
 
+## Importación CSV
+
+Pantalla **Importar CSV** (Administrador y Captura). Catálogos: servicios de telecomunicaciones, líneas de flota y partidas de presupuesto; el Administrador además importa proveedores, cuentas de proveedor y cuentas contables.
+
+1. Elegir qué importar y la empresa (y la versión de presupuesto para partidas).
+2. **Descargar plantilla** para tener el encabezado exacto. Hay ejemplos llenos en `docs/plantillas/`, numerados en el orden en que conviene importarlos (los proveedores y sus cuentas van antes que los servicios y las líneas).
+3. Elegir el archivo: se revisa completo y se muestran los errores con su número de fila. **Nada se guarda** hasta confirmar, y si una fila tiene error no se guarda ninguna.
+4. Confirmar. El mismo archivo no se puede importar dos veces.
+
+Formato: separado por comas o por punto y coma, UTF-8 (también acepta el ANSI de Excel), montos con punto decimal (`1,500.00` o `RD$ 1,500.00`), fechas `AAAA-MM-DD` o `DD/MM/AAAA`. Máximo 5000 filas por archivo.
+
 ## Reglas de la base
 
 - **Roles:** Administrador (global), Captura y Consulta (por empresa). Una persona puede tener roles distintos en empresas distintas.

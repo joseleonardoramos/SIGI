@@ -4,9 +4,10 @@ import { supabase, mensajeError } from './supabase'
 import Login from './Login'
 import Empresas from './Empresas'
 import Usuarios from './Usuarios'
+import Importar from './Importar'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
-type Vista = 'inicio' | 'empresas' | 'usuarios' | 'clave'
+type Vista = 'inicio' | 'importar' | 'empresas' | 'usuarios' | 'clave'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -33,7 +34,13 @@ export default function App() {
 
   // La interfaz solo oculta opciones; los permisos reales los aplica la base de datos.
   const esAdmin = accesos.some((a) => a.rol === 'Administrador')
-  const nav: [Vista, string][] = [['inicio', 'Inicio'], ...(esAdmin ? [['empresas', 'Empresas'], ['usuarios', 'Usuarios y roles']] as [Vista, string][] : []), ['clave', 'Cambiar contraseña']]
+  const puedeImportar = esAdmin || accesos.some((a) => a.rol === 'Captura')
+  const nav: [Vista, string][] = [
+    ['inicio', 'Inicio'],
+    ...(puedeImportar ? [['importar', 'Importar CSV']] as [Vista, string][] : []),
+    ...(esAdmin ? [['empresas', 'Empresas'], ['usuarios', 'Usuarios y roles']] as [Vista, string][] : []),
+    ['clave', 'Cambiar contraseña'],
+  ]
 
   return (
     <div className="app">
@@ -49,6 +56,7 @@ export default function App() {
       </header>
       <main>
         {vista === 'inicio' && <Inicio accesos={accesos} esAdmin={esAdmin} />}
+        {vista === 'importar' && puedeImportar && <Importar accesos={accesos} esAdmin={esAdmin} />}
         {vista === 'empresas' && esAdmin && <Empresas />}
         {vista === 'usuarios' && esAdmin && <Usuarios yo={session.user.id} />}
         {vista === 'clave' && <CambiarClave email={session.user.email ?? ''} />}
