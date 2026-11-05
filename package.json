@@ -10,7 +10,8 @@
     "admin:crear": "node scripts/crear-admin.mjs",
     "test:funciones": "node --env-file=.env scripts/probar-funcion-usuarios.mjs",
     "web:start": "docker compose up -d --build",
-    "web:stop": "docker compose down"
+    "web:stop": "docker compose down",
+    "test:concurrencia": "bash scripts/probar-concurrencia.sh"
   },
   "devDependencies": {
     "supabase": "^3.0.0"

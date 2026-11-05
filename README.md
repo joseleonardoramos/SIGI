@@ -43,6 +43,26 @@ Si el usuario ya existe, el script solo le da el rol de Administrador. Después,
 - **Usuarios y roles:** crea usuarios con una contraseña temporal y elige el rol en cada empresa (Sin acceso, Consulta o Captura) o el rol global de Administrador.
 - Cada usuario cambia su contraseña temporal en «Cambiar contraseña» (mínimo 12 caracteres, con letras y números).
 
+## Presupuesto y gastos
+
+Los gastos no se escriben directo en las tablas: se registran con funciones que bloquean la partida y validan el saldo.
+
+| Función | Hace |
+|---|---|
+| `registrar_compromiso` | Crea el gasto con su orden, contrato o reserva. Fija la tasa de cambio vigente. |
+| `registrar_movimiento` | Agrega más compromiso, una factura (exige NCF o e-CF válido y no repetido) o un pago (no más de lo facturado). |
+| `reversar_movimiento` | Corrige sin borrar: marca el movimiento como reversado y deja un «Reverso» con el motivo. |
+| vista `saldo_partidas` | Presupuesto, comprometido, ejecutado, pagado y disponible por partida, en la moneda de reporte. |
+
+- Si un monto supera el disponible, se rechaza salvo que se indique el motivo: queda **fuera de presupuesto** y el disponible se ve negativo.
+- Un gasto sin partida siempre es fuera de presupuesto y exige motivo.
+- Las tasas de cambio (`tasas_cambio`) las registra el Administrador con fecha de vigencia; cada cambio es una fila nueva.
+
+```bash
+npm run test:concurrencia   # dos sesiones a la vez sobre la misma partida: la segunda espera y se rechaza
+npm run test:funciones      # solo el Administrador crea usuarios
+```
+
 ## Reglas de la base
 
 - **Roles:** Administrador (global), Captura y Consulta (por empresa). Una persona puede tener roles distintos en empresas distintas.
