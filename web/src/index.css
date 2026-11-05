@@ -1,5 +1,5 @@
-/* Paleta de El Catador (ver design/). */
-:root {
+/* Paletas del diseño. El Catador por defecto; Bona se activa con data-tema="bona". */
+:root, [data-tema='catador'] {
   --tinta: #262727;
   --texto: #4a4f4f;
   --fondo: #efeeea;
@@ -7,17 +7,33 @@
   --acento: #807451;
   --suave: #d6cda5;
   --borde: #d9d6cc;
+  --cabecera: #262727;
   --error: #a3261f;
   --ok: #1a5632;
+}
+[data-tema='bona'] {
+  --tinta: #000000;
+  --texto: #333333;
+  --fondo: #f6f4f4;
+  --superficie: #ffffff;
+  --acento: #bc2f2c;
+  --suave: #f0d9d8;
+  --borde: #e2d6d6;
+  --cabecera: #000000;
+  --error: #bc2f2c;
+  --ok: #1a5632;
+}
+:root {
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--texto);
   background: var(--fondo);
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--fondo); }
-h1, h2 { color: var(--tinta); }
+body { margin: 0; background: #efeeea; }
+h1, h2, h3 { color: var(--tinta); }
 h2 { font-size: 1.3rem; margin: 0 0 16px; }
+h3 { font-size: 1rem; margin: 0 0 10px; }
 
 button {
   font: inherit;
@@ -30,6 +46,7 @@ button {
 }
 button:disabled { opacity: .6; cursor: default; }
 button.secundario { background: transparent; color: var(--tinta); border-color: var(--borde); }
+button.enlace { background: none; border: none; padding: 0 6px 0 0; color: var(--acento); text-decoration: underline; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
 input, select {
@@ -41,38 +58,64 @@ input, select {
   color: var(--tinta);
   width: 100%;
 }
+input[type='checkbox'] { width: auto; }
 label { display: grid; gap: 4px; font-size: .85rem; }
+label.casilla { display: flex; align-items: center; gap: 6px; }
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
-.fila { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; margin-bottom: 12px; }
+.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; display: grid; gap: 14px; align-content: start; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; margin-bottom: 12px; }
 .fila .ancho { grid-column: span 2; }
+.fila-controles { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; margin: 16px 0 10px; }
+.fila-controles .buscar { min-width: 240px; }
+.detalle { margin-top: 20px; border-color: var(--acento); }
+.lista { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 
 .login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .login .tarjeta { width: min(380px, 100%); }
 .login h1 { margin: 0; }
 .sub { margin: -8px 0 4px; font-size: .9rem; }
 
-.app header { display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--tinta); color: #fff; flex-wrap: wrap; }
-.app header nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
-.app header nav button { background: transparent; border-color: transparent; }
-.app header nav button.activo { background: var(--acento); }
-.app header .secundario { color: #fff; border-color: #6b6f6f; }
+.app { min-height: 100vh; background: var(--fondo); }
+.app header { display: flex; align-items: center; gap: 14px; padding: 10px 20px; background: var(--cabecera); color: #fff; flex-wrap: wrap; }
+.app header .empresa select { background: transparent; color: #fff; border-color: #6b6f6f; min-width: 200px; }
+.app header .empresa option { color: #000; }
+.app header .secundario { color: #fff; border-color: #6b6f6f; margin-left: auto; }
+.rol { font-size: .8rem; background: var(--acento); padding: 3px 8px; border-radius: 999px; }
 .usuario { font-size: .85rem; opacity: .8; }
-.app main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.cuerpo { display: grid; grid-template-columns: 220px 1fr; }
+.cuerpo nav { background: var(--superficie); border-right: 1px solid var(--borde); padding: 12px 10px; display: grid; gap: 10px; align-content: start; min-height: calc(100vh - 56px); }
+.cuerpo nav div { display: grid; gap: 2px; }
+.cuerpo nav .seccion { margin: 6px 8px 2px; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--acento); font-weight: 600; }
+.cuerpo nav button { text-align: left; background: transparent; color: var(--tinta); border-color: transparent; padding: 6px 10px; }
+.cuerpo nav button.activo { background: var(--suave); border-color: var(--suave); font-weight: 600; }
+.app main { padding: 24px; max-width: 1400px; min-width: 0; }
 
 table { width: 100%; border-collapse: collapse; background: var(--superficie); border: 1px solid var(--borde); border-radius: 10px; }
-th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--borde); font-size: .9rem; }
-th { color: var(--tinta); background: #f7f6f2; }
+th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--borde); font-size: .88rem; vertical-align: top; }
+th { color: var(--tinta); background: #f7f6f2; white-space: nowrap; }
+td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.negativo { color: var(--error); font-weight: 600; }
+td.cambios { font-size: .8rem; max-width: 520px; word-break: break-word; }
 tr.inactivo td { opacity: .55; }
-.acciones { display: flex; gap: 6px; justify-content: flex-end; }
+tr.reversado td { text-decoration: line-through; opacity: .6; }
+tr.seleccionado td { background: var(--suave); }
+.acciones { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
 .desplazable { overflow-x: auto; }
+.subir { display: inline-block; color: var(--acento); cursor: pointer; font-size: .85rem; }
+.subir input { display: none; }
 
 .error { color: var(--error); margin: 0; }
 .ok { color: var(--ok); }
 .nota { font-size: .85rem; color: var(--texto); }
 code { background: var(--suave); padding: 2px 6px; border-radius: 4px; user-select: all; }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .cuerpo { grid-template-columns: 1fr; }
+  .cuerpo nav { min-height: 0; border-right: none; border-bottom: 1px solid var(--borde); }
+  .cuerpo nav div { display: flex; flex-wrap: wrap; gap: 4px; }
+  .cuerpo nav .seccion { width: 100%; }
   .fila .ancho { grid-column: auto; }
   .app main { padding: 16px; }
 }

@@ -2,7 +2,6 @@ import { useEffect, useState, type ChangeEvent } from 'react'
 import { supabase, mensajeError } from './supabase'
 import { aObjetos, decodificar, huella, leerCsv, plantillaCsv } from './csv'
 
-type Acceso = { empresa_id: string | null; rol: string }
 type Opcion = { id: string; nombre: string }
 type Resultado = {
   filas: number
@@ -23,11 +22,10 @@ const CATALOGOS = [
   { id: 'cuentas_contables', nombre: 'Cuentas contables', admin: true },
 ]
 
-export default function Importar({ accesos, esAdmin }: { accesos: Acceso[]; esAdmin: boolean }) {
+// Importa en la empresa elegida en la cabecera (los proveedores son globales).
+export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa: string; nombreEmpresa: string; esAdmin: boolean }) {
   const catalogos = CATALOGOS.filter((c) => esAdmin || !c.admin)
   const [catalogo, setCatalogo] = useState(catalogos[0].id)
-  const [empresas, setEmpresas] = useState<Opcion[]>([])
-  const [empresa, setEmpresa] = useState('')
   const [versiones, setVersiones] = useState<Opcion[]>([])
   const [version, setVersion] = useState('')
   const [archivo, setArchivo] = useState<Archivo | null>(null)
@@ -36,16 +34,6 @@ export default function Importar({ accesos, esAdmin }: { accesos: Acceso[]; esAd
   const [ocupado, setOcupado] = useState(false)
 
   const global = catalogo === 'proveedores'
-
-  // Empresas donde puede importar: todas para el Administrador; las de rol Captura para los demás.
-  useEffect(() => {
-    supabase.from('empresas').select('id, nombre').eq('activo', true).order('nombre').then(({ data }) => {
-      const captura = new Set(accesos.filter((a) => a.rol === 'Captura').map((a) => a.empresa_id))
-      const lista = ((data ?? []) as Opcion[]).filter((e) => esAdmin || captura.has(e.id))
-      setEmpresas(lista)
-      setEmpresa((actual) => actual || lista[0]?.id || '')
-    })
-  }, [accesos, esAdmin])
 
   useEffect(() => {
     if (catalogo !== 'partidas' || !empresa) { setVersiones([]); setVersion(''); return }
@@ -123,13 +111,7 @@ export default function Importar({ accesos, esAdmin }: { accesos: Acceso[]; esAd
             {catalogos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
         </label>
-        {!global && (
-          <label>Empresa
-            <select value={empresa} onChange={(e) => setEmpresa(e.target.value)}>
-              {empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-            </select>
-          </label>
-        )}
+        <p className="nota">{global ? 'Maestro común a todas las empresas.' : <>Se importa en <b>{nombreEmpresa}</b> (cámbiela arriba).</>}</p>
         {catalogo === 'partidas' && (
           <label>Versión de presupuesto
             <select value={version} onChange={(e) => setVersion(e.target.value)}>

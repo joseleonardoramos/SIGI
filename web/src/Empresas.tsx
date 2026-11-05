@@ -7,12 +7,14 @@ type Empresa = {
   nombre: string
   inicio_ejercicio_mes: number
   moneda_reporte: string
+  tema: string
   activo: boolean
   baja_motivo: string | null
 }
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-const VACIA = { codigo: '', nombre: '', inicio_ejercicio_mes: 1, moneda_reporte: 'RD$' }
+const VACIA = { codigo: '', nombre: '', inicio_ejercicio_mes: 1, moneda_reporte: 'RD$', tema: 'catador' }
+const TEMAS: Record<string, string> = { catador: 'El Catador', bona: 'Bona' }
 
 export default function Empresas() {
   const [lista, setLista] = useState<Empresa[]>([])
@@ -74,6 +76,11 @@ export default function Empresas() {
             <option>RD$</option><option>US$</option>
           </select>
         </label>
+        <label>Colores
+          <select value={form.tema} onChange={(e) => setForm({ ...form, tema: e.target.value })}>
+            {Object.entries(TEMAS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </label>
         <button type="submit">{editando ? 'Guardar cambios' : 'Crear empresa'}</button>
         {editando && <button type="button" className="secundario" onClick={() => { setEditando(null); setForm(VACIA) }}>Cancelar</button>}
       </form>
@@ -81,7 +88,7 @@ export default function Empresas() {
       {msg && !error && <p className="ok" role="status">{msg}</p>}
 
       <table>
-        <thead><tr><th>Código</th><th>Nombre</th><th>Año fiscal inicia</th><th>Moneda</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Código</th><th>Nombre</th><th>Año fiscal inicia</th><th>Moneda</th><th>Colores</th><th>Estado</th><th></th></tr></thead>
         <tbody>
           {lista.map((emp) => (
             <tr key={emp.id} className={emp.activo ? '' : 'inactivo'}>
@@ -89,17 +96,18 @@ export default function Empresas() {
               <td>{emp.nombre}</td>
               <td>{MESES[emp.inicio_ejercicio_mes - 1]}</td>
               <td>{emp.moneda_reporte}</td>
+              <td>{TEMAS[emp.tema] ?? emp.tema}</td>
               <td>{emp.activo ? 'Activa' : `Baja: ${emp.baja_motivo ?? ''}`}</td>
               <td className="acciones">
                 <button className="secundario" onClick={() => {
                   setEditando(emp.id)
-                  setForm({ codigo: emp.codigo, nombre: emp.nombre, inicio_ejercicio_mes: emp.inicio_ejercicio_mes, moneda_reporte: emp.moneda_reporte })
+                  setForm({ codigo: emp.codigo, nombre: emp.nombre, inicio_ejercicio_mes: emp.inicio_ejercicio_mes, moneda_reporte: emp.moneda_reporte, tema: emp.tema })
                 }}>Editar</button>
                 <button className="secundario" onClick={() => cambiarEstado(emp)}>{emp.activo ? 'Dar de baja' : 'Reactivar'}</button>
               </td>
             </tr>
           ))}
-          {lista.length === 0 && <tr><td colSpan={6}>Todavía no hay empresas.</td></tr>}
+          {lista.length === 0 && <tr><td colSpan={7}>Todavía no hay empresas.</td></tr>}
         </tbody>
       </table>
     </section>

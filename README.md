@@ -63,6 +63,20 @@ npm run test:concurrencia   # dos sesiones a la vez sobre la misma partida: la s
 npm run test:funciones      # solo el Administrador crea usuarios
 ```
 
+## Módulos
+
+El selector de la cabecera elige la empresa; sus colores (El Catador o Bona) se configuran en Administración → Empresas.
+
+| Sección | Pantallas |
+|---|---|
+| Presupuesto | Versiones, Partidas (con comprometido, ejecutado y disponible), Gastos y evidencias |
+| Operación | Telecomunicaciones, Flotas (cancelar = estado «Cancelada»), Software |
+| Personal | Personal, Ausencias (no se traslapan); el Inicio muestra quién está fuera hoy y en 30 días |
+| Catálogos | Proveedores, Cuentas de proveedor, Cuentas contables, Centros de costo, Tasas de cambio (solo el Administrador los edita) |
+| Herramientas | Importar CSV, Bitácora |
+
+Todas las listas permiten buscar y ver los registros dados de baja. Editar deja el valor anterior en la bitácora; dar de baja (solo el Administrador) pide un motivo y conserva el registro.
+
 ## Importación CSV
 
 Pantalla **Importar CSV** (Administrador y Captura). Catálogos: servicios de telecomunicaciones, líneas de flota y partidas de presupuesto; el Administrador además importa proveedores, cuentas de proveedor y cuentas contables.

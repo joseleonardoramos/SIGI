@@ -1,7 +1,7 @@
 -- Pruebas del motor de presupuesto y gastos (pgTAP).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000c1', 'captura@prueba.test'),
@@ -98,6 +98,9 @@ select lives_ok(
 select throws_ok(
   $$ select reversar_movimiento((select id from gasto_pasos where tipo = 'Pago'), 'Otra vez') $$,
   'P0001', 'Ese movimiento ya fue reversado.', 'No se reversa dos veces');
+select is(
+  (select comprometido || '|' || facturado || '|' || pagado from resumen_gastos r join gastos g on g.id = r.gasto_id where g.codigo = 'G-1'),
+  '600.00|600.00|0', 'El resumen del gasto excluye el pago reversado');
 
 -- El motivo solo se guarda si de verdad queda fuera de presupuesto
 select lives_ok(
