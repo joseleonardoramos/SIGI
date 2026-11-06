@@ -1,7 +1,7 @@
 -- Pruebas del motor de presupuesto y gastos (pgTAP).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000c1', 'captura@prueba.test'),
@@ -120,9 +120,15 @@ update presupuestos_versiones set estado = 'Cerrado' where id = '00000000-0000-0
 select throws_ok(
   $$ select registrar_movimiento((select id from gastos where codigo = 'G-7'), 'Compromiso', 10, '2026-11-05') $$,
   'P0001', 'La versión de presupuesto de esa partida está cerrada.', 'No se agrega compromiso a un presupuesto cerrado');
-select lives_ok(
+select throws_ok(
   $$ select registrar_movimiento((select id from gastos where codigo = 'G-7'), 'Factura', 100, '2026-11-05', p_ncf => 'B0100000002') $$,
+  'P0001', 'La factura requiere el proveedor (el NCF es único por emisor).', 'Una factura sin proveedor se rechaza');
+select lives_ok(
+  $$ select registrar_movimiento((select id from gastos where codigo = 'G-7'), 'Factura', 100, '2026-11-05', p_ncf => 'B0100000002',
+       p_proveedor => '00000000-0000-0000-0000-0000000000d1') $$,
   'Una factura tardía de un presupuesto cerrado se acepta');
+select is((select proveedor_id from gastos where codigo = 'G-7'), '00000000-0000-0000-0000-0000000000d1'::uuid,
+  'El proveedor se asigna al gasto con su primera factura');
 
 -- Partida dada de baja (por un proceso del servidor, sin usuario)
 reset role;
@@ -131,7 +137,7 @@ update partidas set activo = false, baja_motivo = 'Reorganización' where id = '
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
 select throws_ok(
-  $$ select registrar_movimiento((select id from gastos where codigo = 'G-6'), 'Factura', 5000, '2026-11-05', p_ncf => 'B0100000003') $$,
+  $$ select registrar_movimiento((select id from gastos where codigo = 'G-6'), 'Factura', 5000, '2026-11-05', p_ncf => 'B0100000003', p_proveedor => '00000000-0000-0000-0000-0000000000d1') $$,
   'P0001', 'La partida está dada de baja: no acepta montos nuevos.', 'Una partida dada de baja no salta el control de saldo');
 
 -- Escritura directa bloqueada

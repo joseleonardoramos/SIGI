@@ -19,6 +19,7 @@ insert into partidas (id, empresa_id, version_id, codigo, nombre, categoria, dis
   ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000b1', 'P1', 'Internet', 'Telecom', 'Uniforme', 1000),
   ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000b1', 'P2', 'Flotas', 'Flotas', 'Uniforme', 500),
   ('00000000-0000-0000-0000-0000000000f3', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000b2', 'P3', 'Año cerrado', 'Telecom', 'Uniforme', 999);
+insert into proveedores (id, nombre) values ('00000000-0000-0000-0000-0000000000d9', 'Proveedor de prueba del panel');
 insert into servicios_telecom (empresa_id, sucursal, tipo, detalle, moneda, monto) values
   ('00000000-0000-0000-0000-00000000000a', 'Sede', 'Internet', 'Fibra', 'RD$', 100),
   ('00000000-0000-0000-0000-00000000000a', 'Sede', 'Internet Móvil', 'LTE', 'US$', 10);
@@ -38,7 +39,7 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","r
 select registrar_compromiso('00000000-0000-0000-0000-00000000000a', 'G-1', 'Partida', 'Fibra', 600, current_date, p_partida => '00000000-0000-0000-0000-0000000000f1');
 select registrar_compromiso('00000000-0000-0000-0000-00000000000a', 'G-2', 'Flotas', 'Planes', 700, current_date, p_partida => '00000000-0000-0000-0000-0000000000f2', p_motivo_fuera => 'Más líneas');
 select registrar_compromiso('00000000-0000-0000-0000-00000000000a', 'G-3', 'Telecom', 'Reparación', 50, current_date, p_motivo_fuera => 'Urgente');
-select registrar_movimiento((select id from gastos where codigo = 'G-1' and empresa_id = '00000000-0000-0000-0000-00000000000a'), 'Factura', 600, current_date, p_ncf => 'B0100000099');
+select registrar_movimiento((select id from gastos where codigo = 'G-1' and empresa_id = '00000000-0000-0000-0000-00000000000a'), 'Factura', 600, current_date, p_ncf => 'B0100000099', p_proveedor => '00000000-0000-0000-0000-0000000000d9');
 select registrar_movimiento((select id from gastos where codigo = 'G-1' and empresa_id = '00000000-0000-0000-0000-00000000000a'), 'Pago', 100, current_date);
 
 -- presupuesto|comprometido|ejecutado|pagado|disponible|ahorro|exceso|sin_partida|telecom RD|US|flotas|líneas|software|fuera hoy

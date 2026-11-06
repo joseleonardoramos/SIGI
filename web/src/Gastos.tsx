@@ -12,7 +12,7 @@ type Resumen = { gasto_id: string; comprometido: number; facturado: number; paga
 
 const hoy = () => fechaLocal()
 const NUEVO = { codigo: '', origen: 'Partida', descripcion: '', partida: '', proveedor: '', cuenta: '', moneda: 'RD$', monto: '', fecha: hoy(), documento: '', motivo: '' }
-const MOV = { tipo: 'Factura', monto: '', fecha: hoy(), documento: '', ncf: '', metodo: 'Transferencia', referencia: '', motivo: '' }
+const MOV = { tipo: 'Factura', monto: '', fecha: hoy(), documento: '', ncf: '', metodo: 'Transferencia', referencia: '', motivo: '', proveedor: '' }
 
 export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: string; puedeEscribir: boolean; esAdmin: boolean }) {
   const [gastos, setGastos] = useState<Gasto[]>([])
@@ -96,7 +96,7 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
     const listo = await ejecutar(() => supabase.rpc('registrar_movimiento', {
       p_gasto: abierto, p_tipo: mov.tipo, p_monto: Number(mov.monto.replace(/,/g, '')), p_fecha: mov.fecha,
       p_documento: mov.documento || null, p_ncf: mov.ncf || null, p_metodo_pago: mov.metodo || null,
-      p_referencia_bancaria: mov.referencia || null, p_motivo_fuera: mov.motivo || null,
+      p_referencia_bancaria: mov.referencia || null, p_motivo_fuera: mov.motivo || null, p_proveedor: mov.proveedor || null,
     }), ({ Factura: 'Factura registrada.', Pago: 'Pago registrado.', Compromiso: 'Compromiso agregado.' } as Record<string, string>)[mov.tipo])
     if (listo) setMov({ ...MOV, tipo: mov.tipo })
   }
@@ -253,6 +253,14 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
               </label>
               <label>Monto *<input required inputMode="decimal" value={mov.monto} onChange={(e) => setMov({ ...mov, monto: e.target.value })} /></label>
               <label>Fecha *<input type="date" required value={mov.fecha} onChange={(e) => setMov({ ...mov, fecha: e.target.value })} /></label>
+              {mov.tipo === 'Factura' && !gasto.proveedor_id && (
+                <label>Proveedor de la factura *
+                  <select required value={mov.proveedor} onChange={(e) => setMov({ ...mov, proveedor: e.target.value })}>
+                    <option value="">—</option>
+                    {proveedores.map((p) => <option key={p.id} value={p.id}>{p.etiqueta}</option>)}
+                  </select>
+                </label>
+              )}
               {mov.tipo === 'Factura' && <label>NCF o e-CF *<input required placeholder="B0100000001" value={mov.ncf} onChange={(e) => setMov({ ...mov, ncf: e.target.value })} /></label>}
               <label>Documento<input value={mov.documento} onChange={(e) => setMov({ ...mov, documento: e.target.value })} /></label>
               {mov.tipo === 'Pago' && (
