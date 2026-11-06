@@ -26,6 +26,9 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
   const [nuevo, setNuevo] = useState(NUEVO)
   const [mov, setMov] = useState(MOV)
   const [abierto, setAbierto] = useState<string | null>(null)
+  // Los formularios solo se muestran al presionar su botón.
+  const [creando, setCreando] = useState(false)
+  const [moviendo, setMoviendo] = useState(false)
   const [buscar, setBuscar] = useState('')
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
@@ -67,8 +70,8 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
     setEvidencias((e.data ?? []) as Evidencia[])
   }
 
-  useEffect(() => { setAbierto(null); cargar() }, [empresa]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { cargarDetalle(abierto) }, [abierto]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setAbierto(null); setCreando(false); cargar() }, [empresa]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setMoviendo(false); cargarDetalle(abierto) }, [abierto]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function ejecutar(fn: () => PromiseLike<{ error: unknown }>, ok: string) {
     setError('')
@@ -88,7 +91,7 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
       p_partida: nuevo.partida || null, p_proveedor: nuevo.proveedor || null, p_cuenta_proveedor: nuevo.cuenta || null,
       p_documento: nuevo.documento || null, p_motivo_fuera: nuevo.motivo || null,
     }), 'Gasto registrado con su compromiso.')
-    if (listo) setNuevo({ ...NUEVO, fecha: nuevo.fecha })
+    if (listo) { setNuevo({ ...NUEVO, fecha: nuevo.fecha }); setCreando(false) }
   }
 
   async function agregarMovimiento(e: FormEvent) {
@@ -98,7 +101,7 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
       p_documento: mov.documento || null, p_ncf: mov.ncf || null, p_metodo_pago: mov.metodo || null,
       p_referencia_bancaria: mov.referencia || null, p_motivo_fuera: mov.motivo || null, p_proveedor: mov.proveedor || null,
     }), ({ Factura: 'Factura registrada.', Pago: 'Pago registrado.', Compromiso: 'Compromiso agregado.' } as Record<string, string>)[mov.tipo])
-    if (listo) setMov({ ...MOV, tipo: mov.tipo })
+    if (listo) { setMov({ ...MOV, tipo: mov.tipo }); setMoviendo(false) }
   }
 
   async function reversar(p: Paso) {
@@ -140,7 +143,8 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
   return (
     <section>
       <h2>Gastos y evidencias</h2>
-      {puedeEscribir && (
+      {puedeEscribir && !creando && <button type="button" onClick={() => { setNuevo({ ...NUEVO, fecha: hoy() }); setMsg(''); setError(''); setCreando(true) }}>Crear gasto</button>}
+      {puedeEscribir && creando && (
         <form className="tarjeta fila" onSubmit={crear}>
           <label>Código *<input required value={nuevo.codigo} onChange={(e) => setNuevo({ ...nuevo, codigo: e.target.value })} /></label>
           <label>Origen
@@ -175,6 +179,7 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
           <label>Orden o contrato<input value={nuevo.documento} onChange={(e) => setNuevo({ ...nuevo, documento: e.target.value })} /></label>
           <label className="ancho">Motivo si queda fuera de presupuesto<input value={nuevo.motivo} onChange={(e) => setNuevo({ ...nuevo, motivo: e.target.value })} /></label>
           <button type="submit">Registrar gasto</button>
+          <button type="button" className="secundario" onClick={() => setCreando(false)}>Cancelar</button>
         </form>
       )}
       {error && <p className="error" role="alert">{error}</p>}
@@ -244,7 +249,8 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
               </tbody>
             </table>
           </div>
-          {puedeEscribir && (
+          {puedeEscribir && !moviendo && <button type="button" onClick={() => { setMov({ ...MOV, fecha: hoy() }); setMoviendo(true) }}>Registrar movimiento</button>}
+          {puedeEscribir && moviendo && (
             <form className="fila" onSubmit={agregarMovimiento}>
               <label>Movimiento
                 <select value={mov.tipo} onChange={(e) => setMov({ ...mov, tipo: e.target.value })}>
@@ -271,6 +277,7 @@ export default function Gastos({ empresa, puedeEscribir, esAdmin }: { empresa: s
               )}
               {mov.tipo !== 'Pago' && <label className="ancho">Motivo si excede el presupuesto<input value={mov.motivo} onChange={(e) => setMov({ ...mov, motivo: e.target.value })} /></label>}
               <button type="submit">Registrar</button>
+              <button type="button" className="secundario" onClick={() => setMoviendo(false)}>Cancelar</button>
             </form>
           )}
         </div>

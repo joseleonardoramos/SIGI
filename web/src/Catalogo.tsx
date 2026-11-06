@@ -98,6 +98,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
   const [buscar, setBuscar] = useState('')
   const [verBajas, setVerBajas] = useState(false)
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
+  const [abierto, setAbierto] = useState(false) // formulario visible
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
   const escribe = puedeEscribir && (!m.soloAdmin || esAdmin)
@@ -126,7 +127,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
   }
 
   useEffect(() => {
-    setForm(vacio(m)); setEditando(null); setMsg(''); setError(''); setBuscar('')
+    setForm(vacio(m)); setEditando(null); setAbierto(false); setMsg(''); setError(''); setBuscar('')
   }, [m])
   useEffect(() => { cargar() }, [m, empresa, verBajas]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -153,10 +154,12 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
       : await supabase.from(m.tabla).insert(m.global ? datos : { ...datos, empresa_id: empresa })
     if (error) { setError(await mensajeError(error)); return }
     setMsg(editando ? 'Cambios guardados; el valor anterior queda en la bitácora.' : 'Registro creado.')
-    setForm(vacio(m))
-    setEditando(null)
+    cerrar()
     cargar()
   }
+
+  // El formulario solo se muestra al presionar Crear o Editar.
+  function cerrar() { setForm(vacio(m)); setEditando(null); setAbierto(false) }
 
   async function cambiarEstado(f: Fila) {
     setError('')
@@ -209,7 +212,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
       <td className="acciones">
         {!f.activo && <span className="nota">Baja: {f.baja_motivo}</span>}
         {escribe && f.activo && (
-          <button className="secundario" onClick={() => { setEditando(f.id); setForm(desdeFila(m, f)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
+          <button className="secundario" onClick={() => { setEditando(f.id); setForm(desdeFila(m, f)); setAbierto(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
         )}
         {esAdmin && <button className="secundario" onClick={() => cambiarEstado(f)}>{f.activo ? 'Dar de baja' : 'Reactivar'}</button>}
       </td>
@@ -244,7 +247,10 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
       <h2>{m.titulo}</h2>
       {m.nota && <p className="nota">{m.nota}</p>}
 
-      {escribe && (
+      {escribe && !abierto && (
+        <button type="button" onClick={() => { setForm(vacio(m)); setEditando(null); setMsg(''); setError(''); setAbierto(true) }}>Crear</button>
+      )}
+      {escribe && abierto && (
         <form className="tarjeta fila" onSubmit={guardar}>
           {m.campos.map((c) => (
             <label key={c.k} className={c.tipo === 'texto' || !c.tipo ? 'ancho' : ''}>
@@ -277,7 +283,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
             </label>
           ))}
           <button type="submit">{editando ? 'Guardar cambios' : 'Agregar'}</button>
-          {editando && <button type="button" className="secundario" onClick={() => { setEditando(null); setForm(vacio(m)) }}>Cancelar</button>}
+          <button type="button" className="secundario" onClick={cerrar}>Cancelar</button>
         </form>
       )}
       {error && <p className="error" role="alert">{error}</p>}

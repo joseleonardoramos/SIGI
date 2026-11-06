@@ -21,6 +21,7 @@ export default function Usuarios({ yo }: { yo: string }) {
   const [membresias, setMembresias] = useState<Membresia[]>([])
   const [email, setEmail] = useState('')
   const [clave, setClave] = useState(claveTemporal)
+  const [abierto, setAbierto] = useState(false) // formulario visible solo al presionar Crear usuario
   const [creada, setCreada] = useState<{ email: string; clave: string } | null>(null)
   const [error, setError] = useState('')
   const [msg, setMsg] = useState('')
@@ -50,6 +51,7 @@ export default function Usuarios({ yo }: { yo: string }) {
     setCreada({ email: email.trim(), clave })
     setEmail('')
     setClave(claveTemporal())
+    setAbierto(false)
     cargar()
   }
 
@@ -66,7 +68,8 @@ export default function Usuarios({ yo }: { yo: string }) {
   return (
     <section>
       <h2>Usuarios y roles</h2>
-      <form className="tarjeta fila" onSubmit={crear}>
+      {!abierto && <button type="button" onClick={() => { setCreada(null); setMsg(''); setError(''); setAbierto(true) }}>Crear usuario</button>}
+      {abierto && <form className="tarjeta fila" onSubmit={crear}>
         <label className="ancho">Correo del nuevo usuario
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
@@ -75,7 +78,8 @@ export default function Usuarios({ yo }: { yo: string }) {
         </label>
         <button type="button" className="secundario" onClick={() => setClave(claveTemporal())}>Generar otra</button>
         <button type="submit">Crear usuario</button>
-      </form>
+        <button type="button" className="secundario" onClick={() => { setEmail(''); setAbierto(false) }}>Cancelar</button>
+      </form>}
       {creada && (
         <p className="ok" role="status">
           Usuario <b>{creada.email}</b> creado. Entréguele esta contraseña temporal por un medio seguro: <code>{creada.clave}</code>.

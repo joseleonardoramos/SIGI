@@ -20,6 +20,7 @@ export default function Empresas() {
   const [lista, setLista] = useState<Empresa[]>([])
   const [form, setForm] = useState(VACIA)
   const [editando, setEditando] = useState<string | null>(null)
+  const [abierto, setAbierto] = useState(false) // formulario visible solo al presionar Crear o Editar
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
 
@@ -42,10 +43,11 @@ export default function Empresas() {
       return
     }
     setMsg(editando ? 'Empresa actualizada.' : 'Empresa creada.')
-    setForm(VACIA)
-    setEditando(null)
+    cerrar()
     cargar()
   }
+
+  function cerrar() { setForm(VACIA); setEditando(null); setAbierto(false) }
 
   async function cambiarEstado(emp: Empresa) {
     setError('')
@@ -63,7 +65,8 @@ export default function Empresas() {
   return (
     <section>
       <h2>Empresas</h2>
-      <form className="tarjeta fila" onSubmit={guardar}>
+      {!abierto && <button type="button" onClick={() => { cerrar(); setMsg(''); setError(''); setAbierto(true) }}>Crear empresa</button>}
+      {abierto && <form className="tarjeta fila" onSubmit={guardar}>
         <label>Código<input required maxLength={10} value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} /></label>
         <label className="ancho">Nombre<input required value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} /></label>
         <label>Inicio del año fiscal
@@ -82,8 +85,8 @@ export default function Empresas() {
           </select>
         </label>
         <button type="submit">{editando ? 'Guardar cambios' : 'Crear empresa'}</button>
-        {editando && <button type="button" className="secundario" onClick={() => { setEditando(null); setForm(VACIA) }}>Cancelar</button>}
-      </form>
+        <button type="button" className="secundario" onClick={cerrar}>Cancelar</button>
+      </form>}
       {error && <p className="error" role="alert">{error}</p>}
       {msg && !error && <p className="ok" role="status">{msg}</p>}
 
@@ -101,6 +104,7 @@ export default function Empresas() {
               <td className="acciones">
                 <button className="secundario" onClick={() => {
                   setEditando(emp.id)
+                  setAbierto(true)
                   setForm({ codigo: emp.codigo, nombre: emp.nombre, inicio_ejercicio_mes: emp.inicio_ejercicio_mes, moneda_reporte: emp.moneda_reporte, tema: emp.tema })
                 }}>Editar</button>
                 <button className="secundario" onClick={() => cambiarEstado(emp)}>{emp.activo ? 'Dar de baja' : 'Reactivar'}</button>
