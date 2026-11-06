@@ -2,7 +2,7 @@
 -- Todo ocurre dentro de una transacción que se deshace al final.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(25);
 
 -- Usuarios de prueba: admin (global), captura y consulta de la empresa A.
 insert into auth.users (id, email) values
@@ -95,6 +95,10 @@ select is(
 select is(
   (select count(*)::int from bitacora where tabla = 'servicios_telecom' and registro_id = '00000000-0000-0000-0000-0000000000f2' and accion = 'UPDATE'),
   1, 'La baja queda en la bitácora con el valor anterior');
+update ausencias set activo = false, baja_motivo = 'Registrada por error' where persona_id = '00000000-0000-0000-0000-0000000000e1';
+select lives_ok(
+  $$ insert into ausencias (empresa_id, persona_id, tipo, desde, hasta) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000e1', 'Permiso', '2026-11-10', '2026-11-11') $$,
+  'Una ausencia dada de baja deja libres sus fechas');
 select throws_ok(
   $$ insert into ausencias (empresa_id, persona_id, tipo, desde, hasta) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000e2', 'Viaje', '2026-12-01', '2026-12-02') $$,
   '23503', null, 'Una ausencia no puede usar una persona de otra empresa');
