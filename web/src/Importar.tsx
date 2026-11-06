@@ -20,6 +20,7 @@ const CATALOGOS = [
   { id: 'proveedores', nombre: 'Proveedores (maestro)', admin: true },
   { id: 'cuentas_proveedor', nombre: 'Cuentas de proveedor', admin: true },
   { id: 'cuentas_contables', nombre: 'Cuentas contables', admin: true },
+  { id: 'departamentos', nombre: 'Áreas y departamentos', admin: true },
 ]
 
 // Importa en la empresa elegida en la cabecera (los proveedores son globales).

@@ -12,7 +12,8 @@ export type Campo = {
   label: string
   tipo?: 'texto' | 'numero' | 'fecha' | 'si_no' | 'opciones' | 'ref' | 'lista'
   opciones?: string[]
-  ref?: { tabla: string; select?: string; etiqueta: (f: Fila) => string; global?: boolean }
+  // filtrarPor: lista dependiente (p. ej. departamentos del área elegida en el campo area_id).
+  ref?: { tabla: string; select?: string; etiqueta: (f: Fila) => string; global?: boolean; filtrarPor?: { campo: string; columna: string } }
   obligatorio?: boolean
   oculto?: boolean // no se muestra en la lista
   defecto?: string | boolean
@@ -251,11 +252,18 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
               {c.tipo === 'si_no' ? (
                 <input type="checkbox" checked={Boolean(form[c.k])} onChange={(e) => setForm({ ...form, [c.k]: e.target.checked })} />
               ) : c.tipo === 'opciones' || c.tipo === 'ref' ? (
-                <select value={String(form[c.k])} onChange={(e) => setForm({ ...form, [c.k]: e.target.value })}>
+                <select value={String(form[c.k])} onChange={(e) => setForm({
+                  ...form,
+                  [c.k]: e.target.value,
+                  // Al cambiar el campo principal se limpian los que dependen de él.
+                  ...Object.fromEntries(m.campos.filter((x) => x.ref?.filtrarPor?.campo === c.k).map((x) => [x.k, ''])),
+                })}>
                   <option value="">—</option>
                   {c.tipo === 'opciones'
                     ? c.opciones!.map((o) => <option key={o}>{o}</option>)
-                    : (refs[c.k] ?? []).map((r) => <option key={r.id} value={r.id}>{c.ref!.etiqueta(r)}</option>)}
+                    : (refs[c.k] ?? [])
+                        .filter((r) => !c.ref!.filtrarPor || r[c.ref!.filtrarPor.columna] === form[c.ref!.filtrarPor.campo])
+                        .map((r) => <option key={r.id} value={r.id}>{c.ref!.etiqueta(r)}</option>)}
                 </select>
               ) : (
                 <input

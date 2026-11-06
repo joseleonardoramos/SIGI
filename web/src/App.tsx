@@ -7,7 +7,7 @@ import Usuarios from './Usuarios'
 import Importar from './Importar'
 import Catalogo from './Catalogo'
 import Gastos from './Gastos'
-import Bitacora, { FueraHoy } from './Bitacora'
+import Bitacora from './Bitacora'
 import Panel from './Panel'
 import Comparar from './Comparar'
 import { MODULOS } from './modulos'
@@ -49,6 +49,8 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'cuentas_proveedor', titulo: 'Cuentas de proveedor', ver: todos },
     { id: 'cuentas_contables', titulo: 'Cuentas contables', ver: todos },
     { id: 'centros_costo', titulo: 'Centros de costo', ver: todos },
+    { id: 'areas', titulo: 'Áreas', ver: todos },
+    { id: 'departamentos', titulo: 'Departamentos', ver: todos },
     { id: 'tasas', titulo: 'Tasas de cambio', ver: todos },
   ] },
   { seccion: 'Herramientas', entradas: [
@@ -137,7 +139,7 @@ export default function App() {
         </div>
       </aside>
       <div className="contenido">
-        <header className="cabecera">
+        {vista !== 'inicio' && <header className="cabecera">
           <span className="ruta">
             {seccion?.seccion || 'Control'} · Ambiente <b>{actual?.nombre ?? '—'}</b> · Corte al {corte}{actual && ` · Moneda de reporte ${actual.moneda_reporte}`}
           </span>
@@ -152,12 +154,12 @@ export default function App() {
               </label>
             )}
           </div>
-        </header>
+        </header>}
         <main>
           {sinEmpresa && <p className="nota">{esAdmin ? 'Cree primero una empresa en Administración → Empresas.' : 'Su usuario aún no tiene acceso a ninguna empresa. Pida al Administrador que le asigne un rol.'}</p>}
           {!sinEmpresa && (
             <>
-              {vista === 'inicio' && <Inicio accesos={accesos} esAdmin={esAdmin} empresa={empresa} personal={permisos.personal} />}
+              {vista === 'inicio' && <Panel empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} personal={permisos.personal} ir={setVista} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
@@ -171,28 +173,6 @@ export default function App() {
         </main>
       </div>
     </div>
-  )
-}
-
-function Inicio({ accesos, esAdmin, empresa, personal }: { accesos: Acceso[]; esAdmin: boolean; empresa: string; personal: boolean }) {
-  return (
-    <section>
-      <h2>Panel gerencial</h2>
-      {empresa && <Panel empresa={empresa} personal={personal} />}
-      <div className="tarjetas">
-        <div className="tarjeta">
-          <h3>Mis accesos</h3>
-          <ul className="lista">
-            {esAdmin && <li><b>Administrador</b> en todas las empresas</li>}
-            {accesos.filter((a) => a.empresa_id).map((a) => (
-              <li key={a.empresa_id}><b>{a.rol}</b> en {a.empresas?.nombre}</li>
-            ))}
-          </ul>
-          <p className="nota">Si entró con una contraseña temporal, cámbiela en «Cambiar contraseña».</p>
-        </div>
-        {personal && empresa && <FueraHoy empresa={empresa} />}
-      </div>
-    </section>
   )
 }
 

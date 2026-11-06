@@ -15,6 +15,11 @@ const cuentaProveedor = {
   etiqueta: (f: Fila) => `${s((f.proveedores as { nombre?: string } | null)?.nombre)} · ${s(f.numero)}`,
 }
 
+// Maestro de áreas y departamentos (listas desplegables). El departamento depende del área elegida.
+const area = { tabla: 'areas', etiqueta: (f: Fila) => s(f.nombre) }
+const departamentoDelArea = { tabla: 'departamentos', etiqueta: (f: Fila) => s(f.nombre), filtrarPor: { campo: 'area_id', columna: 'area_id' } }
+const departamento = { tabla: 'departamentos', select: '*, areas(nombre)', etiqueta: (f: Fila) => `${s((f.areas as { nombre?: string } | null)?.nombre)} · ${s(f.nombre)}` }
+
 export const MODULOS: Record<string, Modulo> = {
   telecom: {
     id: 'telecom', titulo: 'Telecomunicaciones', tabla: 'servicios_telecom', orden: { k: 'sucursal' }, agrupar: ['sucursal'],
@@ -37,15 +42,15 @@ export const MODULOS: Record<string, Modulo> = {
     ],
   },
   flotas: {
-    id: 'flotas', titulo: 'Flotas móviles', tabla: 'lineas_flota', orden: { k: 'area' }, agrupar: ['area', 'departamento'],
+    id: 'flotas', titulo: 'Flotas móviles', tabla: 'lineas_flota', orden: { k: 'numero' }, agrupar: ['area_id', 'departamento_id'],
     total: { k: 'costo_mensual', label: 'Costo mensual (sin canceladas)', si: (f) => f.estado !== 'Cancelada' },
     nota: 'Para cancelar una línea, cambie su estado a «Cancelada»: deja de sumar en los totales y se conserva.',
     campos: [
       { k: 'numero', label: 'Número', obligatorio: true },
       { k: 'sim', label: 'Tarjeta SIM', oculto: true },
       { k: 'usuario', label: 'Nombre' },
-      { k: 'area', label: 'Área', obligatorio: true },
-      { k: 'departamento', label: 'Departamento', obligatorio: true },
+      { k: 'area_id', label: 'Área', tipo: 'ref', ref: area, obligatorio: true },
+      { k: 'departamento_id', label: 'Departamento', tipo: 'ref', ref: departamentoDelArea, obligatorio: true },
       { k: 'cuenta_proveedor_id', label: 'Cuenta proveedor', tipo: 'ref', ref: cuentaProveedor },
       { k: 'datos', label: 'Datos', tipo: 'si_no', defecto: true },
       { k: 'cantidad', label: 'Cantidad' },
@@ -136,7 +141,7 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'cantidad', label: 'Cantidad', tipo: 'numero', defecto: '1', obligatorio: true },
       { k: 'costo', label: 'Costo total (todas las unidades)', tipo: 'numero' },
       { k: 'moneda', label: 'Moneda', tipo: 'opciones', opciones: MONEDAS, defecto: 'RD$', obligatorio: true },
-      { k: 'departamento', label: 'Departamento' },
+      { k: 'departamento_id', label: 'Departamento', tipo: 'ref', ref: departamento },
       { k: 'fecha_prevista', label: 'Fecha prevista', tipo: 'fecha' },
       { k: 'estado', label: 'Estado', tipo: 'opciones', opciones: ['Propuesta', 'Presupuestada', 'Ejecutada', 'Descartada'], defecto: 'Propuesta', obligatorio: true },
     ],
@@ -164,7 +169,7 @@ export const MODULOS: Record<string, Modulo> = {
     campos: [
       { k: 'nombre', label: 'Nombre', obligatorio: true },
       { k: 'cargo', label: 'Cargo' },
-      { k: 'area', label: 'Área' },
+      { k: 'area_id', label: 'Área', tipo: 'ref', ref: area },
     ],
   },
   ausencias: {
@@ -206,6 +211,19 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'categoria', label: 'Categoría', obligatorio: true },
       { k: 'centro_costo_codigo', label: 'Centro de costo (3 dígitos)' },
       { k: 'estado', label: 'Estado', tipo: 'opciones', opciones: ['Activa', 'Nueva', 'Inactiva'], defecto: 'Activa', obligatorio: true },
+    ],
+  },
+  areas: {
+    id: 'areas', titulo: 'Áreas', tabla: 'areas', soloAdmin: true, orden: { k: 'nombre' },
+    nota: 'Las áreas aparecen como lista en Flotas, Personal y Reposición. Cada área tiene sus departamentos.',
+    campos: [{ k: 'nombre', label: 'Área', obligatorio: true }],
+  },
+  departamentos: {
+    id: 'departamentos', titulo: 'Departamentos', tabla: 'departamentos', soloAdmin: true, orden: { k: 'nombre' }, agrupar: ['area_id'],
+    nota: 'El nombre no se repite dentro de un área. También se cargan desde Importar CSV → Áreas y departamentos.',
+    campos: [
+      { k: 'area_id', label: 'Área', tipo: 'ref', ref: area, obligatorio: true },
+      { k: 'nombre', label: 'Departamento', obligatorio: true },
     ],
   },
   centros_costo: {

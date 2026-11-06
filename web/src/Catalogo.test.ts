@@ -14,7 +14,7 @@ const { MODULOS } = await import('./modulos')
 describe('aDatos', () => {
   it('convierte montos con comas, vacíos a nulo y casillas a booleano', () => {
     const { datos } = aDatos(MODULOS.flotas, {
-      numero: '809-555-0001', sim: '', usuario: '', area: 'Ventas', departamento: 'Ruta', cuenta_proveedor_id: '',
+      numero: '809-555-0001', sim: '', usuario: '', area_id: 'a1', departamento_id: 'd1', cuenta_proveedor_id: '',
       datos: false, cantidad: '', costo_mensual: '1,250.50', estado: 'Sin alerta', fecha_alta: '2026-11-04', fecha_cambiazo: '',
     })
     expect(datos).toMatchObject({ costo_mensual: 1250.5, datos: false, sim: null, fecha_cambiazo: null, cuenta_proveedor_id: null })

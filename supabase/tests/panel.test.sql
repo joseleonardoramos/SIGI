@@ -23,9 +23,11 @@ insert into proveedores (id, nombre) values ('00000000-0000-0000-0000-0000000000
 insert into servicios_telecom (empresa_id, sucursal, tipo, detalle, moneda, monto) values
   ('00000000-0000-0000-0000-00000000000a', 'Sede', 'Internet', 'Fibra', 'RD$', 100),
   ('00000000-0000-0000-0000-00000000000a', 'Sede', 'Internet Móvil', 'LTE', 'US$', 10);
-insert into lineas_flota (empresa_id, numero, area, departamento, costo_mensual, estado) values
-  ('00000000-0000-0000-0000-00000000000a', '1', 'Ventas', 'Ruta', 300, 'Sin alerta'),
-  ('00000000-0000-0000-0000-00000000000a', '2', 'Ventas', 'Ruta', 200, 'Cancelada');
+insert into areas (id, empresa_id, nombre) values ('00000000-0000-0000-0000-0000000000aa', '00000000-0000-0000-0000-00000000000a', 'Ventas');
+insert into departamentos (id, empresa_id, area_id, nombre) values ('00000000-0000-0000-0000-0000000000ad', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000aa', 'Ruta');
+insert into lineas_flota (empresa_id, numero, area_id, departamento_id, costo_mensual, estado) values
+  ('00000000-0000-0000-0000-00000000000a', '1', '00000000-0000-0000-0000-0000000000aa', '00000000-0000-0000-0000-0000000000ad', 300, 'Sin alerta'),
+  ('00000000-0000-0000-0000-00000000000a', '2', '00000000-0000-0000-0000-0000000000aa', '00000000-0000-0000-0000-0000000000ad', 200, 'Cancelada');
 insert into productos_software (empresa_id, nombre, tipo, unidad, contratadas, precio_unitario, periodicidad, inicio, vence, renovacion) values
   ('00000000-0000-0000-0000-00000000000a', 'Antivirus', 'Licencia', 'Equipo', 10, 5, 'Anual', current_date - 300, current_date + 30, 'Manual'),
   ('00000000-0000-0000-0000-00000000000a', 'Firma digital', 'Certificado', 'Certificado', 1, 50, 'Anual', current_date - 400, current_date - 1, 'Manual'),

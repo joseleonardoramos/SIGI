@@ -17,6 +17,35 @@
   --ahorro-tinta: #5e5539;
   --riesgo: #A8481A;
   --ok: #1a5632;
+  --primario: #262727;
+  --primario2: #807451;
+  --primario3: #d6cda5;
+  --presupuesto: #d6cda5;
+  --ahorro: #807451;
+  --ahorro-suave: #d6cda5;
+  --enlace: #6b6143;
+  --boton-activo: #262727;
+}
+/* Vista consolidada del panel (tema 'all' del diseño). */
+[data-tema='todas'] {
+  --suelo: #F4F6F8;
+  --tinta: #131A22;
+  --tenue: #5A6573;
+  --borde: #DDE2E8;
+  --suave: #F7F9FB;
+  --acento: #0F5E73;
+  --pista: #EEF1F4;
+  --ahorro-fondo: #E7F5EF;
+  --ahorro-tinta: #075B3F;
+  --riesgo: #A8481A;
+  --primario: #1D3557;
+  --primario2: #5B84B1;
+  --primario3: #A9C1DA;
+  --presupuesto: #B8C2CE;
+  --ahorro: #0B7A55;
+  --ahorro-suave: #8FD3B8;
+  --enlace: #0F5E73;
+  --boton-activo: #1D3557;
 }
 [data-tema='bona'] {
   --suelo: #F4F4F4;
@@ -35,6 +64,14 @@
   --ahorro-tinta: #1A5632;
   --riesgo: #BC2F2C;
   --ok: #1A5632;
+  --primario: #000000;
+  --primario2: #BC2F2C;
+  --primario3: #E8A9A7;
+  --presupuesto: #D6D6D6;
+  --ahorro: #1A5632;
+  --ahorro-suave: #9CC7AC;
+  --enlace: #1A5632;
+  --boton-activo: #BC2F2C;
 }
 
 * { box-sizing: border-box; }
@@ -128,6 +165,10 @@ table { width: 100%; border-collapse: collapse; background: #fff; border: 1px so
 th { text-align: left; font-weight: 600; font-size: 12px; padding: 10px 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.12); white-space: nowrap; background: var(--suave); }
 td { padding: 11px 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.06); vertical-align: middle; }
 td.num { text-align: right; white-space: nowrap; }
+/* Tablas dentro de tarjetas, como table.t del diseño. */
+table.t { border: none; border-radius: 0; background: transparent; }
+table.t th { background: none; }
+table.t .r { text-align: right; white-space: nowrap; }
 td.negativo { color: var(--riesgo); font-weight: 600; }
 td.cambios { font-size: 12px; max-width: 520px; word-break: break-word; }
 tr.inactivo td { opacity: .55; }

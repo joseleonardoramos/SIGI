@@ -1,7 +1,7 @@
 -- Pruebas de la importación CSV (pgTAP).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'admin@prueba.test'),
@@ -15,6 +15,8 @@ insert into proveedores (id, nombre) values ('00000000-0000-0000-0000-0000000000
 insert into cuentas_proveedor (empresa_id, proveedor_id, numero) values
   ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000d1', '7001');
 insert into tasas_cambio (moneda, vigente_desde, tasa, fuente) values ('US$', '2026-01-01', 60, 'Prueba');
+insert into areas (id, empresa_id, nombre) values ('00000000-0000-0000-0000-0000000000aa', '00000000-0000-0000-0000-00000000000a', 'Ventas');
+insert into departamentos (empresa_id, area_id, nombre) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000aa', 'Ruta');
 insert into presupuestos_versiones (id, empresa_id, ejercicio, numero, estado) values
   ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-00000000000a', '2026-2027', 1, 'Vigente'),
   ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-00000000000a', '2025-2026', 1, 'Cerrado');
@@ -100,7 +102,7 @@ select is((select distribucion from partidas where codigo = 'P1'), 'Puntual · m
 -- Catálogos del Administrador
 select throws_ok(
   $$ select importar_csv('proveedores', null, 'pr.csv', repeat('1', 64), '[{"Nombre": "Nuevo"}]', true) $$,
-  'P0001', 'Solo el Administrador importa proveedores y cuentas contables.', 'Captura no importa proveedores');
+  'P0001', 'Solo el Administrador importa proveedores, cuentas, áreas y departamentos.', 'Captura no importa proveedores');
 
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}';
 select is(
@@ -118,6 +120,24 @@ select is(
 select is(
   (select importar_csv('proveedores', null, 'pr.csv', repeat('4', 64), '[{"Nombre": "CLARO PRUEBA"}]') -> 'errores' -> 0 ->> 'mensaje'),
   'Ya existe un registro igual (en el archivo o en SIGI)', 'Un proveedor que solo cambia mayúsculas se rechaza');
+
+-- Maestro de áreas y departamentos
+select is(
+  (select importar_csv('departamentos', '00000000-0000-0000-0000-00000000000a', 'd.csv', repeat('5', 64), '[
+     {"Área": "Operaciones", "Departamento": "Almacén"},
+     {"Área": "ventas", "Departamento": "Ruta"}
+   ]') -> 'errores'),
+  '[{"fila": 3, "mensaje": "Ya existe un registro igual (en el archivo o en SIGI)"}]'::jsonb, 'Un departamento no se repite dentro de su área');
+select is(
+  (select (importar_csv('departamentos', '00000000-0000-0000-0000-00000000000a', 'd2.csv', repeat('6', 64),
+     '[{"Área": "Operaciones", "Departamento": "Almacén"}]', true) ->> 'importado')
+     || '|' || (select count(*) from areas where nombre = 'Operaciones')),
+  'true|1', 'Importar áreas y departamentos crea el área que falta');
+select is(
+  (select importar_csv('lineas_flota', '00000000-0000-0000-0000-00000000000a', 'f9.csv', repeat('7', 64), '[
+     {"Cuenta Proveedor": "7001", "Número": "809-555-0099", "Área": "Logística", "Departamento": "Ruta", "Precio": "10"}
+   ]') -> 'errores' -> 0 ->> 'mensaje'),
+  'El área «Logística» no existe en el maestro de áreas', 'Una línea de flota exige un área del maestro');
 
 select * from finish();
 rollback;
