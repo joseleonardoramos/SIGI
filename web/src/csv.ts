@@ -65,8 +65,26 @@ export async function huella(bytes: ArrayBuffer): Promise<string> {
   return Array.from(new Uint8Array(h), (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-// Encabezado de plantilla con BOM, para que Excel lo abra como UTF-8.
-export function plantillaCsv(columnas: string[]): string {
-  const celda = (c: string) => (/[",;\r\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)
-  return '﻿' + columnas.map(celda).join(',') + '\r\n'
+// CSV con BOM, para que Excel lo abra como UTF-8; comillas solo donde hacen falta.
+export function aCsv(encabezado: string[], filas: unknown[][]): string {
+  const celda = (v: unknown) => {
+    let t = v == null ? '' : String(v)
+    // Un texto que empieza con = + - @ Excel lo ejecuta como fórmula; el apóstrofo lo deja como texto.
+    // Los números van como números (un monto negativo no se toca).
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(t)) t = `'${t}`
+    return /[",;\r\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
+  }
+  return '﻿' + [encabezado, ...filas].map((f) => f.map(celda).join(',')).join('\r\n') + '\r\n'
+}
+
+export const plantillaCsv = (columnas: string[]) => aCsv(columnas, [])
+
+// Entrega un texto como archivo descargado por el navegador.
+export function descargar(nombre: string, texto: string) {
+  const url = URL.createObjectURL(new Blob([texto], { type: 'text/csv;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nombre
+  a.click()
+  URL.revokeObjectURL(url)
 }

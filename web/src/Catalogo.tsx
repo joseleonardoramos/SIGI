@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { supabase, mensajeError, leerTodo } from './supabase'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { supabase, mensajeError, leerTodo, fechaLocal, dinero } from './supabase'
+import { aCsv, descargar } from './csv'
 
 // Pantalla genérica de un catálogo: lista con búsqueda, alta, edición y baja con motivo.
 // Cada módulo la configura en modulos.ts. Los permisos reales los aplica la base (RLS).
@@ -28,11 +29,21 @@ export type Modulo = {
   total?: { k: string; label: string; si?: (f: Fila) => boolean }
   extra?: { cargar: (empresa: string) => Promise<Record<string, Record<string, unknown>>>; columnas: { k: string; label: string }[] }
   nota?: string
+  agrupar?: string[] // campos para agrupar la lista, de mayor a menor (área → departamento)
+}
+
+// Agrupa filas por una etiqueta, en orden alfabético; las vacías van a «(sin dato)».
+export function agruparPor<T>(filas: T[], etiqueta: (f: T) => string): [string, T[]][] {
+  const grupos = new Map<string, T[]>()
+  for (const f of filas) {
+    const k = etiqueta(f).trim() || '(sin dato)'
+    grupos.set(k, [...(grupos.get(k) ?? []), f])
+  }
+  return [...grupos.entries()].sort(([a], [b]) => a.localeCompare(b, 'es'))
 }
 
 type Valores = Record<string, string | boolean>
 
-const numero = (v: unknown) => Number(v).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 function vacio(m: Modulo): Valores {
   return Object.fromEntries(m.campos.map((c) => [c.k, c.defecto ?? (c.tipo === 'si_no' ? false : '')]))
@@ -85,6 +96,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
   const [editando, setEditando] = useState<string | null>(null)
   const [buscar, setBuscar] = useState('')
   const [verBajas, setVerBajas] = useState(false)
+  const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
   const escribe = puedeEscribir && (!m.soloAdmin || esAdmin)
@@ -122,7 +134,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
     if (v == null || v === '') return ''
     if (c.tipo === 'si_no') return v ? 'Sí' : 'No'
     if (c.tipo === 'lista') return (v as string[]).join('; ')
-    if (c.tipo === 'numero') return numero(v)
+    if (c.tipo === 'numero') return dinero(v)
     if (c.tipo === 'ref') {
       const r = refs[c.k]?.find((x) => x.id === v)
       return r ? c.ref!.etiqueta(r) : '(dado de baja)'
@@ -164,15 +176,67 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
     ? filas.filter((f) => visibles.some((c) => mostrar(c, f).toLowerCase().includes(termino)))
     : filas
   // Un total por moneda: sumar RD$ y US$ juntos no tiene sentido.
-  const totales: Record<string, number> = {}
-  if (m.total) {
-    for (const f of lista) {
-      if (!f.activo || !(m.total.si?.(f) ?? true)) continue
+  function totalTexto(grupo: Fila[]): string {
+    const totales: Record<string, number> = {}
+    for (const f of grupo) {
+      if (!m.total || !f.activo || !(m.total.si?.(f) ?? true)) continue
       const moneda = String(f.moneda ?? '')
       totales[moneda] = (totales[moneda] ?? 0) + Number(f[m.total.k] ?? 0)
     }
+    return Object.entries(totales).map(([moneda, v]) => `${moneda ? `${moneda} ` : ''}${dinero(v)}`).join(' · ') || dinero(0)
   }
-  const total = Object.entries(totales).map(([moneda, v]) => `${moneda ? `${moneda} ` : ''}${numero(v)}`).join(' · ') || numero(0)
+  const total = totalTexto(lista)
+  const columnas = visibles.length + (m.extra?.columnas.length ?? 0) + 1
+
+  function exportar() {
+    const encabezado = [...visibles.map((c) => c.label), ...(m.extra?.columnas.map((c) => c.label) ?? []), 'Estado del registro']
+    const datos = lista.map((f) => [
+      ...visibles.map((c) => (c.tipo === 'numero' ? f[c.k] : mostrar(c, f))), // números sin formato, para Excel
+      ...(m.extra?.columnas.map((c) => extra[f.id]?.[c.k]) ?? []),
+      f.activo ? 'Activo' : `Baja: ${f.baja_motivo ?? ''}`,
+    ])
+    descargar(`${m.id}-${fechaLocal()}.csv`, aCsv(encabezado, datos))
+  }
+
+  const filaDatos = (f: Fila) => (
+    <tr key={f.id} className={f.activo ? '' : 'inactivo'}>
+      {visibles.map((c) => <td key={c.k} className={c.tipo === 'numero' ? 'num' : ''}>{mostrar(c, f)}</td>)}
+      {m.extra?.columnas.map((c) => {
+        const v = extra[f.id]?.[c.k]
+        return <td key={c.k} className={`num${Number(v) < 0 ? ' negativo' : ''}`}>{v == null ? '' : dinero(v)}</td>
+      })}
+      <td className="acciones">
+        {!f.activo && <span className="nota">Baja: {f.baja_motivo}</span>}
+        {escribe && f.activo && (
+          <button className="secundario" onClick={() => { setEditando(f.id); setForm(desdeFila(m, f)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
+        )}
+        {esAdmin && <button className="secundario" onClick={() => cambiarEstado(f)}>{f.activo ? 'Dar de baja' : 'Reactivar'}</button>}
+      </td>
+    </tr>
+  )
+
+  // Grupos expandibles (sucursal; área → departamento → líneas), con conteo y subtotal.
+  function filasAgrupadas(grupo: Fila[], niveles: string[], ruta: string): ReactNode[] {
+    if (niveles.length === 0) return grupo.map(filaDatos)
+    const campo = m.campos.find((c) => c.k === niveles[0])!
+    return agruparPor(grupo, (f) => mostrar(campo, f)).flatMap(([nombre, filasGrupo]) => {
+      const clave = `${ruta}/${nombre}`
+      const abierto = abiertos.has(clave)
+      return [
+        <tr key={clave} className={`grupo nivel-${ruta.split('/').length - 1}`}>
+          <td colSpan={columnas}>
+            <button className="enlace" aria-expanded={abierto} onClick={() => {
+              const s = new Set(abiertos)
+              if (abierto) s.delete(clave); else s.add(clave)
+              setAbiertos(s)
+            }}>{abierto ? '▾' : '▸'} {campo.label}: {nombre}</button>
+            <span className="nota"> · {filasGrupo.length} registro(s){m.total && ` · ${totalTexto(filasGrupo)}`}</span>
+          </td>
+        </tr>,
+        ...(abierto ? filasAgrupadas(filasGrupo, niveles.slice(1), clave) : []),
+      ]
+    })
+  }
 
   return (
     <section>
@@ -215,6 +279,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
         <label className="buscar">Buscar<input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
         <label className="casilla"><input type="checkbox" checked={verBajas} onChange={(e) => setVerBajas(e.target.checked)} /> Mostrar dados de baja</label>
         <span className="nota">{lista.length} registro(s){m.total && ` · ${m.total.label}: ${total}`}</span>
+        <button type="button" className="secundario" onClick={exportar} disabled={lista.length === 0}>Exportar CSV</button>
       </div>
 
       <div className="desplazable">
@@ -227,23 +292,8 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
             </tr>
           </thead>
           <tbody>
-            {lista.map((f) => (
-              <tr key={f.id} className={f.activo ? '' : 'inactivo'}>
-                {visibles.map((c) => <td key={c.k} className={c.tipo === 'numero' ? 'num' : ''}>{mostrar(c, f)}</td>)}
-                {m.extra?.columnas.map((c) => {
-                  const v = extra[f.id]?.[c.k]
-                  return <td key={c.k} className={`num${Number(v) < 0 ? ' negativo' : ''}`}>{v == null ? '' : numero(v)}</td>
-                })}
-                <td className="acciones">
-                  {!f.activo && <span className="nota">Baja: {f.baja_motivo}</span>}
-                  {escribe && f.activo && (
-                    <button className="secundario" onClick={() => { setEditando(f.id); setForm(desdeFila(m, f)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
-                  )}
-                  {esAdmin && <button className="secundario" onClick={() => cambiarEstado(f)}>{f.activo ? 'Dar de baja' : 'Reactivar'}</button>}
-                </td>
-              </tr>
-            ))}
-            {lista.length === 0 && <tr><td colSpan={visibles.length + (m.extra?.columnas.length ?? 0) + 1}>Sin registros.</td></tr>}
+            {m.agrupar ? filasAgrupadas(lista, m.agrupar, '') : lista.map(filaDatos)}
+            {lista.length === 0 && <tr><td colSpan={columnas}>Sin registros.</td></tr>}
           </tbody>
         </table>
       </div>

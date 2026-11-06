@@ -9,10 +9,14 @@ import Catalogo from './Catalogo'
 import Gastos from './Gastos'
 import Bitacora, { FueraHoy } from './Bitacora'
 import Panel from './Panel'
+import Comparar from './Comparar'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
-type Empresa = { id: string; nombre: string; tema: string }
+type Empresa = { id: string; nombre: string; tema: string; moneda_reporte: string }
+
+// Sello del menú, como en el diseño: iniciales de la empresa (El Catador → EC, Bona → B).
+const sello = (nombre?: string) => (nombre ?? 'SIGI').split(/\s+/).filter((p) => p.length > 2 || /^[A-Z]/.test(p)).slice(0, 2).map((p) => p[0].toUpperCase()).join('') || 'SI'
 type Permisos = { esAdmin: boolean; escribe: boolean; personal: boolean }
 type Entrada = { id: string; titulo: string; ver: (p: Permisos) => boolean }
 
@@ -23,6 +27,7 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
   { seccion: 'Presupuesto', entradas: [
     { id: 'versiones', titulo: 'Versiones', ver: todos },
     { id: 'partidas', titulo: 'Partidas', ver: todos },
+    { id: 'comparar', titulo: 'Comparar versiones', ver: todos },
     { id: 'gastos', titulo: 'Gastos y evidencias', ver: todos },
   ] },
   { seccion: 'Operación', entradas: [
@@ -82,7 +87,7 @@ export default function App() {
       .eq('usuario_id', usuarioId).eq('activo', true)
       .then(({ data }) => setAccesos((data ?? []) as unknown as Acceso[]))
     // RLS devuelve solo las empresas que este usuario puede ver.
-    supabase.from('empresas').select('id, nombre, tema').eq('activo', true).order('nombre')
+    supabase.from('empresas').select('id, nombre, tema, moneda_reporte').eq('activo', true).order('nombre')
       .then(({ data }) => {
         const lista = (data ?? []) as Empresa[]
         setEmpresas(lista)
@@ -104,44 +109,58 @@ export default function App() {
   const modulo = MODULOS[vista]
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
 
+  const seccion = MENU.find((s) => s.entradas.some((x) => x.id === vista))
+  const corte = new Date().toLocaleDateString('es-DO', { day: 'numeric', month: 'short', year: 'numeric' })
+
   return (
     <div className="app" data-tema={actual?.tema ?? 'catador'}>
-      <header>
-        <strong>SIGI</strong>
-        {empresas.length > 0 && (
-          <label className="empresa">
-            <span className="oculto">Empresa</span>
-            <select value={empresa} onChange={(e) => setEmpresa(e.target.value)} aria-label="Empresa">
-              {empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-            </select>
-          </label>
-        )}
-        {rol && <span className="rol">{rol}</span>}
-        <span className="usuario">{session.user.email}</span>
-        <button className="secundario" onClick={() => supabase.auth.signOut()}>Salir</button>
-      </header>
-      <div className="cuerpo">
-        <nav aria-label="Principal">
+      <aside className="lateral">
+        <div className="marca">
+          <span className="sello" aria-hidden="true">{sello(actual?.nombre)}</span>
+          <div><strong>SIGI</strong><span>{actual?.nombre ?? 'Sin empresa'}</span></div>
+        </div>
+        <nav aria-label="Módulos de SIGI">
           {MENU.map(({ seccion, entradas }) => {
             const visibles = entradas.filter((x) => x.ver(permisos))
             if (visibles.length === 0) return null
-            return (
-              <div key={seccion || 'general'}>
-                {seccion && <p className="seccion">{seccion}</p>}
-                {visibles.map((x) => (
-                  <button key={x.id} className={vista === x.id ? 'activo' : ''} aria-current={vista === x.id ? 'page' : undefined} onClick={() => setVista(x.id)}>{x.titulo}</button>
-                ))}
-              </div>
-            )
+            return [
+              seccion && <p key={`s-${seccion}`} className="seccion">{seccion}</p>,
+              ...visibles.map((x) => (
+                <button key={x.id} className={vista === x.id ? 'activo' : ''} aria-current={vista === x.id ? 'page' : undefined} onClick={() => setVista(x.id)}>{x.titulo}</button>
+              )),
+            ]
           })}
         </nav>
+        <div className="pie">
+          <span>{session.user.email}</span>
+          <button onClick={() => supabase.auth.signOut()}>Salir</button>
+        </div>
+      </aside>
+      <div className="contenido">
+        <header className="cabecera">
+          <span className="ruta">
+            {seccion?.seccion || 'Control'} · Ambiente <b>{actual?.nombre ?? '—'}</b> · Corte al {corte}{actual && ` · Moneda de reporte ${actual.moneda_reporte}`}
+          </span>
+          <div className="fila-controles" style={{ margin: 0 }}>
+            {rol && <span className="rol">{rol}</span>}
+            {empresas.length > 0 && (
+              <label className="empresa">
+                <span className="oculto">Empresa</span>
+                <select value={empresa} onChange={(e) => setEmpresa(e.target.value)} aria-label="Empresa">
+                  {empresas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
+        </header>
         <main>
           {sinEmpresa && <p className="nota">{esAdmin ? 'Cree primero una empresa en Administración → Empresas.' : 'Su usuario aún no tiene acceso a ninguna empresa. Pida al Administrador que le asigne un rol.'}</p>}
           {!sinEmpresa && (
             <>
               {vista === 'inicio' && <Inicio accesos={accesos} esAdmin={esAdmin} empresa={empresa} personal={permisos.personal} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
-              {vista === 'gastos' && <Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
+              {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
+              {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'bitacora' && permisos.personal && <Bitacora empresa={empresa} esAdmin={esAdmin} />}
               {vista === 'importar' && permisos.escribe && <Importar key={empresa} empresa={empresa} nombreEmpresa={actual?.nombre ?? ''} esAdmin={esAdmin} />}
               {vista === 'empresas' && esAdmin && <Empresas />}

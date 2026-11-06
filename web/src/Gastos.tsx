@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
-import { supabase, mensajeError, fechaLocal, leerTodo } from './supabase'
+import { supabase, mensajeError, fechaLocal, leerTodo, dinero } from './supabase'
 
 // Gastos: compromiso → factura → pago, con evidencias. Todo pasa por las funciones de la base
 // (registrar_compromiso, registrar_movimiento, reversar_movimiento), que bloquean la partida y validan.
@@ -11,7 +11,6 @@ type Opcion = { id: string; etiqueta: string }
 type Resumen = { gasto_id: string; comprometido: number; facturado: number; pagado: number }
 
 const hoy = () => fechaLocal()
-const dinero = (n: number) => n.toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const NUEVO = { codigo: '', origen: 'Partida', descripcion: '', partida: '', proveedor: '', cuenta: '', moneda: 'RD$', monto: '', fecha: hoy(), documento: '', motivo: '' }
 const MOV = { tipo: 'Factura', monto: '', fecha: hoy(), documento: '', ncf: '', metodo: 'Transferencia', referencia: '', motivo: '' }
 

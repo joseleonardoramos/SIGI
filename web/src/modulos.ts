@@ -17,7 +17,7 @@ const cuentaProveedor = {
 
 export const MODULOS: Record<string, Modulo> = {
   telecom: {
-    id: 'telecom', titulo: 'Telecomunicaciones', tabla: 'servicios_telecom', orden: { k: 'sucursal' },
+    id: 'telecom', titulo: 'Telecomunicaciones', tabla: 'servicios_telecom', orden: { k: 'sucursal' }, agrupar: ['sucursal'],
     total: { k: 'monto', label: 'Monto mensual activo' },
     campos: [
       { k: 'sucursal', label: 'Sucursal', obligatorio: true },
@@ -37,7 +37,7 @@ export const MODULOS: Record<string, Modulo> = {
     ],
   },
   flotas: {
-    id: 'flotas', titulo: 'Flotas móviles', tabla: 'lineas_flota', orden: { k: 'area' },
+    id: 'flotas', titulo: 'Flotas móviles', tabla: 'lineas_flota', orden: { k: 'area' }, agrupar: ['area', 'departamento'],
     total: { k: 'costo_mensual', label: 'Costo mensual (sin canceladas)', si: (f) => f.estado !== 'Cancelada' },
     nota: 'Para cancelar una línea, cambie su estado a «Cancelada»: deja de sumar en los totales y se conserva.',
     campos: [

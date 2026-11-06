@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { supabase, mensajeError } from './supabase'
-import { aObjetos, decodificar, huella, leerCsv, plantillaCsv } from './csv'
+import { aObjetos, decodificar, descargar, huella, leerCsv, plantillaCsv } from './csv'
 
 type Opcion = { id: string; nombre: string }
 type Resultado = {
@@ -53,12 +53,7 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
     const { data, error } = await supabase.rpc('csv_plantilla', { p_catalogo: catalogo })
     if (error) { setError(await mensajeError(error)); return }
     const columnas = (data as { columna: string; obligatoria: boolean }[]).map((c) => c.columna)
-    const url = URL.createObjectURL(new Blob([plantillaCsv(columnas)], { type: 'text/csv;charset=utf-8' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `plantilla-${catalogo}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    descargar(`plantilla-${catalogo}.csv`, plantillaCsv(columnas))
   }
 
   async function enviar(datos: Archivo, confirmar: boolean) {

@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./supabase', () => ({ supabase: {}, mensajeError: async () => '', fechaLocal: () => '2026-11-04' }))
-const { aDatos } = await import('./Catalogo')
+const { aDatos, agruparPor } = await import('./Catalogo')
+
+describe('agruparPor', () => {
+  it('agrupa en orden alfabético y junta los vacíos en «(sin dato)»', () => {
+    const filas = [{ s: 'Santiago' }, { s: 'Bávaro' }, { s: '' }, { s: 'Santiago' }]
+    expect(agruparPor(filas, (f) => f.s).map(([k, v]) => `${k}:${v.length}`)).toEqual(['(sin dato):1', 'Bávaro:1', 'Santiago:2'])
+  })
+})
 const { MODULOS } = await import('./modulos')
 
 describe('aDatos', () => {

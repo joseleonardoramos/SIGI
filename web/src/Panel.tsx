@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { supabase, mensajeError } from './supabase'
+import { supabase, mensajeError, leerTodo, dinero } from './supabase'
+import { porCategoria } from './Comparar'
 
 // Panel gerencial: lee la vista panel_empresa (una fila por empresa visible; los cálculos están en la base).
 type Fila = {
@@ -24,11 +25,11 @@ type Fila = {
   reposiciones_pendientes: number
 }
 
-const dinero = (n: number) => Number(n).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const pct = (a: number, b: number) => (Number(b) > 0 ? `${((Number(a) / Number(b)) * 100).toFixed(1)} %` : '—')
 
 export default function Panel({ empresa, personal }: { empresa: string; personal: boolean }) {
   const [filas, setFilas] = useState<Fila[]>([])
+  const [categorias, setCategorias] = useState<[string, { presupuesto: number; ejecutado: number }][]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -36,6 +37,14 @@ export default function Panel({ empresa, personal }: { empresa: string; personal
       if (error) setError(await mensajeError(error))
       else setFilas((data ?? []) as Fila[])
     })
+    // Ejecución por categoría de la versión vigente (la gráfica de barras).
+    supabase.from('presupuestos_versiones').select('id').eq('empresa_id', empresa).eq('estado', 'Vigente').eq('activo', true).maybeSingle()
+      .then(async ({ data: v }) => {
+        if (!v) { setCategorias([]); return }
+        const { data } = await leerTodo<{ version_id: string; categoria: string; presupuesto: number; ejecutado: number }>((d, h) =>
+          supabase.from('saldo_partidas').select('version_id, categoria, presupuesto, ejecutado').eq('version_id', v.id).order('partida_id').range(d, h))
+        setCategorias(Object.entries(porCategoria(data, v.id)).sort(([, x], [, y]) => y.presupuesto - x.presupuesto))
+      })
   }, [empresa])
 
   const f = filas.find((x) => x.empresa_id === empresa)
@@ -43,12 +52,12 @@ export default function Panel({ empresa, personal }: { empresa: string; personal
   if (!f) return null
   const m = f.moneda_reporte
 
-  const tarjetas: { titulo: string; valor: string; nota?: string; alerta?: boolean }[] = [
+  const tarjetas: { titulo: string; valor: string; nota?: string; alerta?: boolean; ahorro?: boolean }[] = [
     { titulo: 'Presupuesto vigente', valor: `${m} ${dinero(f.presupuesto)}` },
     { titulo: 'Ejecutado', valor: `${m} ${dinero(f.ejecutado)}`, nota: `${pct(f.ejecutado, f.presupuesto)} del presupuesto · pagado ${dinero(f.pagado)}` },
     { titulo: 'Comprometido', valor: `${m} ${dinero(f.comprometido)}` },
     { titulo: 'Disponible', valor: `${m} ${dinero(f.disponible)}`, alerta: Number(f.disponible) < 0 },
-    { titulo: 'Ahorro en partidas', valor: `${m} ${dinero(f.ahorro)}`, nota: 'Saldo de las partidas por debajo de su presupuesto' },
+    { titulo: 'Ahorro en partidas', valor: `${m} ${dinero(f.ahorro)}`, nota: 'Saldo de las partidas por debajo de su presupuesto', ahorro: true },
     { titulo: 'Fuera de presupuesto', valor: `${m} ${dinero(Number(f.exceso) + Number(f.sin_partida))}`, nota: `Excesos ${dinero(f.exceso)} · sin partida ${dinero(f.sin_partida)}`, alerta: Number(f.exceso) + Number(f.sin_partida) > 0 },
     { titulo: 'Telecomunicaciones / mes', valor: `RD$ ${dinero(f.telecom_rd)}`, nota: Number(f.telecom_us) ? `y US$ ${dinero(f.telecom_us)}` : undefined },
     { titulo: 'Flotas / mes', valor: `RD$ ${dinero(f.flotas_mensual)}`, nota: `${f.flotas_lineas} ${Number(f.flotas_lineas) === 1 ? 'línea activa' : 'líneas activas'}` },
@@ -66,13 +75,37 @@ export default function Panel({ empresa, personal }: { empresa: string; personal
     <>
       <div className="indicadores">
         {tarjetas.map((t) => (
-          <div key={t.titulo} className={`tarjeta indicador${t.alerta ? ' alerta' : ''}`}>
+          <div key={t.titulo} className={`tarjeta indicador${t.alerta ? ' alerta' : ''}${t.ahorro ? ' ahorro' : ''}`}>
             <span className="nota">{t.titulo}</span>
             <strong>{t.valor}</strong>
             {t.nota && <span className="nota">{t.nota}</span>}
           </div>
         ))}
       </div>
+
+      {categorias.length > 0 && (
+        <div className="tarjeta">
+          <h3 style={{ margin: 0 }}>Ejecución por categoría · versión vigente</h3>
+          <p className="nota" style={{ margin: 0 }}>Barra: presupuesto de la categoría; relleno: lo ejecutado ({m}). En rojo, lo que supera el presupuesto.</p>
+          <div className="barras">
+            {categorias.map(([cat, t]) => {
+              const max = categorias[0][1].presupuesto || 1
+              const uso = t.presupuesto ? Math.min(t.ejecutado / t.presupuesto, 1) : 1
+              const exceso = t.ejecutado > t.presupuesto
+              return (
+                <div key={cat} className="barra">
+                  <span>{cat}</span>
+                  <div className="pista" style={{ width: `${Math.max((t.presupuesto / max) * 100, 4)}%` }} role="img"
+                    aria-label={`${cat}: ejecutado ${dinero(t.ejecutado)} de ${dinero(t.presupuesto)}`}>
+                    <div className={exceso ? 'relleno exceso' : 'relleno'} style={{ width: `${uso * 100}%` }} />
+                  </div>
+                  <span className="mono nota">{dinero(t.ejecutado)} / {dinero(t.presupuesto)} · {pct(t.ejecutado, t.presupuesto)}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {filas.length > 1 && (
         <>

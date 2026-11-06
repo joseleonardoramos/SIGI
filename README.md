@@ -77,7 +77,7 @@ El selector de la cabecera elige la empresa; sus colores (El Catador o Bona) se 
 | Catálogos | Proveedores, Cuentas de proveedor, Cuentas contables, Centros de costo, Tasas de cambio (solo el Administrador los edita) |
 | Herramientas | Importar CSV, Bitácora |
 
-Todas las listas permiten buscar y ver los registros dados de baja. Editar deja el valor anterior en la bitácora; dar de baja (solo el Administrador) pide un motivo y conserva el registro.
+Telecomunicaciones se agrupa por sucursal y Flotas por área y departamento, con subtotales por moneda. Presupuesto → Comparar versiones muestra dos versiones lado a lado por categoría, y el panel incluye la ejecución por categoría de la versión vigente. Todas las listas permiten buscar, ver los registros dados de baja y exportar a CSV (lo que se ve en pantalla, con los números sin formato para Excel). Editar deja el valor anterior en la bitácora; dar de baja (solo el Administrador) pide un motivo y conserva el registro.
 
 ## Importación CSV
 
@@ -98,6 +98,8 @@ npm stop         # los detiene; los datos quedan en los volúmenes de Docker
 npm test         # todas las pruebas: base, frontend, función de usuarios, concurrencia y respaldo
 npm run respaldar -- <carpeta>
 ```
+
+Si Docker se reinició (por ejemplo, después de apagar el equipo) y la creación de usuarios u otra parte no responde, ejecute `npm stop` y luego `npm start`: algún contenedor de Supabase pudo quedar detenido.
 
 **Respaldos.** `npm run respaldar -- <carpeta>` guarda en la carpeta que usted elija la base completa (`base.dump`), los archivos de evidencias (`evidencias.tar`) y sus huellas (`sha256.txt`). No hay carpeta por defecto: sin carpeta, no se guarda nada. Para no escribirla cada vez, defina la variable `SIGI_RESPALDOS` y cada respaldo se guardará en una subcarpeta con la fecha. Los respaldos tienen datos personales: elija un lugar que usted controle. No se guardan sesiones ni tokens de acceso; después de restaurar, cada usuario vuelve a iniciar sesión.
 

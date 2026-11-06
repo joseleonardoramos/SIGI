@@ -25,6 +25,9 @@ export async function leerTodo<T>(
   return { data: filas, error: null }
 }
 
+// Monto con dos decimales en formato dominicano (1,250.50). Única definición para todas las pantallas.
+export const dinero = (n: unknown) => Number(n).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
 // Fecha AAAA-MM-DD en la hora local. toISOString() usa UTC: de noche en RD ya daría el día siguiente.
 export function fechaLocal(d = new Date()): string {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)

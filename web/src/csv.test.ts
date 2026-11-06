@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { aObjetos, decodificar, leerCsv, plantillaCsv, separador } from './csv'
+import { aCsv, aObjetos, decodificar, leerCsv, plantillaCsv, separador } from './csv'
+
+describe('aCsv', () => {
+  it('exporta lo que leerCsv vuelve a leer igual (comas, comillas, saltos y vacíos)', () => {
+    const filas = [['Sede, Santiago', 'Dijo "sí"', null, 1500.5], ['Línea\nsegunda', '', undefined, 0]]
+    const texto = aCsv(['Sucursal', 'Nota', 'Vacío', 'Monto'], filas)
+    expect(texto.startsWith('﻿')).toBe(true)
+    expect(leerCsv(texto)).toEqual([
+      ['Sucursal', 'Nota', 'Vacío', 'Monto'],
+      ['Sede, Santiago', 'Dijo "sí"', '', '1500.5'],
+      ['Línea\nsegunda', '', '', '0'],
+    ])
+  })
+
+  it('neutraliza fórmulas en textos y deja los números negativos como números', () => {
+    const texto = aCsv(['Comentario', 'Monto'], [['=HYPERLINK("http://x","Ver")', -50], ['@SUM(A1)', 10], ['+1', 0]])
+    expect(leerCsv(texto).slice(1)).toEqual([["'=HYPERLINK(\"http://x\",\"Ver\")", '-50'], ["'@SUM(A1)", '10'], ["'+1", '0']])
+  })
+})
 
 describe('leerCsv', () => {
   it('lee comas, comillas, comillas escapadas y saltos de línea dentro de comillas', () => {
