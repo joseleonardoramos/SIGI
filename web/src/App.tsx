@@ -10,6 +10,7 @@ import Gastos from './Gastos'
 import Bitacora from './Bitacora'
 import Panel from './Panel'
 import Comparar from './Comparar'
+import Telecom from './Telecom'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
@@ -108,7 +109,9 @@ export default function App() {
   const rol = esAdmin ? 'Administrador' : accesos.find((a) => a.empresa_id === empresa)?.rol ?? ''
   const permisos: Permisos = { esAdmin, escribe: esAdmin || rol === 'Captura', personal: esAdmin || rol === 'Captura' }
   const actual = empresas.find((e) => e.id === empresa)
-  const modulo = MODULOS[vista]
+  // Telecomunicaciones tiene pantalla propia (diseño); su formulario sigue saliendo de MODULOS.
+  const modulo = vista === 'telecom' ? undefined : MODULOS[vista]
+  const conCabeceraPropia = vista === 'inicio' || vista === 'telecom'
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
 
   const seccion = MENU.find((s) => s.entradas.some((x) => x.id === vista))
@@ -139,7 +142,7 @@ export default function App() {
         </div>
       </aside>
       <div className="contenido">
-        {vista !== 'inicio' && <header className="cabecera">
+        {!conCabeceraPropia && <header className="cabecera">
           <span className="ruta">
             {seccion?.seccion || 'Control'} · Ambiente <b>{actual?.nombre ?? '—'}</b> · Corte al {corte}{actual && ` · Moneda de reporte ${actual.moneda_reporte}`}
           </span>
@@ -160,6 +163,7 @@ export default function App() {
           {!sinEmpresa && (
             <>
               {vista === 'inicio' && <Panel empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} personal={permisos.personal} ir={setVista} />}
+              {vista === 'telecom' && <Telecom empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}

@@ -84,6 +84,86 @@ export function aDatos(m: Modulo, v: Valores): { datos?: Record<string, unknown>
   return { datos }
 }
 
+// Listas para los campos con referencia (proveedor, cuenta, área…), activas y de la empresa.
+export async function cargarRefs(m: Modulo, empresa: string): Promise<Record<string, Fila[]>> {
+  const listas = await Promise.all(m.campos.filter((c) => c.ref).map(async (c) => {
+    const r = await leerTodo<Fila>((desde, hasta) => {
+      let q = supabase.from(c.ref!.tabla).select(c.ref!.select ?? '*').eq('activo', true)
+      if (!c.ref!.global) q = q.eq('empresa_id', empresa)
+      return q.order('id').range(desde, hasta)
+    })
+    return [c.k, r.data] as const
+  }))
+  return Object.fromEntries(listas)
+}
+
+// Alta (fila nula) o edición de un registro del módulo. Valida con aDatos; la base decide los permisos.
+export function Formulario({ m, empresa, fila, titulo, onGuardado, onCancelar }: {
+  m: Modulo
+  empresa: string
+  fila: Fila | null
+  titulo?: string
+  onGuardado: (mensaje: string) => void
+  onCancelar: () => void
+}) {
+  const [form, setForm] = useState<Valores>(() => (fila ? desdeFila(m, fila) : vacio(m)))
+  const [refs, setRefs] = useState<Record<string, Fila[]>>({})
+  const [error, setError] = useState('')
+  useEffect(() => { cargarRefs(m, empresa).then(setRefs) }, [m, empresa])
+
+  async function guardar(e: FormEvent) {
+    e.preventDefault()
+    setError('')
+    const { datos, error: invalido } = aDatos(m, form)
+    if (!datos) { setError(invalido!); return }
+    const { error } = fila
+      ? await supabase.from(m.tabla).update(datos).eq('id', fila.id)
+      : await supabase.from(m.tabla).insert(m.global ? datos : { ...datos, empresa_id: empresa })
+    if (error) { setError(await mensajeError(error)); return }
+    onGuardado(fila ? 'Cambios guardados; el valor anterior queda en la bitácora.' : 'Registro creado.')
+  }
+
+  return (
+    <form className="tarjeta fila" onSubmit={guardar}>
+      {titulo && <h3 style={{ gridColumn: '1 / -1', margin: 0 }}>{titulo}</h3>}
+      {m.campos.map((c) => (
+        <label key={c.k} className={c.tipo === 'texto' || !c.tipo ? 'ancho' : ''}>
+          {c.label}{c.obligatorio && ' *'}
+          {c.tipo === 'si_no' ? (
+            <input type="checkbox" checked={Boolean(form[c.k])} onChange={(e) => setForm({ ...form, [c.k]: e.target.checked })} />
+          ) : c.tipo === 'opciones' || c.tipo === 'ref' ? (
+            <select value={String(form[c.k])} onChange={(e) => setForm({
+              ...form,
+              [c.k]: e.target.value,
+              // Al cambiar el campo principal se limpian los que dependen de él.
+              ...Object.fromEntries(m.campos.filter((x) => x.ref?.filtrarPor?.campo === c.k).map((x) => [x.k, ''])),
+            })}>
+              <option value="">—</option>
+              {c.tipo === 'opciones'
+                // Un valor guardado que no está en la lista (p. ej. importado) se conserva como opción.
+                ? [...new Set([...c.opciones!, ...(form[c.k] ? [String(form[c.k])] : [])])].map((o) => <option key={o}>{o}</option>)
+                : (refs[c.k] ?? [])
+                    .filter((r) => !c.ref!.filtrarPor || r[c.ref!.filtrarPor.columna] === form[c.ref!.filtrarPor.campo])
+                    .map((r) => <option key={r.id} value={r.id}>{c.ref!.etiqueta(r)}</option>)}
+            </select>
+          ) : (
+            <input
+              type={c.tipo === 'fecha' ? 'date' : 'text'}
+              inputMode={c.tipo === 'numero' ? 'decimal' : undefined}
+              value={String(form[c.k])}
+              placeholder={c.tipo === 'lista' ? 'Separados por ;' : undefined}
+              onChange={(e) => setForm({ ...form, [c.k]: e.target.value })}
+            />
+          )}
+        </label>
+      ))}
+      {error && <p className="error" role="alert" style={{ gridColumn: '1 / -1' }}>{error}</p>}
+      <button type="submit">{fila ? 'Guardar cambios' : 'Agregar'}</button>
+      <button type="button" className="secundario" onClick={onCancelar}>Cancelar</button>
+    </form>
+  )
+}
+
 export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }: {
   modulo: Modulo
   empresa: string
@@ -93,8 +173,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
   const [filas, setFilas] = useState<Fila[]>([])
   const [refs, setRefs] = useState<Record<string, Fila[]>>({})
   const [extra, setExtra] = useState<Record<string, Record<string, unknown>>>({})
-  const [form, setForm] = useState<Valores>(() => vacio(m))
-  const [editando, setEditando] = useState<string | null>(null)
+  const [editando, setEditando] = useState<Fila | null>(null)
   const [buscar, setBuscar] = useState('')
   const [verBajas, setVerBajas] = useState(false)
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
@@ -112,22 +191,12 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
     })
     if (error) { setError(await mensajeError(error)); return }
     setFilas(data)
-
-    const conRef = m.campos.filter((c) => c.ref)
-    const listas = await Promise.all(conRef.map(async (c) => {
-      const r = await leerTodo<Fila>((desde, hasta) => {
-        let q = supabase.from(c.ref!.tabla).select(c.ref!.select ?? '*').eq('activo', true)
-        if (!c.ref!.global) q = q.eq('empresa_id', empresa)
-        return q.order('id').range(desde, hasta)
-      })
-      return [c.k, r.data] as const
-    }))
-    setRefs(Object.fromEntries(listas))
+    setRefs(await cargarRefs(m, empresa))
     if (m.extra) setExtra(await m.extra.cargar(empresa))
   }
 
   useEffect(() => {
-    setForm(vacio(m)); setEditando(null); setAbierto(false); setMsg(''); setError(''); setBuscar('')
+    setEditando(null); setAbierto(false); setMsg(''); setError(''); setBuscar('')
   }, [m])
   useEffect(() => { cargar() }, [m, empresa, verBajas]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -144,22 +213,8 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
     return String(v)
   }
 
-  async function guardar(e: FormEvent) {
-    e.preventDefault()
-    setError('')
-    const { datos, error: invalido } = aDatos(m, form)
-    if (!datos) { setError(invalido!); return }
-    const { error } = editando
-      ? await supabase.from(m.tabla).update(datos).eq('id', editando)
-      : await supabase.from(m.tabla).insert(m.global ? datos : { ...datos, empresa_id: empresa })
-    if (error) { setError(await mensajeError(error)); return }
-    setMsg(editando ? 'Cambios guardados; el valor anterior queda en la bitácora.' : 'Registro creado.')
-    cerrar()
-    cargar()
-  }
-
   // El formulario solo se muestra al presionar Crear o Editar.
-  function cerrar() { setForm(vacio(m)); setEditando(null); setAbierto(false) }
+  function cerrar() { setEditando(null); setAbierto(false) }
 
   async function cambiarEstado(f: Fila) {
     setError('')
@@ -212,7 +267,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
       <td className="acciones">
         {!f.activo && <span className="nota">Baja: {f.baja_motivo}</span>}
         {escribe && f.activo && (
-          <button className="secundario" onClick={() => { setEditando(f.id); setForm(desdeFila(m, f)); setAbierto(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
+          <button className="secundario" onClick={() => { setEditando(f); setMsg(''); setAbierto(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Editar</button>
         )}
         {esAdmin && <button className="secundario" onClick={() => cambiarEstado(f)}>{f.activo ? 'Dar de baja' : 'Reactivar'}</button>}
       </td>
@@ -248,43 +303,11 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
       {m.nota && <p className="nota">{m.nota}</p>}
 
       {escribe && !abierto && (
-        <button type="button" onClick={() => { setForm(vacio(m)); setEditando(null); setMsg(''); setError(''); setAbierto(true) }}>Crear</button>
+        <button type="button" onClick={() => { setEditando(null); setMsg(''); setError(''); setAbierto(true) }}>Crear</button>
       )}
       {escribe && abierto && (
-        <form className="tarjeta fila" onSubmit={guardar}>
-          {m.campos.map((c) => (
-            <label key={c.k} className={c.tipo === 'texto' || !c.tipo ? 'ancho' : ''}>
-              {c.label}{c.obligatorio && ' *'}
-              {c.tipo === 'si_no' ? (
-                <input type="checkbox" checked={Boolean(form[c.k])} onChange={(e) => setForm({ ...form, [c.k]: e.target.checked })} />
-              ) : c.tipo === 'opciones' || c.tipo === 'ref' ? (
-                <select value={String(form[c.k])} onChange={(e) => setForm({
-                  ...form,
-                  [c.k]: e.target.value,
-                  // Al cambiar el campo principal se limpian los que dependen de él.
-                  ...Object.fromEntries(m.campos.filter((x) => x.ref?.filtrarPor?.campo === c.k).map((x) => [x.k, ''])),
-                })}>
-                  <option value="">—</option>
-                  {c.tipo === 'opciones'
-                    ? c.opciones!.map((o) => <option key={o}>{o}</option>)
-                    : (refs[c.k] ?? [])
-                        .filter((r) => !c.ref!.filtrarPor || r[c.ref!.filtrarPor.columna] === form[c.ref!.filtrarPor.campo])
-                        .map((r) => <option key={r.id} value={r.id}>{c.ref!.etiqueta(r)}</option>)}
-                </select>
-              ) : (
-                <input
-                  type={c.tipo === 'fecha' ? 'date' : 'text'}
-                  inputMode={c.tipo === 'numero' ? 'decimal' : undefined}
-                  value={String(form[c.k])}
-                  placeholder={c.tipo === 'lista' ? 'Separados por ;' : undefined}
-                  onChange={(e) => setForm({ ...form, [c.k]: e.target.value })}
-                />
-              )}
-            </label>
-          ))}
-          <button type="submit">{editando ? 'Guardar cambios' : 'Agregar'}</button>
-          <button type="button" className="secundario" onClick={cerrar}>Cancelar</button>
-        </form>
+        <Formulario key={editando?.id ?? 'nuevo'} m={m} empresa={empresa} fila={editando}
+          onGuardado={(texto) => { setMsg(texto); cerrar(); cargar() }} onCancelar={cerrar} />
       )}
       {error && <p className="error" role="alert">{error}</p>}
       {msg && !error && <p className="ok" role="status">{msg}</p>}

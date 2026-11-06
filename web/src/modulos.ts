@@ -5,6 +5,8 @@ import { supabase, fechaLocal, leerTodo } from './supabase'
 // Las listas de opciones repiten las restricciones de la base, que es la que decide.
 
 const MONEDAS = ['RD$', 'US$']
+// Estatus de un servicio de telecomunicaciones (texto libre en la base; lista en pantalla).
+export const ESTATUS_TELECOM = ['Activo', 'En renegociación', 'Upgrade solicitado', 'Migración a SIP', 'Baja programada']
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 const s = (v: unknown) => (v == null ? '' : String(v))
 
@@ -36,7 +38,7 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'monto', label: 'Monto', tipo: 'numero', obligatorio: true },
       { k: 'circuito', label: 'No. circuito' },
       { k: 'cuenta_contable', label: 'Cuenta contable' },
-      { k: 'estatus', label: 'Estatus', defecto: 'Activo', obligatorio: true },
+      { k: 'estatus', label: 'Estatus', tipo: 'opciones', opciones: ESTATUS_TELECOM, defecto: 'Activo', obligatorio: true },
       { k: 'vence', label: 'Vence', tipo: 'fecha', oculto: true },
       { k: 'comentarios', label: 'Comentarios', oculto: true },
     ],
