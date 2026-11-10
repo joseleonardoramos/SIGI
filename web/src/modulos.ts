@@ -236,6 +236,14 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'nombre', label: 'Nombre', obligatorio: true },
     ],
   },
+  feriados: {
+    id: 'feriados', titulo: 'Feriados', tabla: 'feriados', global: true, soloAdmin: true, orden: { k: 'fecha', asc: false },
+    nota: 'Días no laborables comunes a todas las empresas. Se descuentan de los días hábiles de las ausencias. Si un feriado se traslada, dé de baja la fecha original y registre la nueva.',
+    campos: [
+      { k: 'fecha', label: 'Fecha', tipo: 'fecha', obligatorio: true },
+      { k: 'nombre', label: 'Feriado', obligatorio: true },
+    ],
+  },
   tasas: {
     id: 'tasas', titulo: 'Tasas de cambio', tabla: 'tasas_cambio', global: true, soloAdmin: true, orden: { k: 'vigente_desde', asc: false },
     nota: 'Cada cambio es una fila nueva con su fecha. Los gastos guardan la tasa vigente el día en que se comprometen.',

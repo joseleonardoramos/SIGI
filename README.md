@@ -73,8 +73,8 @@ El selector de la cabecera elige la empresa; sus colores (El Catador o Bona) se 
 | Presupuesto | Versiones, Partidas (con comprometido, ejecutado y disponible), Gastos y evidencias |
 | Operación | Telecomunicaciones, Flotas (cancelar = estado «Cancelada»), Software |
 | Activos y proyectos | Activos (serial único, garantía), Plan de reposición (reemplazo, compra nueva o mantenimiento), Proyectos y aperturas (inversión inicial separada del OPEX mensual) |
-| Personal | Personal, Ausencias (no se traslapan); el Inicio muestra quién está fuera hoy y en 30 días |
-| Catálogos | Proveedores, Cuentas de proveedor, Cuentas contables, Centros de costo, Áreas, Departamentos, Tasas de cambio (solo el Administrador los edita). Áreas y departamentos alimentan las listas de Flotas, Personal y Reposición; el departamento depende del área |
+| Personal | Personal y ausencias en una pantalla: quién está fuera hoy y en 30 días, ausencias (no se traslapan; cancelar las conserva) y la bitácora de ambas |
+| Catálogos | Proveedores, Cuentas de proveedor, Cuentas contables, Centros de costo, Áreas, Departamentos, Tasas de cambio, Feriados (solo el Administrador los edita). Los feriados se descuentan de los días hábiles de las ausencias. Áreas y departamentos alimentan las listas de Flotas, Personal y Reposición; el departamento depende del área |
 | Herramientas | Importar CSV, Bitácora |
 
 Telecomunicaciones se agrupa por sucursal y Flotas por área y departamento, con subtotales por moneda. Presupuesto → Comparar versiones muestra dos versiones lado a lado por categoría, y el panel incluye la ejecución por categoría de la versión vigente. Todas las listas permiten buscar, ver los registros dados de baja y exportar a CSV (lo que se ve en pantalla, con los números sin formato para Excel). Editar deja el valor anterior en la bitácora; dar de baja (solo el Administrador) pide un motivo y conserva el registro.

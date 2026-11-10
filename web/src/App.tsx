@@ -13,6 +13,7 @@ import Comparar from './Comparar'
 import Telecom from './Telecom'
 import Flotas from './Flotas'
 import Software from './Software'
+import Personal from './Personal'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
@@ -44,8 +45,7 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'proyectos', titulo: 'Proyectos y aperturas', ver: todos },
   ] },
   { seccion: 'Personal', entradas: [
-    { id: 'personas', titulo: 'Personal', ver: (p) => p.personal },
-    { id: 'ausencias', titulo: 'Ausencias', ver: (p) => p.personal },
+    { id: 'personas', titulo: 'Personal y ausencias', ver: (p) => p.personal },
   ] },
   { seccion: 'Catálogos', entradas: [
     { id: 'proveedores', titulo: 'Proveedores', ver: todos },
@@ -55,6 +55,7 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'areas', titulo: 'Áreas', ver: todos },
     { id: 'departamentos', titulo: 'Departamentos', ver: todos },
     { id: 'tasas', titulo: 'Tasas de cambio', ver: todos },
+    { id: 'feriados', titulo: 'Feriados', ver: todos },
   ] },
   { seccion: 'Herramientas', entradas: [
     { id: 'importar', titulo: 'Importar CSV', ver: (p) => p.escribe },
@@ -112,7 +113,7 @@ export default function App() {
   const permisos: Permisos = { esAdmin, escribe: esAdmin || rol === 'Captura', personal: esAdmin || rol === 'Captura' }
   const actual = empresas.find((e) => e.id === empresa)
   // Pantallas propias (diseño); su formulario sigue saliendo de MODULOS.
-  const propias = ['inicio', 'telecom', 'flotas', 'software']
+  const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias']
   const modulo = propias.includes(vista) ? undefined : MODULOS[vista]
   const conCabeceraPropia = propias.includes(vista)
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
@@ -169,6 +170,7 @@ export default function App() {
               {vista === 'telecom' && <Telecom empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'flotas' && <Flotas empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'software' && <Software empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
+              {(vista === 'personas' || vista === 'ausencias') && permisos.personal && <Personal empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} esAdmin={esAdmin} ir={setVista} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}

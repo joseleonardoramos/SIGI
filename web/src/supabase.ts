@@ -57,6 +57,7 @@ export async function mensajeError(error: unknown): Promise<string> {
     activos_serial_unico: 'Ese serial ya está registrado en esta empresa.',
     reposiciones_check: 'Un reemplazo o mantenimiento necesita el activo actual.',
     proyectos_check: 'La fecha de fin no puede ser anterior al inicio.',
+    feriados_fecha_unica: 'Ya hay un feriado registrado en esa fecha.',
   }
   const regla = Object.keys(porRegla).find((r) => message?.includes(`"${r}"`))
   if (regla) return porRegla[regla]
