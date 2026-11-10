@@ -113,7 +113,7 @@ export default function App() {
   const permisos: Permisos = { esAdmin, escribe: esAdmin || rol === 'Captura', personal: esAdmin || rol === 'Captura' }
   const actual = empresas.find((e) => e.id === empresa)
   // Pantallas propias (diseño); su formulario sigue saliendo de MODULOS.
-  const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias']
+  const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias', 'gastos']
   const modulo = propias.includes(vista) ? undefined : MODULOS[vista]
   const conCabeceraPropia = propias.includes(vista)
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
@@ -173,7 +173,7 @@ export default function App() {
               {(vista === 'personas' || vista === 'ausencias') && permisos.personal && <Personal empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} esAdmin={esAdmin} ir={setVista} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
-              {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
+              {vista === 'gastos' && <Gastos empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'bitacora' && permisos.personal && <Bitacora empresa={empresa} esAdmin={esAdmin} />}
               {vista === 'importar' && permisos.escribe && <Importar key={empresa} empresa={empresa} nombreEmpresa={actual?.nombre ?? ''} esAdmin={esAdmin} />}
               {vista === 'empresas' && esAdmin && <Empresas />}
