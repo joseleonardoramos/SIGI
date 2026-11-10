@@ -69,10 +69,11 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'tipo', label: 'Tipo', tipo: 'opciones', opciones: ['SaaS', 'PaaS', 'IaaS', 'Licencia', 'Certificado'], obligatorio: true },
       { k: 'proveedor_id', label: 'Proveedor', tipo: 'ref', ref: proveedor },
       { k: 'cuenta_proveedor_id', label: 'Cuenta proveedor', tipo: 'ref', ref: cuentaProveedor, oculto: true },
-      { k: 'unidad', label: 'Unidad', defecto: 'Usuario', obligatorio: true },
+      { k: 'unidad', label: 'Unidad de cobro', tipo: 'opciones', opciones: ['Usuario', 'Equipo', 'Certificado', 'Dominio', 'Consumo'], defecto: 'Usuario', obligatorio: true },
       { k: 'contratadas', label: 'Contratadas', tipo: 'numero', obligatorio: true },
       { k: 'asignadas', label: 'Asignadas', tipo: 'numero', defecto: '0', obligatorio: true },
-      { k: 'precio_unitario', label: 'Precio unitario', tipo: 'numero', obligatorio: true },
+      // Mensual aunque se facture al año: el costo anual es contratadas × precio × 12 (diseño).
+      { k: 'precio_unitario', label: 'Precio unitario mensual', tipo: 'numero', obligatorio: true },
       { k: 'moneda', label: 'Moneda', tipo: 'opciones', opciones: MONEDAS, defecto: 'US$', obligatorio: true },
       { k: 'periodicidad', label: 'Periodicidad', tipo: 'opciones', opciones: ['Mensual', 'Anual', 'Por consumo'], obligatorio: true },
       { k: 'inicio', label: 'Inicio', tipo: 'fecha', obligatorio: true },

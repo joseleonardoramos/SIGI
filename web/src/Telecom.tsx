@@ -3,6 +3,7 @@ import { supabase, mensajeError, leerTodo, fechaLocal, dinero } from './supabase
 import { aCsv, descargar } from './csv'
 import { Formulario, type Fila } from './Catalogo'
 import { MODULOS, ESTATUS_TELECOM } from './modulos'
+import { cuentasVigentes, enRD, tasaVigenteUSD } from './comun'
 import { Barra, Cabecera, Indicadores, Mensajes, Paginador, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, miles, paginaValida, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Telecomunicaciones, reconstruida a partir de design/Telecom.dc.html con datos reales.
@@ -24,10 +25,6 @@ const tono = (estatus: string): [string, string] => TONO[estatus] ?? ['#EEF1F4',
 const POR_PAGINA = 20
 const SIN_FILTRO = { q: '', sucursal: '', tipo: '', proveedor: '', cuenta: '', moneda: '', estatus: '' }
 const nombreProveedor = (s: Servicio) => s.proveedores?.nombre ?? ''
-
-// Costo mensual en RD$: US$ a la tasa vigente; sin tasa registrada, los US$ no se suman (null).
-export const enRD = (s: Pick<Servicio, 'moneda' | 'monto'>, tasaUSD: number | null) =>
-  s.moneda === 'US$' ? (tasaUSD ? Number(s.monto) * tasaUSD : null) : Number(s.monto)
 
 // Una sucursal tiene respaldo si cuenta con dos o más accesos a internet (fijo o móvil).
 export const tieneRespaldo = (servicios: Pick<Servicio, 'tipo'>[]) =>
@@ -58,23 +55,20 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
   useEffect(() => { if (empresa && co !== 'all') setCo(empresa) }, [empresa]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function cargar() {
-    const de = <T,>(tabla: string, columnas: string, soloActivos = true) => leerTodo<T>((d, h) => {
-      let q = supabase.from(tabla).select(columnas)
-      if (soloActivos) q = q.eq('activo', true)
-      if (!todas) q = q.eq('empresa_id', co)
-      return q.order('id').range(d, h)
-    })
     const [s, c, t] = await Promise.all([
-      de<Servicio>('servicios_telecom', '*, proveedores!servicios_telecom_proveedor_id_fkey(nombre), cuentas_proveedor!servicios_telecom_cuenta_proveedor_id_fkey(numero)', false),
-      de<{ empresa_id: string; codigo: string; estado: string }>('cuentas_contables', 'empresa_id, codigo, estado'),
-      supabase.from('tasas_cambio').select('tasa, vigente_desde').eq('activo', true).eq('moneda', 'US$').lte('vigente_desde', hoy)
-        .order('vigente_desde', { ascending: false }).limit(1).maybeSingle(),
+      leerTodo<Servicio>((d, h) => {
+        let q = supabase.from('servicios_telecom').select('*, proveedores!servicios_telecom_proveedor_id_fkey(nombre), cuentas_proveedor!servicios_telecom_cuenta_proveedor_id_fkey(numero)')
+        if (!todas) q = q.eq('empresa_id', co)
+        return q.order('id').range(d, h)
+      }),
+      cuentasVigentes(co),
+      tasaVigenteUSD(hoy),
     ])
     const fallo = s.error ?? c.error ?? t.error
     if (fallo) { setError(await mensajeError(fallo)); return }
     setServicios(s.data)
-    setCuentas(new Set(c.data.filter((x) => x.estado !== 'Inactiva').map((x) => `${x.empresa_id}|${x.codigo}`)))
-    setTasa(t.data ? { tasa: Number(t.data.tasa), desde: t.data.vigente_desde } : null)
+    setCuentas(c.cuentas)
+    setTasa(t.tasa)
   }
   useEffect(() => { cargar() }, [co]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -86,7 +80,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
   const emp = empresas.find((e) => e.id === co)
   const nombreEmpresa = (id: string) => empresas.find((e) => e.id === id)?.nombre ?? ''
   const usd = tasa?.tasa ?? null
-  const rd = (s: Servicio) => enRD(s, usd) ?? 0
+  const rd = (s: Servicio) => enRD(s.moneda, Number(s.monto), usd) ?? 0
   const cuentaValida = (s: Servicio) => !!s.cuenta_contable && cuentas.has(`${s.empresa_id}|${s.cuenta_contable}`)
 
   async function cambiarEstado(s: Servicio) {
@@ -161,7 +155,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
     const encabezado = ['Empresa', 'Sucursal', 'Ubicación', 'Proveedor', 'Cuenta proveedor', 'Cuenta contable', 'No. circuito', 'Estatus', 'Detalle', 'Tipo', 'Velocidad', 'Moneda', 'Monto', 'Monto RD$', 'Vence', 'Comentarios', 'Estado del registro']
     descargar(`telecomunicaciones-${hoy}.csv`, aCsv(encabezado, listado.map((s) => [
       nombreEmpresa(s.empresa_id), s.sucursal, s.ciudad, nombreProveedor(s), s.cuentas_proveedor?.numero, s.cuenta_contable, s.circuito, s.estatus,
-      s.detalle, s.tipo, s.velocidad, s.moneda, Number(s.monto), enRD(s, usd), s.vence, s.comentarios, s.activo ? 'Activo' : `Baja: ${s.baja_motivo ?? ''}`,
+      s.detalle, s.tipo, s.velocidad, s.moneda, Number(s.monto), enRD(s.moneda, Number(s.monto), usd), s.vence, s.comentarios, s.activo ? 'Activo' : `Baja: ${s.baja_motivo ?? ''}`,
     ])))
   }
 

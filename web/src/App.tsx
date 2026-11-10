@@ -12,6 +12,7 @@ import Panel from './Panel'
 import Comparar from './Comparar'
 import Telecom from './Telecom'
 import Flotas from './Flotas'
+import Software from './Software'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
@@ -111,7 +112,7 @@ export default function App() {
   const permisos: Permisos = { esAdmin, escribe: esAdmin || rol === 'Captura', personal: esAdmin || rol === 'Captura' }
   const actual = empresas.find((e) => e.id === empresa)
   // Pantallas propias (diseño); su formulario sigue saliendo de MODULOS.
-  const propias = ['inicio', 'telecom', 'flotas']
+  const propias = ['inicio', 'telecom', 'flotas', 'software']
   const modulo = propias.includes(vista) ? undefined : MODULOS[vista]
   const conCabeceraPropia = propias.includes(vista)
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
@@ -167,6 +168,7 @@ export default function App() {
               {vista === 'inicio' && <Panel empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} personal={permisos.personal} ir={setVista} />}
               {vista === 'telecom' && <Telecom empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'flotas' && <Flotas empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
+              {vista === 'software' && <Software empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' &&<Gastos empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
