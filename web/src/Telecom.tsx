@@ -1,13 +1,13 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase, mensajeError, leerTodo, fechaLocal, dinero } from './supabase'
 import { aCsv, descargar } from './csv'
 import { Formulario, type Fila } from './Catalogo'
 import { MODULOS, ESTATUS_TELECOM } from './modulos'
+import { Barra, Cabecera, Indicadores, Mensajes, Paginador, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, miles, paginaValida, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Telecomunicaciones, reconstruida a partir de design/Telecom.dc.html con datos reales.
 // Alta y edición usan el formulario genérico del módulo (modulos.ts); la base valida y guarda la bitácora.
 
-type Empresa = { id: string; nombre: string; tema: string; moneda_reporte: string }
 export type Servicio = Fila & {
   empresa_id: string; sucursal: string; ciudad: string | null; tipo: string; detalle: string; velocidad: string | null
   moneda: string; monto: number; circuito: string | null; cuenta_contable: string | null; estatus: string
@@ -20,20 +20,9 @@ const TONO: Record<string, [string, string]> = {
   'Activo': ['#E7F5EF', '#075B3F'], 'En renegociación': ['#FFF4D6', '#6B4A00'], 'Upgrade solicitado': ['#E6EEF7', '#1D3557'],
   'Migración a SIP': ['#E6EEF7', '#1D3557'], 'Baja programada': ['#FBE9DF', '#8A3A12'],
 }
-const tono = (estatus: string) => TONO[estatus] ?? ['#EEF1F4', '#3A4552']
-const RIESGO: [string, string] = ['#FBE9DF', '#8A3A12']
+const tono = (estatus: string): [string, string] => TONO[estatus] ?? ['#EEF1F4', '#3A4552']
 const POR_PAGINA = 20
 const SIN_FILTRO = { q: '', sucursal: '', tipo: '', proveedor: '', cuenta: '', moneda: '', estatus: '' }
-
-const tarjeta: CSSProperties = { background: '#FFFFFF', border: '1px solid var(--borde)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }
-const h2: CSSProperties = { margin: 0, fontSize: 17, fontWeight: 600 }
-const tenue: CSSProperties = { fontSize: 13, color: 'var(--tenue)' }
-const etiqueta: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600, color: 'var(--tenue)' }
-const control: CSSProperties = { height: 40, border: '1px solid var(--borde)', borderRadius: 8, padding: '0 10px', fontSize: 14, background: '#FFFFFF', color: 'var(--tinta)' }
-const botonBorde: CSSProperties = { height: 40, padding: '0 12px', borderRadius: 8, border: '1px solid var(--borde)', background: '#FFFFFF', color: 'var(--tinta)', fontSize: 13, fontWeight: 500 }
-const pastilla = ([bg, fg]: [string, string]): CSSProperties => ({ fontSize: 12, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: bg, color: fg, whiteSpace: 'nowrap' })
-const miles = (v: number) => (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })
-const entero = (v: number) => Math.round(v).toLocaleString('en-US')
 const nombreProveedor = (s: Servicio) => s.proveedores?.nombre ?? ''
 
 // Costo mensual en RD$: US$ a la tasa vigente; sin tasa registrada, los US$ no se suman (null).
@@ -165,8 +154,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
     (!termino || [s.sucursal, s.ciudad, nombreProveedor(s), s.cuentas_proveedor?.numero, s.cuenta_contable, s.circuito, s.detalle, s.tipo, s.comentarios]
       .join(' ').toLowerCase().includes(termino)))
     .sort((a, b) => a.sucursal.localeCompare(b.sucursal, 'es') || a.tipo.localeCompare(b.tipo, 'es'))
-  const paginas = Math.max(1, Math.ceil(listado.length / POR_PAGINA))
-  const pag = Math.min(pagina, paginas - 1)
+  const pag = paginaValida(pagina, listado.length, POR_PAGINA)
   const unicos = (v: (string | null | undefined)[]) => [...new Set(v.filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, 'es'))
 
   function exportar() {
@@ -209,33 +197,10 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
 
   return (
     <div data-tema={todas ? 'todas' : emp?.tema ?? 'catador'} style={{ display: 'flex', flexDirection: 'column', gap: 24, color: 'var(--tinta)' }}>
-      <header style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={tenue}><button className="enlace" onClick={() => ir('inicio')} style={{ color: 'var(--enlace)', fontSize: 13 }}>Panel gerencial</button> · Telecomunicaciones · Ambiente <b>{todas ? 'Consolidado' : emp?.nombre}</b></span>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.01em' }}>Telecomunicaciones</h1>
-          <span style={{ fontSize: 14, color: 'var(--tenue)' }}>
-            Internet, Telefonía, Metro Ethernet e Internet Móvil · Montos mensuales en moneda del contrato · Totales en RD${usd ? ` a ${usd.toFixed(2)}` : ''} · Corte {hoy}
-          </span>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-          <div role="group" aria-label="Empresa" style={{ display: 'flex', border: '1px solid var(--borde)', borderRadius: 10, overflow: 'hidden', background: '#FFFFFF' }}>
-            {[{ id: 'all', nombre: 'Consolidado' }, ...empresas].map((c) => (
-              <button key={c.id} onClick={() => elegir(c.id)} aria-pressed={co === c.id}
-                style={{ height: 44, padding: '0 18px', border: 'none', borderRadius: 0, fontSize: 14, fontWeight: 600, background: co === c.id ? 'var(--boton-activo)' : '#FFFFFF', color: co === c.id ? '#FFFFFF' : 'var(--tinta)' }}>
-                {c.nombre}
-              </button>
-            ))}
-          </div>
-          {puedeEscribir && !formulario && (
-            <button onClick={() => abrir(null)} disabled={todas} title={todas ? 'Elija una empresa para crear el servicio' : undefined}
-              style={{ height: 44, padding: '0 16px', borderRadius: 8, border: 'none', background: 'var(--acento)', color: '#FFFFFF', fontSize: 14, fontWeight: 600 }}>Crear servicio</button>
-          )}
-        </div>
-      </header>
-      {puedeEscribir && todas && !formulario && <p className="nota" style={{ margin: '-12px 0 0' }}>Para crear un servicio, elija primero la empresa.</p>}
-
-      {msg && !error && <p role="status" style={{ margin: 0, padding: '10px 12px', borderRadius: 8, background: 'var(--ahorro-fondo)', color: 'var(--ahorro-tinta)', fontSize: 13 }}>{msg}</p>}
-      {error && <p className="error" role="alert">{error}</p>}
+      <Cabecera modulo="Telecomunicaciones" titulo="Telecomunicaciones" empresas={empresas} co={co} elegir={elegir} ir={ir}
+        subtitulo={`Internet, Telefonía, Metro Ethernet e Internet Móvil · Montos mensuales en moneda del contrato · Totales en RD$${usd ? ` a ${usd.toFixed(2)}` : ''} · Corte ${hoy}`}
+        crear={puedeEscribir && !formulario ? { texto: 'Crear servicio', onClick: () => abrir(null) } : undefined} />
+      <Mensajes msg={msg} error={error} />
 
       {formulario && (
         <Formulario key={formulario.fila?.id ?? 'nuevo'} m={MODULOS.telecom} empresa={formulario.fila?.empresa_id ?? co} fila={formulario.fila}
@@ -243,15 +208,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
           onGuardado={(texto) => { setMsg(texto); setFormulario(null); cargar() }} onCancelar={() => setFormulario(null)} />
       )}
 
-      <section aria-label="Indicadores de telecomunicaciones" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
-        {kpis.map((k) => (
-          <div key={k.label} style={{ background: '#FFFFFF', border: '1px solid var(--borde)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ fontSize: 13, color: 'var(--tenue)', fontWeight: 600 }}>{k.label}</span>
-            <span className="mono" style={{ fontSize: 26, fontWeight: 600, color: k.color ?? 'var(--tinta)' }}>{k.value}</span>
-            <span style={{ fontSize: 12, color: 'var(--tenue)' }}>{k.sub}</span>
-          </div>
-        ))}
-      </section>
+      <Indicadores etiqueta="Indicadores de telecomunicaciones" kpis={kpis} />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
         <section aria-labelledby="h-tipo" style={{ ...tarjeta, flex: '1 1 420px', minWidth: 0 }}>
@@ -259,17 +216,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
             <h2 id="h-tipo" style={h2}>Costo mensual por tipo de servicio</h2>
             <span style={tenue}>RD$ miles · cantidad de servicios · clic para filtrar</span>
           </div>
-          {porTipo.map((g) => (
-            <button key={g.tipo} onClick={() => filtrar({ tipo: g.tipo })} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '4px 0', border: 'none', background: 'transparent', color: 'var(--tinta)', textAlign: 'left', width: '100%' }}>
-              <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 14, width: '100%' }}>
-                <span>{g.tipo} <span style={{ color: 'var(--tenue)' }}>· {g.n}</span></span>
-                <span className="mono" style={{ fontWeight: 600 }}>{miles(g.costo)}</span>
-              </span>
-              <span style={{ display: 'block', width: '100%', height: 10, background: 'var(--pista)', borderRadius: 5, overflow: 'hidden' }}>
-                <span style={{ display: 'block', width: `${(g.costo / maxTipo) * 100}%`, height: '100%', background: 'var(--primario)' }} />
-              </span>
-            </button>
-          ))}
+          {porTipo.map((g) => <Barra key={g.tipo} nombre={g.tipo} detalle={String(g.n)} valor={miles(g.costo)} ancho={(g.costo / maxTipo) * 100} onClick={() => filtrar({ tipo: g.tipo })} />)}
           {porTipo.length === 0 && <span style={tenue}>Sin servicios activos.</span>}
         </section>
         <section aria-labelledby="h-ges" style={{ ...tarjeta, flex: '1 1 340px', minWidth: 0, gap: 12 }}>
@@ -332,7 +279,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         <button className="enlace" onClick={() => filtrar({ sucursal: x.nombre })} style={{ color: 'var(--enlace)', fontSize: 13, fontWeight: 600 }}>Ver esta sucursal en el listado completo →</button>
-                        <button onClick={() => ir('gastos')} style={{ height: 40, padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--acento)', color: '#FFFFFF', fontSize: 13, fontWeight: 600 }}>Registrar gasto →</button>
+                        <button onClick={() => ir('gastos')} style={botonAcento}>Registrar gasto →</button>
                       </div>
                     </div>
                   )}
@@ -390,13 +337,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
           </table>
         </div>
         {listado.length === 0 && <p style={{ ...tenue, margin: 0, padding: 16, textAlign: 'center', fontSize: 14 }}>Ningún servicio coincide con los filtros.</p>}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span className="mono" style={tenue}>{listado.length ? `Mostrando ${pag * POR_PAGINA + 1}–${Math.min(listado.length, (pag + 1) * POR_PAGINA)} de ${listado.length} · página ${pag + 1} de ${paginas}` : ''}</span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button style={botonBorde} disabled={pag === 0} onClick={() => setPagina(pag - 1)}>← Anterior</button>
-            <button style={botonBorde} disabled={pag >= paginas - 1} onClick={() => setPagina(pag + 1)}>Siguiente →</button>
-          </div>
-        </div>
+        <Paginador total={listado.length} pagina={pag} porPagina={POR_PAGINA} setPagina={setPagina} />
         <span style={{ fontSize: 12, color: 'var(--tenue)' }}>
           Cuenta del proveedor y cuenta contable son dimensiones distintas. Una cuenta contable que no está vigente en el catálogo de la empresa (por ejemplo «CANCELADO») se marca para revisión y no se imputa hasta corregirse.
         </span>
