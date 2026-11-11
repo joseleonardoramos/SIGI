@@ -11,8 +11,11 @@
 set -euo pipefail
 export MSYS_NO_PATHCONV=1 # Git Bash en Windows: no convertir /mnt ni /tmp del contenedor en rutas de Windows
 
+# Desarrollo (supabase start): valores por defecto. Producción (Supabase autoalojado): ver docs/PaseProduccion.md
+# (SIGI_DB_CONTAINER=supabase-db SIGI_STORAGE_CONTAINER=supabase-storage SIGI_STORAGE_DIR=/var/lib/storage).
 DB="${SIGI_DB_CONTAINER:-supabase_db_SIGI}"
 ST="${SIGI_STORAGE_CONTAINER:-supabase_storage_SIGI}"
+ST_DIR="${SIGI_STORAGE_DIR:-/mnt}" # carpeta de los archivos dentro del contenedor de Storage
 if [ -n "${1:-}" ]; then
   DESTINO="$1"
 elif [ -n "${SIGI_RESPALDOS:-}" ]; then
@@ -28,7 +31,7 @@ docker exec "$DB" pg_dump -U supabase_admin -Fc \
   --exclude-table-data=auth.refresh_tokens --exclude-table-data=auth.sessions --exclude-table-data=auth.one_time_tokens \
   --exclude-table-data=auth.mfa_amr_claims \
   postgres > "$DESTINO/base.dump"
-docker exec "$ST" tar -C /mnt -cf - . > "$DESTINO/evidencias.tar"
+docker exec "$ST" tar -C "$ST_DIR" -cf - . > "$DESTINO/evidencias.tar"
 (cd "$DESTINO" && sha256sum base.dump evidencias.tar > sha256.txt)
 
 echo "Respaldo listo en $DESTINO:"

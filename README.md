@@ -1,6 +1,6 @@
 # SIGI — Sistema Integral de Gestión de Infraestructura
 
-- `docs/` — diseño funcional (v3.1).
+- `docs/` — diseño funcional (v3.1) y pase a producción en Docker y Docker Swarm (`docs/PaseProduccion.md`).
 - `design/` — prototipo de pantallas (lienzo de Claude Design).
 - `supabase/` — base de datos: migraciones, seguridad y pruebas.
 
