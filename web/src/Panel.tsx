@@ -2,9 +2,10 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase, mensajeError, leerTodo, fechaLocal } from './supabase'
 import { aCsv, descargar } from './csv'
 import { acumular, etiquetaMes, indiceMes, mesesDelEjercicio, programar, transcurrido, type Mes } from './panelDatos'
+import { ahorroDe, type Iniciativa } from './ahorro'
 
 // Panel gerencial, reconstruido a partir de design/Main.dc.html con datos reales.
-// Pendiente de definir por el usuario: la proyección de cierre y las iniciativas de ahorro.
+// Ahorro y proyección de cierre con la regla única de ahorro.ts (iniciativas registradas en Ahorros).
 
 type Empresa = { id: string; nombre: string; tema: string; moneda_reporte: string; inicio_ejercicio_mes?: number }
 type Version = { id: string; empresa_id: string; ejercicio: string; numero: number; estado: string }
@@ -49,6 +50,7 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
   const [lineas, setLineas] = useState<Linea[]>([])
   const [software, setSoftware] = useState<Software[]>([])
   const [fuera, setFuera] = useState<string[]>([])
+  const [iniciativas, setIniciativas] = useState<Iniciativa[]>([])
   const [categoria, setCategoria] = useState('')
   const [centro, setCentro] = useState('')
   const [modo, setModo] = useState<'mensual' | 'acumulado'>('mensual')
@@ -75,8 +77,9 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
       de<Linea>('lineas_flota', 'empresa_id, estado, costo_mensual'),
       de<Software>('productos_software', 'empresa_id, nombre, contratadas, asignadas, precio_unitario, moneda, vence, renovacion, preaviso_dias'),
       de<{ empresa_id: string; codigo: string; tipo: string }>('cuentas_contables', 'empresa_id, codigo, tipo'),
-    ]).then(async ([e, v, s, l, sw, cc]) => {
-      const fallo = e.error ?? v.error ?? s.error ?? l.error ?? sw.error ?? cc.error
+      de<Iniciativa>('iniciativas_ahorro', 'empresa_id, modulo, palanca, linea_base, costo_nuevo, fecha_efectiva, estado, activo'),
+    ]).then(async ([e, v, s, l, sw, cc, ini]) => {
+      const fallo = e.error ?? v.error ?? s.error ?? l.error ?? sw.error ?? cc.error ?? ini.error
       if (fallo) { setError(await mensajeError(fallo)); return }
       setInfo(Object.fromEntries((e.data ?? []).map((x) => [x.id, x.inicio_ejercicio_mes])))
       setVersiones(v.data)
@@ -85,6 +88,7 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
       setLineas(l.data)
       setSoftware(sw.data)
       setTipos(Object.fromEntries(cc.data.map((x) => [`${x.empresa_id}|${x.codigo}`, x.tipo])))
+      setIniciativas(ini.data)
     })
     if (personal) {
       let q = supabase.from('ausencias').select('personas!ausencias_persona_id_fkey(nombre)').eq('activo', true).eq('cancelada', false).lte('desde', hoy).gte('hasta', hoy)
@@ -129,9 +133,20 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
   const tot = {
     bud: sum(lista, (p) => Number(p.monto)), exe: sum(lista, (p) => Number(s(p).ejecutado)), com: sum(lista, pendiente),
     disp: sum(lista, (p) => Number(s(p).disponible)),
-    ahorro: sum(lista, (p) => Math.max(Number(s(p).disponible), 0)), exceso: sum(lista, (p) => Math.max(-Number(s(p).disponible), 0)),
+    exceso: sum(lista, (p) => Math.max(-Number(s(p).disponible), 0)),
   }
-  const neto = tot.ahorro - tot.exceso
+  // Ahorro de iniciativas en el ejercicio medido: la versión elegida (una empresa) o la vigente de cada empresa (consolidado).
+  // Las iniciativas no tienen categoría ni centro: con esos filtros no se restan (proyección = presupuesto + excesos de lo filtrado).
+  const filtrado = !!categoria || !!centro
+  const mesesDe = (id: string) => {
+    const v = (!todas && id === co ? ver : undefined)
+      ?? versiones.find((x) => x.empresa_id === id && x.estado === 'Vigente') ?? versiones.find((x) => x.empresa_id === id)
+    return mesesDelEjercicio(v?.ejercicio ?? hoy.slice(0, 4), info[id] ?? 1)
+  }
+  const ahorroEmpresa = (ids: string[]) => ahorroDe(iniciativas.filter((i) => ids.includes(i.empresa_id)), mesesDe)
+  const ah = filtrado ? { R: 0, G: 0 } : ahorroEmpresa(todas ? empresas.map((e) => e.id) : [co])
+  const neto = ah.R + ah.G - tot.exceso
+  const proyeccion = tot.bud - neto
   const pctDe = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)} %` : '—')
 
   // Gráfico mensual (una empresa): presupuesto programado vs. ejecutado por mes del ejercicio.
@@ -160,8 +175,15 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
     const ps = lista.filter((p) => p.categoria === c)
     const tiposCat = [...new Set(ps.map((p) => (p.cuenta_contable ? tipos[`${p.empresa_id}|${p.cuenta_contable}`] : undefined)).filter(Boolean))]
     const bud = sum(ps, (p) => Number(p.monto)), exe = sum(ps, (p) => Number(s(p).ejecutado)), com = sum(ps, pendiente), disp = sum(ps, (p) => Number(s(p).disponible))
-    return { c, tipo: tiposCat.length === 1 ? tiposCat[0]! : tiposCat.length ? 'Mixto' : '—', bud, exe, com, disp, ahorro: sum(ps, (p) => Math.max(Number(s(p).disponible), 0)) }
+    return { c, tipo: tiposCat.length === 1 ? tiposCat[0]! : tiposCat.length ? 'Mixto' : '—', bud, exe, com, disp, exceso: sum(ps, (p) => Math.max(-Number(s(p).disponible), 0)) }
   })
+
+  // Ahorro por módulo (iniciativas), para la tarjeta de ahorros.
+  const idsVista = todas ? empresas.map((e) => e.id) : [co]
+  const porModulo = filtrado ? [] : [...new Set(iniciativas.filter((i) => idsVista.includes(i.empresa_id)).map((i) => i.modulo))]
+    .map((m) => ({ m, ...ahorroDe(iniciativas.filter((i) => i.modulo === m && idsVista.includes(i.empresa_id)), mesesDe) }))
+    .filter((x) => x.R + x.G > 0).sort((a, b) => b.R + b.G - (a.R + a.G))
+  const maxModulo = Math.max(...porModulo.map((x) => x.R + x.G), 1e-9)
 
   // Resumen por módulo.
   const enGestion = servicios.filter((x) => x.estatus !== 'Activo').length
@@ -218,7 +240,8 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
     const v = versiones.find((x) => x.empresa_id === e.id && x.estado === 'Vigente')
     const ps = partidas.filter((p) => p.empresa_id === e.id)
     const bud = sum(ps, (p) => Number(p.monto)), exe = sum(ps, (p) => Number(s(p).ejecutado)), com = sum(ps, pendiente)
-    const net = sum(ps, (p) => Math.max(Number(s(p).disponible), 0)) - sum(ps, (p) => Math.max(-Number(s(p).disponible), 0))
+    const a = ahorroEmpresa([e.id])
+    const net = a.R + a.G - sum(ps, (p) => Math.max(-Number(s(p).disponible), 0))
     const ms = v ? mesesDelEjercicio(v.ejercicio, info[e.id] ?? 1) : []
     return { e, v, bud, exe, com, net, elapsed: ms.length ? transcurrido(ms, hoy) * 100 : 0, colores: COLORES_EMPRESA[e.tema] ?? COLORES_EMPRESA.catador,
       periodo: ms.length ? `${etiquetaMes(ms[0])} ${ms[0].anio} – ${etiquetaMes(ms[11])} ${ms[11].anio}` : 'Sin versión vigente' }
@@ -226,8 +249,8 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
 
   function exportar() {
     descargar(`panel-${nombreVista}-${hoy}.csv`, aCsv(
-      ['Categoría', 'Tipo', 'Vigente', 'Ejecutado', 'Comprometido', 'Reservado', 'Disponible', 'Ahorro / (exceso)'],
-      porCat.map((c) => [c.c, c.tipo, c.bud, c.exe, c.com, 0, c.disp, c.disp]),
+      ['Categoría', 'Tipo', 'Vigente', 'Ejecutado', 'Comprometido', 'Reservado', 'Disponible', 'Exceso'],
+      porCat.map((c) => [c.c, c.tipo, c.bud, c.exe, c.com, 0, c.disp, c.exceso]),
     ))
   }
 
@@ -239,7 +262,7 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
     { label: 'Ejecutado', value: f1(tot.exe), sub: `${pctDe(tot.exe, tot.bud)} del vigente${todas ? '' : ` · ${(avance * 100).toFixed(0)} % del año`}`, color: 'var(--primario)' },
     { label: 'Comprometido + reservas', value: f1(tot.com), sub: `Compromisos ${f1(tot.com)} · Reservas 0.0` },
     { label: 'Disponible', value: f1(tot.disp), sub: `${pctDe(tot.disp, tot.bud)} del vigente`, color: tot.disp < 0 ? 'var(--riesgo)' : undefined },
-    { label: 'Proyección de cierre', value: '—', sub: 'Método por definir' },
+    { label: 'Proyección de cierre', value: f1(proyeccion), sub: filtrado ? 'Vigente + excesos (las iniciativas no se filtran)' : `Vigente − ahorro neto · ${pctDe(proyeccion, tot.bud)} del vigente`, color: proyeccion > tot.bud ? 'var(--riesgo)' : undefined },
   ]
 
   return (
@@ -299,7 +322,7 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
         <div style={{ background: 'var(--ahorro-fondo)', border: '1px solid var(--ahorro-suave)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <span style={{ fontSize: 13, color: 'var(--ahorro-tinta)', fontWeight: 700 }}>Ahorro neto generado</span>
           <span className="mono" style={{ fontSize: 28, fontWeight: 600, color: 'var(--ahorro-tinta)' }}>{f2(neto)}</span>
-          <span style={{ fontSize: 12, color: 'var(--ahorro-tinta)' }}>Ahorro {f2(tot.ahorro)} − excesos {f2(tot.exceso)}</span>
+          <span style={{ fontSize: 12, color: 'var(--ahorro-tinta)' }}>Realizado {f2(ah.R)} + en gestión {f2(ah.G)} − excesos {f2(tot.exceso)}</span>
         </div>
       </section>
 
@@ -382,21 +405,24 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
         <section aria-labelledby="h-ahorro" style={{ ...tarjeta, flex: '1 1 320px', minWidth: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2 id="h-ahorro" style={titulo}>Ahorros generados vs. presupuesto</h2>
-            <span style={tenue}>Por categoría · {moneda} M en el ejercicio</span>
+            <span style={tenue}>Por módulo · iniciativas registradas · {moneda} M en el ejercicio</span>
           </div>
-          {porCat.map((c) => (
-            <div key={c.c} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{c.c}</span><span className="mono" style={{ fontWeight: 600 }}>{f2(c.ahorro)}</span></div>
+          {porModulo.map((m) => (
+            <div key={m.m} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{m.m}</span><span className="mono" style={{ fontWeight: 600 }}>{f2(m.R + m.G)}</span></div>
               <div style={{ display: 'flex', height: 12, background: 'var(--pista)', borderRadius: 6, overflow: 'hidden' }}>
-                <div style={{ width: `${tot.ahorro ? (c.ahorro / tot.ahorro) * 100 : 0}%`, background: 'var(--ahorro)' }} />
+                <div style={{ width: `${(m.R / maxModulo) * 100}%`, background: 'var(--ahorro)' }} />
+                <div style={{ width: `${(m.G / maxModulo) * 100}%`, background: 'var(--ahorro-suave)' }} />
               </div>
             </div>
           ))}
+          {porModulo.length === 0 && <span style={tenue}>{filtrado ? 'Las iniciativas no se filtran por categoría ni centro de costo.' : 'Sin iniciativas registradas.'} <button className="enlace" onClick={() => ir('ahorros')} style={{ fontSize: 13 }}>Ir a Ahorros →</button></span>}
           <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--tenue)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{muestra('var(--ahorro)')}Saldo bajo el presupuesto</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{muestra('var(--ahorro)')}Realizado</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{muestra('var(--ahorro-suave)')}En gestión</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, borderTop: '1px solid var(--pista)', paddingTop: 14 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontSize: 12, color: 'var(--tenue)' }}>Ahorro bruto</span><span className="mono" style={{ fontSize: 18, fontWeight: 600 }}>{f2(tot.ahorro)}</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontSize: 12, color: 'var(--tenue)' }}>Ahorro bruto</span><span className="mono" style={{ fontSize: 18, fontWeight: 600 }}>{f2(ah.R + ah.G)}</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontSize: 12, color: 'var(--tenue)' }}>Excesos</span><span className="mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--riesgo)' }}>({f2(tot.exceso)})</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontSize: 12, color: 'var(--tenue)' }}>Ahorro neto</span><span className="mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ahorro-tinta)' }}>{f2(neto)}</span></div>
           </div>
@@ -410,7 +436,7 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="t" style={{ minWidth: 960 }}>
-            <thead><tr style={{ color: 'var(--tenue)' }}><th>Categoría</th><th>Tipo</th><th className="r">Vigente</th><th className="r">Ejecutado</th><th className="r">Comprometido</th><th className="r">Reservado</th><th className="r">Disponible</th><th className="r">Proyección</th><th className="r">Ahorro / (exceso)</th><th style={{ width: 200 }}>Consumo del presupuesto</th></tr></thead>
+            <thead><tr style={{ color: 'var(--tenue)' }}><th>Categoría</th><th>Tipo</th><th className="r">Vigente</th><th className="r">Ejecutado</th><th className="r">Comprometido</th><th className="r">Reservado</th><th className="r">Disponible</th><th className="r">Exceso</th><th style={{ width: 200 }}>Consumo del presupuesto</th></tr></thead>
             <tbody>
               {porCat.map((c) => (
                 <tr key={c.c}>
@@ -420,9 +446,8 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
                   <td className="r mono">{f2(c.exe)}</td>
                   <td className="r mono">{f2(c.com)}</td>
                   <td className="r mono">0.00</td>
-                  <td className="r mono">{f2(c.disp)}</td>
-                  <td className="r mono">—</td>
-                  <td className="r mono" style={{ fontWeight: 600, color: c.disp < 0 ? 'var(--riesgo)' : 'var(--ahorro-tinta)' }}>{c.disp < 0 ? `(${f2(-c.disp)})` : f2(c.disp)}</td>
+                  <td className="r mono" style={{ color: c.disp < 0 ? 'var(--riesgo)' : undefined }}>{f2(c.disp)}</td>
+                  <td className="r mono" style={{ fontWeight: 600, color: c.exceso ? 'var(--riesgo)' : 'var(--tenue)' }}>{c.exceso ? `(${f2(c.exceso)})` : '—'}</td>
                   <td><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ flex: 1, display: 'flex', height: 10, background: 'var(--pista)', borderRadius: 5, overflow: 'hidden' }}>
                       <div style={{ width: `${c.bud ? Math.min((c.exe / c.bud) * 100, 100) : 0}%`, background: 'var(--primario)' }} />
@@ -436,8 +461,8 @@ export default function Panel({ empresas, empresa, setEmpresa, personal, ir }: {
                 <td style={{ fontWeight: 700 }}>Total {nombreVista}</td><td />
                 <td className="r mono" style={{ fontWeight: 700 }}>{f2(tot.bud)}</td><td className="r mono" style={{ fontWeight: 700 }}>{f2(tot.exe)}</td>
                 <td className="r mono" style={{ fontWeight: 700 }}>{f2(tot.com)}</td><td className="r mono" style={{ fontWeight: 700 }}>0.00</td>
-                <td className="r mono" style={{ fontWeight: 700 }}>{f2(tot.disp)}</td><td className="r mono" style={{ fontWeight: 700 }}>—</td>
-                <td className="r mono" style={{ fontWeight: 700, color: 'var(--ahorro-tinta)' }}>{f2(neto)}</td>
+                <td className="r mono" style={{ fontWeight: 700 }}>{f2(tot.disp)}</td>
+                <td className="r mono" style={{ fontWeight: 700, color: tot.exceso ? 'var(--riesgo)' : 'var(--tenue)' }}>{tot.exceso ? `(${f2(tot.exceso)})` : '—'}</td>
                 <td className="mono" style={{ fontSize: 12, textAlign: 'right' }}>{pctDe(tot.exe + tot.com, tot.bud)}</td>
               </tr>
             </tbody>

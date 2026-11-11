@@ -213,7 +213,8 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'tipo', label: 'Tipo', tipo: 'opciones', opciones: ['OPEX', 'CAPEX'], defecto: 'OPEX', obligatorio: true },
       { k: 'categoria', label: 'Categoría', obligatorio: true },
       { k: 'centro_costo_codigo', label: 'Centro de costo (3 dígitos)' },
-      { k: 'estado', label: 'Estado', tipo: 'opciones', opciones: ['Activa', 'Nueva', 'Inactiva'], defecto: 'Activa', obligatorio: true },
+      // Una cuenta creada en SIGI queda «Nueva» hasta que Contabilidad la confirme (diseño).
+      { k: 'estado', label: 'Estado', tipo: 'opciones', opciones: ['Activa', 'Nueva', 'Inactiva'], defecto: 'Nueva', obligatorio: true },
     ],
   },
   areas: {
@@ -234,6 +235,20 @@ export const MODULOS: Record<string, Modulo> = {
     campos: [
       { k: 'codigo', label: 'Código (3 dígitos)', obligatorio: true },
       { k: 'nombre', label: 'Nombre', obligatorio: true },
+    ],
+  },
+  iniciativas: {
+    id: 'iniciativas', titulo: 'Iniciativas de ahorro', tabla: 'iniciativas_ahorro', orden: { k: 'codigo' },
+    campos: [
+      { k: 'codigo', label: 'ID (AH-01)', obligatorio: true },
+      { k: 'nombre', label: 'Iniciativa', obligatorio: true },
+      { k: 'modulo', label: 'Módulo', tipo: 'opciones', opciones: ['Telecom', 'Flotas', 'Software', 'Partida', 'Otro'], defecto: 'Telecom', obligatorio: true },
+      { k: 'palanca', label: 'Palanca', tipo: 'opciones', opciones: ['Precio', 'Cantidad', 'Arquitectura', 'Plan / tarifa', 'Conciliación', 'Otra'], defecto: 'Precio', obligatorio: true },
+      { k: 'linea_base', label: 'Línea base anual (moneda de reporte)', tipo: 'numero', obligatorio: true },
+      { k: 'costo_nuevo', label: 'Costo nuevo anual', tipo: 'numero', obligatorio: true },
+      { k: 'fecha_efectiva', label: 'Fecha efectiva', tipo: 'fecha', obligatorio: true },
+      { k: 'estado', label: 'Estado', tipo: 'opciones', opciones: ['Propuesta', 'En validación', 'En trámite', 'En negociación', 'Realizado', 'Descartada'], defecto: 'Propuesta', obligatorio: true },
+      { k: 'evidencia', label: 'Evidencia (contrato, factura, acta)' },
     ],
   },
   feriados: {

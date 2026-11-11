@@ -14,6 +14,9 @@ import Telecom from './Telecom'
 import Flotas from './Flotas'
 import Software from './Software'
 import Personal from './Personal'
+import ProveedoresCuentas from './ProveedoresCuentas'
+import Presupuestos from './Presupuestos'
+import Ahorros from './Ahorros'
 import { MODULOS } from './modulos'
 
 type Acceso = { empresa_id: string | null; rol: string; empresas: { nombre: string } | null }
@@ -30,7 +33,8 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
   { seccion: '', entradas: [{ id: 'inicio', titulo: 'Inicio', ver: todos }] },
   { seccion: 'Presupuesto', entradas: [
     { id: 'versiones', titulo: 'Versiones', ver: todos },
-    { id: 'partidas', titulo: 'Partidas', ver: todos },
+    { id: 'partidas', titulo: 'Presupuesto y ejecución', ver: todos },
+    { id: 'ahorros', titulo: 'Ahorros', ver: todos },
     { id: 'comparar', titulo: 'Comparar versiones', ver: todos },
     { id: 'gastos', titulo: 'Gastos y evidencias', ver: todos },
   ] },
@@ -48,9 +52,7 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'personas', titulo: 'Personal y ausencias', ver: (p) => p.personal },
   ] },
   { seccion: 'Catálogos', entradas: [
-    { id: 'proveedores', titulo: 'Proveedores', ver: todos },
-    { id: 'cuentas_proveedor', titulo: 'Cuentas de proveedor', ver: todos },
-    { id: 'cuentas_contables', titulo: 'Cuentas contables', ver: todos },
+    { id: 'proveedores', titulo: 'Proveedores y cuentas', ver: todos },
     { id: 'centros_costo', titulo: 'Centros de costo', ver: todos },
     { id: 'areas', titulo: 'Áreas', ver: todos },
     { id: 'departamentos', titulo: 'Departamentos', ver: todos },
@@ -113,7 +115,7 @@ export default function App() {
   const permisos: Permisos = { esAdmin, escribe: esAdmin || rol === 'Captura', personal: esAdmin || rol === 'Captura' }
   const actual = empresas.find((e) => e.id === empresa)
   // Pantallas propias (diseño); su formulario sigue saliendo de MODULOS.
-  const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias', 'gastos']
+  const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias', 'gastos', 'proveedores', 'cuentas_proveedor', 'cuentas_contables', 'partidas', 'ahorros']
   const modulo = propias.includes(vista) ? undefined : MODULOS[vista]
   const conCabeceraPropia = propias.includes(vista)
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
@@ -174,6 +176,9 @@ export default function App() {
               {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' && <Gastos empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
+              {vista === 'partidas' && <Presupuestos empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
+              {vista === 'ahorros' && <Ahorros empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
+              {['proveedores', 'cuentas_proveedor', 'cuentas_contables'].includes(vista) && <ProveedoresCuentas empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'bitacora' && permisos.personal && <Bitacora empresa={empresa} esAdmin={esAdmin} />}
               {vista === 'importar' && permisos.escribe && <Importar key={empresa} empresa={empresa} nombreEmpresa={actual?.nombre ?? ''} esAdmin={esAdmin} />}
               {vista === 'empresas' && esAdmin && <Empresas />}

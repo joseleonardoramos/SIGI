@@ -17,7 +17,7 @@ export const miles = (v: number) => (v / 1000).toLocaleString('en-US', { maximum
 export const entero = (v: number) => Math.round(v).toLocaleString('en-US')
 
 // Cabecera del módulo: ruta, título, subtítulo, Consolidado / empresas y el botón de crear.
-export function Cabecera({ modulo, titulo, subtitulo, empresas, co, elegir, ir, crear }: {
+export function Cabecera({ modulo, titulo, subtitulo, empresas, co, elegir, ir, crear, consolidado = true }: {
   modulo: string
   titulo: string
   subtitulo: ReactNode
@@ -26,6 +26,7 @@ export function Cabecera({ modulo, titulo, subtitulo, empresas, co, elegir, ir, 
   elegir: (id: string) => void
   ir: (vista: string) => void
   crear?: { texto: string; onClick: () => void } // ausente si no puede crear o el formulario ya está abierto
+  consolidado?: boolean // false en pantallas que solo tienen sentido por empresa (presupuesto)
 }) {
   const todas = co === 'all'
   return (
@@ -38,7 +39,7 @@ export function Cabecera({ modulo, titulo, subtitulo, empresas, co, elegir, ir, 
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           <div role="group" aria-label="Empresa" style={{ display: 'flex', border: '1px solid var(--borde)', borderRadius: 10, overflow: 'hidden', background: '#FFFFFF' }}>
-            {[{ id: 'all', nombre: 'Consolidado' }, ...empresas].map((c) => (
+            {[...(consolidado ? [{ id: 'all', nombre: 'Consolidado' }] : []), ...empresas].map((c) => (
               <button key={c.id} onClick={() => elegir(c.id)} aria-pressed={co === c.id}
                 style={{ height: 44, padding: '0 18px', border: 'none', borderRadius: 0, fontSize: 14, fontWeight: 600, background: co === c.id ? 'var(--boton-activo)' : '#FFFFFF', color: co === c.id ? '#FFFFFF' : 'var(--tinta)' }}>
                 {c.nombre}
@@ -106,6 +107,28 @@ export function Paginador({ total, pagina, porPagina, setPagina }: { total: numb
         <button style={botonBorde} disabled={pagina >= paginas - 1} onClick={() => setPagina(pagina + 1)}>Siguiente →</button>
       </div>
     </div>
+  )
+}
+
+// Registros dados de baja (se conservan): lista plegada con «Reactivar», solo para el Administrador.
+export function DadosDeBaja<T extends { id: string; baja_motivo?: unknown }>({ filas, nombre, reactivar }: {
+  filas: T[]
+  nombre: (f: T) => string
+  reactivar: (f: T) => void
+}) {
+  if (!filas.length) return null
+  return (
+    <details style={{ fontSize: 13 }}>
+      <summary style={{ cursor: 'pointer', color: 'var(--tenue)' }}>Dados de baja ({filas.length})</summary>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+        {filas.map((f) => (
+          <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '6px 10px', border: '1px solid var(--pista)', borderRadius: 8 }}>
+            <span><b>{nombre(f)}</b>{f.baja_motivo ? <span style={{ color: 'var(--tenue)' }}> · Baja: {String(f.baja_motivo)}</span> : null}</span>
+            <button className="secundario" onClick={() => reactivar(f)}>Reactivar</button>
+          </div>
+        ))}
+      </div>
+    </details>
   )
 }
 

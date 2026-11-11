@@ -58,6 +58,7 @@ export async function mensajeError(error: unknown): Promise<string> {
     reposiciones_check: 'Un reemplazo o mantenimiento necesita el activo actual.',
     proyectos_check: 'La fecha de fin no puede ser anterior al inicio.',
     feriados_fecha_unica: 'Ya hay un feriado registrado en esa fecha.',
+    iniciativas_ahorro_ahorra: 'El costo nuevo no puede ser mayor que la línea base: no sería un ahorro.',
   }
   const regla = Object.keys(porRegla).find((r) => message?.includes(`"${r}"`))
   if (regla) return porRegla[regla]
