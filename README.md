@@ -115,16 +115,17 @@ MSYS_NO_PATHCONV=1 docker exec -i supabase_storage_SIGI tar -C /mnt -xf - < <car
 
 Se restauran los datos, los usuarios y las evidencias tal como estaban (fechas, autores y bitácora incluidos). Este procedimiento lo prueba `npm run test:respaldo` sobre una base aparte.
 
-**Publicar en el proyecto de Supabase en la nube** (requiere acceso al proyecto; no se ha hecho todavía):
+**Todo corre local.** SIGI no usa servicios en la nube: la base, los usuarios, las evidencias y el frontend viven en Docker en este equipo o en el servidor local. El registro libre está desactivado y la contraseña mínima (12, con letras y números) se fija en `supabase/config.toml`.
 
-1. `npx supabase login` y `npx supabase link --project-ref <ref del proyecto>`.
-2. `npx supabase db push` aplica las migraciones (incluye la zona horaria y el bucket de evidencias). Si alguna empresa tuviera dos versiones vigentes, cierre una antes.
-3. `npx supabase functions deploy usuarios`.
-4. En el panel de Supabase, Authentication: desactivar el registro libre, contraseña mínima de 12 con letras y números, y poner la URL del sitio.
-5. Crear el primer Administrador con `npm run admin:crear` usando la URL y la clave `service_role` del proyecto (solo en el entorno, nunca en un archivo).
-6. En `.env`, poner la URL y la clave pública del proyecto y ejecutar `npm run web:start`.
+**Aplicar una versión nueva** (después de `git pull`), sin perder datos:
 
-En la nube, los respaldos los hace Supabase según el plan contratado; `npm run respaldar` es para la instalación local.
+```bash
+npm run respaldar -- <carpeta>   # primero, un respaldo
+npx supabase migration up        # aplica solo las migraciones nuevas; los datos se conservan
+npm run web:start                # reconstruye el frontend
+```
+
+No use `npm run db:reset` en la instalación con datos reales: borra la base y la recrea vacía.
 
 ## Reglas de la base
 
@@ -133,4 +134,4 @@ En la nube, los respaldos los hace Supabase según el plan contratado; `npm run 
 - **Bitácora:** cada alta y edición guarda el valor anterior y el nuevo.
 - **Personal y ausencias:** solo los ven el Administrador y Captura.
 - **«Aprobado por Dirección»:** marca informativa; solo la escribe el Administrador.
-- **Secretos:** nunca en el repositorio. La clave `service_role` del proyecto en la nube no se usa en el frontend.
+- **Secretos:** nunca en el repositorio. La clave `service_role` solo se usa en el entorno para crear el primer Administrador; el frontend usa la clave pública.
