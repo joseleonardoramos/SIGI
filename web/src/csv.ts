@@ -33,7 +33,14 @@ export function leerCsv(texto: string): string[][] {
     } else campo += c
   }
   if (campo !== '' || fila.length > 0) { fila.push(campo); filas.push(fila) }
-  return filas.filter((f) => f.some((v) => v.trim() !== ''))
+  // Las filas vacías del medio se conservan: la base las omite y avisa su número (que así coincide con Excel).
+  // Solo se quitan las del principio y las del final (Excel suele dejar líneas como «;;;» al final).
+  const llena = (f: string[]) => f.some((v) => v.trim() !== '')
+  const desde = filas.findIndex(llena)
+  if (desde < 0) return []
+  let hasta = filas.length
+  while (!llena(filas[hasta - 1])) hasta--
+  return filas.slice(desde, hasta)
 }
 
 // Convierte las filas en objetos {encabezado: valor}.

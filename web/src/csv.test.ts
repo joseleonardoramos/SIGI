@@ -34,8 +34,9 @@ describe('leerCsv', () => {
     expect(leerCsv(texto)).toEqual([['Nombre', 'RNC'], ['Claro', '101001577']])
   })
 
-  it('omite filas vacías y conserva celdas vacías', () => {
-    expect(leerCsv('a,b,c\n\n1,,3\n,,\n')).toEqual([['a', 'b', 'c'], ['1', '', '3']])
+  it('conserva las filas vacías del medio (la base las informa) y quita las del principio y el final', () => {
+    expect(leerCsv('\na,b,c\n\n1,,3\n,,\n\n')).toEqual([['a', 'b', 'c'], [''], ['1', '', '3']])
+    expect(leerCsv(',,\n\n')).toEqual([])
   })
 
   it('lee la última fila aunque no termine en salto de línea', () => {

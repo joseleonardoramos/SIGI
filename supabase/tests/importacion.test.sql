@@ -1,7 +1,7 @@
 -- Pruebas de la importación CSV (pgTAP).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(25);
+select plan(33);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'admin@prueba.test'),
@@ -31,11 +31,14 @@ grant select on telecom_ok to authenticated;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated"}';
 
--- Vista previa: valida pero no guarda
+-- Vista previa: valida, muestra cada fila con su resultado, pero no guarda
 select is(
-  (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('a', 64), filas) - 'muestra' from telecom_ok),
-  '{"filas": 2, "errores": [], "importado": false}'::jsonb, 'La vista previa valida sin errores');
+  (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('a', 64), filas) -> 'resumen' from telecom_ok),
+  '{"nueva": 2}'::jsonb, 'La vista previa clasifica las filas: dos nuevas');
 select is((select count(*)::int from servicios_telecom), 0, 'La vista previa no guarda nada');
+select is(
+  (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('a', 64), filas) -> 'detalle' -> 1 -> 'vacios' from telecom_ok),
+  '["Ubicación", "Cuenta Proveedor"]'::jsonb, 'La vista previa indica las columnas opcionales que vienen vacías');
 
 -- Errores con número de fila; no se guarda nada aunque haya filas buenas
 select is(
@@ -47,6 +50,14 @@ select is(
   '[3, 4]'::jsonb, 'Los errores indican la fila del archivo (la 1 es el encabezado)');
 select is((select count(*)::int from servicios_telecom), 0, 'Un archivo con errores no guarda ninguna fila');
 
+-- Filas vacías: se omiten e informan con su número, no son error
+select is(
+  (select jsonb_path_query_array(importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 'v.csv', repeat('7', 64), '[
+     {"Sucursal": "Sede", "Proveedor": "Claro Prueba", "Detalle": "Fibra", "Tipo": "internet", "Monto": "100"},
+     {"Sucursal": "", "Proveedor": " ", "Detalle": "", "Tipo": "", "Monto": ""}
+   ]'), '$.detalle[*] ? (@.accion == "vacia").fila')),
+  '[3]'::jsonb, 'Una fila vacía se omite y se informa su número');
+
 -- Confirmar
 select is(
   (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('a', 64), filas, true) ->> 'importado' from telecom_ok),
@@ -57,9 +68,20 @@ select is((select tasa from servicios_telecom where detalle = 'LTE'), 60.0000, '
 select matches(
   (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('a', 64), filas, true) -> 'errores' -> 0 ->> 'mensaje' from telecom_ok),
   '^Este archivo ya se importó el ', 'El mismo archivo no se importa dos veces');
+
+-- Reimportar: lo que ya existe igual se omite; solo se cargan los cambios
 select is(
-  (select jsonb_path_query_array(importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't2.csv', repeat('9', 64), filas), '$.errores[*].fila') from telecom_ok),
-  '[2, 3]'::jsonb, 'Reimportar un archivo corregido no duplica los servicios ya registrados');
+  (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't2.csv', repeat('9', 64), filas) -> 'resumen' from telecom_ok),
+  '{"igual": 2}'::jsonb, 'Reimportar los mismos datos no duplica: se omiten como sin cambios');
+select is(
+  (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't3.csv', repeat('6', 64), '[
+     {"Sucursal": "Sede", "Ubicación": "", "Proveedor": "Claro Prueba", "Cuenta Proveedor": "7001", "Detalle": "Fibra 100", "Tipo": "Internet", "Moneda": "RD$", "Monto": "1,800"}
+   ]', true) -> 'detalle' -> 0 -> 'cambios'),
+  '[{"campo": "Monto", "antes": "1500.00", "despues": "1800"}]'::jsonb, 'Un cambio muestra el campo, el valor anterior y el nuevo');
+select is(
+  (select monto || '|' || ciudad from servicios_telecom where detalle = 'Fibra 100'),
+  '1800.00|Santiago', 'Se actualiza solo lo que cambió; una celda vacía no borra lo guardado');
+select is((select count(*)::int from servicios_telecom), 2, 'Actualizar no agrega filas');
 
 select is(
   (select importar_csv('servicios_telecom', '00000000-0000-0000-0000-00000000000a', 't.csv', repeat('c', 64), '[{"Sucursal": "Sede", "Detalle": "X"}]') -> 'errores' -> 0 ->> 'mensaje'),
@@ -77,14 +99,19 @@ select is(
 select is(
   (select importar_csv('lineas_flota', '00000000-0000-0000-0000-00000000000a', 'f3.csv', repeat('8', 64), '[
      {"Cuenta Proveedor": "7001", "Número": "809-555-0009", "Fecha creación": "04/03/2024", "Área": "Ventas", "Departamento": "Ruta", "Precio": "1"}
-   ]') -> 'muestra') @> '[{"numero": "809-555-0009", "fecha_alta": "2024-03-04"}]',
-  true, 'La vista previa muestra la fecha ya convertida (4 de marzo), no el texto del archivo');
+   ]') -> 'detalle' -> 0 -> 'valores' ->> 'Fecha creación'),
+  '2024-03-04', 'La vista previa muestra la fecha ya convertida (4 de marzo), no el texto del archivo');
 select is(
   (select importar_csv('lineas_flota', '00000000-0000-0000-0000-00000000000a', 'f.csv', repeat('e', 64), '[
      {"Cuenta Proveedor": "7001", "Número": "809-555-0002", "Área": "Ventas", "Departamento": "Ruta", "Precio": "850"},
      {"Cuenta Proveedor": "7001", "Número": "809-555-0002", "Área": "Ventas", "Departamento": "Ruta", "Precio": "850"}
    ]') -> 'errores' -> 0),
-  '{"fila": 3, "mensaje": "La línea «809-555-0002» ya está registrada"}'::jsonb, 'Una línea repetida en el mismo archivo se detecta');
+  '{"fila": 3, "mensaje": "Repetida en el archivo: es la misma línea de la fila 2"}'::jsonb, 'Una línea repetida en el mismo archivo se detecta');
+select is(
+  (select importar_csv('lineas_flota', '00000000-0000-0000-0000-00000000000a', 'f4.csv', repeat('0', 64), '[
+     {"Cuenta Proveedor": "7001", "Número": "809-555-0001", "Status": "", "Área": "Ventas", "Departamento": "Ruta", "Datos (SI/NO)": "", "Precio": "850"}
+   ]') -> 'resumen'),
+  '{"igual": 1}'::jsonb, 'Status y Datos vacíos no reemplazan lo guardado por sus valores por defecto');
 
 -- Partidas
 select throws_ok(
@@ -98,6 +125,11 @@ select is(
      '00000000-0000-0000-0000-0000000000b1') ->> 'importado'),
   'true', 'Se importan partidas a una versión vigente');
 select is((select distribucion from partidas where codigo = 'P1'), 'Puntual · mar', 'La distribución puntual se normaliza');
+select is(
+  (select importar_csv('partidas', '00000000-0000-0000-0000-00000000000a', 'p2.csv', repeat('5', 64),
+     '[{"Código": "P1", "Nombre": "Renovación", "Categoría": "Software", "Distribución": "Puntual marzo", "Monto": "15000"}]', true,
+     '00000000-0000-0000-0000-0000000000b1') -> 'resumen'),
+  '{"cambio": 1}'::jsonb, 'Una partida con el mismo código se actualiza, no se duplica');
 
 -- Catálogos del Administrador
 select throws_ok(
@@ -108,7 +140,7 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","r
 select is(
   (select importar_csv('cuentas_contables', '00000000-0000-0000-0000-00000000000a', 'c.csv', repeat('2', 64), '[
      {"Código": "6101-001", "Descripción": "Internet", "Tipo": "opex", "Categoría": "Telecom", "Centro de costo": "101"},
-     {"Código": "6101-001", "Descripción": "Repetida", "Tipo": "OPEX", "Categoría": "Telecom", "Centro de costo": "1"}
+     {"Código": "6101-002", "Descripción": "Otra", "Tipo": "OPEX", "Categoría": "Telecom", "Centro de costo": "1"}
    ]') -> 'errores' -> 0),
   '{"fila": 3, "mensaje": "Centro de costo debe tener 3 dígitos"}'::jsonb, 'Las cuentas contables se validan fila por fila');
 select is(
@@ -118,16 +150,19 @@ select is(
    ]') -> 'errores'),
   '[{"fila": 3, "mensaje": "El proveedor «No existe» no existe en el maestro"}]'::jsonb, 'Las cuentas de proveedor exigen un proveedor del maestro');
 select is(
-  (select importar_csv('proveedores', null, 'pr.csv', repeat('4', 64), '[{"Nombre": "CLARO PRUEBA"}]') -> 'errores' -> 0 ->> 'mensaje'),
-  'Ya existe un registro igual (en el archivo o en SIGI)', 'Un proveedor que solo cambia mayúsculas se rechaza');
+  (select importar_csv('proveedores', null, 'pr.csv', repeat('4', 64), '[{"Nombre": "CLARO PRUEBA"}]') -> 'resumen'),
+  '{"igual": 1}'::jsonb, 'Un proveedor que solo cambia mayúsculas es el mismo: no se duplica');
+select is(
+  (select importar_csv('proveedores', null, 'pr2.csv', repeat('3', 64), '[{"Nombre": "Claro Prueba", "RNC": "101-01010-1"}]', true) -> 'detalle' -> 0 -> 'cambios'),
+  '[{"campo": "RNC", "despues": "101010101"}]'::jsonb, 'Al proveedor existente solo se le agrega el dato nuevo (antes no tenía)');
 
 -- Maestro de áreas y departamentos
 select is(
   (select importar_csv('departamentos', '00000000-0000-0000-0000-00000000000a', 'd.csv', repeat('5', 64), '[
      {"Área": "Operaciones", "Departamento": "Almacén"},
      {"Área": "ventas", "Departamento": "Ruta"}
-   ]') -> 'errores'),
-  '[{"fila": 3, "mensaje": "Ya existe un registro igual (en el archivo o en SIGI)"}]'::jsonb, 'Un departamento no se repite dentro de su área');
+   ]') -> 'resumen'),
+  '{"igual": 1, "nueva": 1}'::jsonb, 'Un departamento que ya existe en su área se omite');
 select is(
   (select (importar_csv('departamentos', '00000000-0000-0000-0000-00000000000a', 'd2.csv', repeat('6', 64),
      '[{"Área": "Operaciones", "Departamento": "Almacén"}]', true) ->> 'importado')

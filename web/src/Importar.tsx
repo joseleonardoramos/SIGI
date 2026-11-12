@@ -3,14 +3,45 @@ import { supabase, mensajeError } from './supabase'
 import { aObjetos, decodificar, descargar, huella, leerCsv, plantillaCsv } from './csv'
 
 type Opcion = { id: string; nombre: string }
+// Resultado de cada fila según la base: nueva, cambio (solo lo que cambia), igual y vacía (se omiten), error.
+export type Detalle = {
+  fila: number
+  accion: 'nueva' | 'cambio' | 'igual' | 'vacia' | 'error'
+  clave?: string
+  mensaje?: string
+  cambios?: { campo: string; antes?: string; despues?: string }[]
+  valores?: Record<string, string | null>
+  vacios?: string[]
+}
 type Resultado = {
   filas: number
   errores: { fila: number; mensaje: string }[]
   importado: boolean
-  muestra?: Record<string, unknown>[] // primeras filas tal como se guardarán
+  detalle: Detalle[]
+  resumen: Partial<Record<Detalle['accion'], number>>
 }
 
-const celda = (v: unknown) => (v === true ? 'Sí' : v === false ? 'No' : v == null ? '' : Array.isArray(v) ? v.join('; ') : String(v))
+const ACCIONES: { id: Detalle['accion']; nombre: string; tono: [string, string] }[] = [
+  { id: 'nueva', nombre: 'Nuevas', tono: ['#E6EEF7', '#1D3557'] },
+  { id: 'cambio', nombre: 'Con cambios', tono: ['#FFF4D6', '#6B4A00'] },
+  { id: 'igual', nombre: 'Sin cambios (se omiten)', tono: ['#EEF1F4', '#3E4A58'] },
+  { id: 'vacia', nombre: 'Vacías (se omiten)', tono: ['#F4F4F4', '#4D4D4D'] },
+  { id: 'error', nombre: 'Con error', tono: ['#FBE9DF', '#8A3A12'] },
+]
+const ESTADO: Record<Detalle['accion'], string> = { nueva: 'Nueva', cambio: 'Cambio', igual: 'Sin cambios', vacia: 'Vacía', error: 'Error' }
+const MAX_FILAS = 500 // filas dibujadas a la vez; los filtros muestran el resto
+
+// Qué pasará con la fila, en palabras.
+export function explicar(d: Detalle): string {
+  switch (d.accion) {
+    case 'nueva': return Object.entries(d.valores ?? {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}: ${v}`).join(' · ')
+    case 'cambio': return (d.cambios ?? []).map((c) => `${c.campo}: ${c.antes ?? '(vacío)'} → ${c.despues ?? '(vacío)'}`).join(' · ')
+    case 'igual': return 'Ya existe igual en SIGI: se omite.'
+    case 'vacia': return 'Fila vacía: se omite.'
+    default: return d.mensaje ?? ''
+  }
+}
+
 type Archivo = { nombre: string; hash: string; filas: Record<string, string>[] }
 
 const CATALOGOS = [
@@ -33,6 +64,7 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const [ver, setVer] = useState<Detalle['accion'] | ''>('') // filtro de la vista previa
 
   const global = catalogo === 'proveedores'
 
@@ -72,6 +104,7 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
     setOcupado(false)
     if (error) { setError(await mensajeError(error)); return }
     setResultado(data as Resultado)
+    setVer('')
   }
 
   async function elegir(e: ChangeEvent<HTMLInputElement>) {
@@ -95,7 +128,10 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
     enviar(datos, false)
   }
 
+  const n = (a: Detalle['accion']) => resultado?.resumen?.[a] ?? 0
+  const aCargar = n('nueva') + n('cambio')
   const listo = archivo && resultado && resultado.errores.length === 0 && !resultado.importado
+  const visibles = (resultado?.detalle ?? []).filter((d) => !ver || d.accion === ver)
   const faltaDestino = (!global && !empresa) || (catalogo === 'partidas' && !version)
 
   return (
@@ -121,7 +157,7 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
         </label>
       </div>
       {faltaDestino && <p className="nota">{catalogo === 'partidas' ? 'Cree primero una versión de presupuesto abierta para esta empresa.' : 'No tiene empresas donde importar.'}</p>}
-      <p className="nota">Separado por comas o punto y coma, en UTF-8. Montos con punto decimal (1,500.00). Fechas AAAA-MM-DD o DD/MM/AAAA. Primero se revisa el archivo; nada se guarda hasta confirmar.</p>
+      <p className="nota">Separado por comas o punto y coma, en UTF-8. Montos con punto decimal (1,500.00). Fechas AAAA-MM-DD o DD/MM/AAAA. Primero se revisa el archivo y se muestra fila por fila qué es nuevo, qué cambia y qué se omite; nada se guarda hasta confirmar.</p>
 
       {ocupado && <p role="status">Revisando…</p>}
       {error && <p className="error" role="alert">{error}</p>}
@@ -129,12 +165,14 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
       {archivo && resultado && (
         <>
           {resultado.importado
-            ? <p className="ok" role="status">Se importaron {resultado.filas} filas de «{archivo.nombre}». Quedan en la bitácora.</p>
+            ? <p className="ok" role="status">Se cargaron {n('nueva')} nuevas y {n('cambio')} con cambios de «{archivo.nombre}». Se omitieron {n('igual')} sin cambios y {n('vacia')} vacías. Todo queda en la bitácora.</p>
             : resultado.errores.length > 0
               ? <p className="error" role="alert">{resultado.errores.length} fila(s) con errores en «{archivo.nombre}». Corrija el archivo y vuelva a elegirlo; no se guardó nada.</p>
-              : <p className="ok" role="status">{resultado.filas} filas revisadas sin errores. Revise la muestra y confirme.</p>}
+              : aCargar === 0
+                ? <p className="ok" role="status">Nada que cargar: todo lo de «{archivo.nombre}» ya está en SIGI sin cambios{n('vacia') ? ` (y ${n('vacia')} filas vacías)` : ''}.</p>
+                : <p className="ok" role="status">Revise la vista previa: se cargarán {n('nueva')} nuevas y {n('cambio')} con cambios; se omiten {n('igual')} sin cambios y {n('vacia')} vacías. Nada se guarda hasta confirmar.</p>}
 
-          {resultado.errores.length > 0 && (
+          {resultado.detalle.length === 0 && resultado.errores.length > 0 && (
             <table>
               <thead><tr><th>Fila</th><th>Error</th></tr></thead>
               <tbody>
@@ -143,21 +181,42 @@ export default function Importar({ empresa, nombreEmpresa, esAdmin }: { empresa:
             </table>
           )}
 
-          {listo && (
+          {resultado.detalle.length > 0 && (
             <>
-              <p className="nota">Así se guardarán (fechas, montos y estados ya convertidos). Revise sobre todo las fechas: se leen como día/mes/año.</p>
+              <div className="fila-controles" role="group" aria-label="Filtrar la vista previa">
+                <button type="button" className={ver === '' ? '' : 'secundario'} aria-pressed={ver === ''} onClick={() => setVer('')}>Todas ({resultado.detalle.length})</button>
+                {ACCIONES.filter((a) => n(a.id) > 0).map((a) => (
+                  <button key={a.id} type="button" className={ver === a.id ? '' : 'secundario'} aria-pressed={ver === a.id} onClick={() => setVer(a.id)}>{a.nombre} ({n(a.id)})</button>
+                ))}
+              </div>
+              <p className="nota">Las celdas opcionales vacías no borran lo que ya está guardado. Revise las fechas: se leen como día/mes/año.</p>
               <div className="desplazable">
                 <table>
-                  <thead><tr><th>Fila</th>{Object.keys(resultado.muestra?.[0] ?? {}).map((c) => <th key={c}>{c}</th>)}</tr></thead>
+                  <thead><tr><th>Fila</th><th>Resultado</th><th>Registro</th><th>Qué se hará</th></tr></thead>
                   <tbody>
-                    {(resultado.muestra ?? []).map((f, i) => (
-                      <tr key={i}><td>{i + 2}</td>{Object.values(f).map((v, j) => <td key={j}>{celda(v)}</td>)}</tr>
-                    ))}
+                    {visibles.slice(0, MAX_FILAS).map((d) => {
+                      const a = ACCIONES.find((x) => x.id === d.accion)!
+                      return (
+                        <tr key={d.fila}>
+                          <td className="num">{d.fila}</td>
+                          <td><span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 999, background: a.tono[0], color: a.tono[1], whiteSpace: 'nowrap' }}>{ESTADO[d.accion]}</span></td>
+                          <td style={{ fontWeight: 600 }}>{d.clave}</td>
+                          <td style={{ fontSize: 13 }}>
+                            {explicar(d)}
+                            {d.vacios && d.vacios.length > 0 && d.accion !== 'error' && (
+                              <div className="nota">{d.accion === 'nueva' ? 'Sin dato' : 'Sin dato, se conserva lo guardado'}: {d.vacios.join(', ')}</div>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
-              {archivo.filas.length > 10 && <p className="nota">Se muestran 10 de {archivo.filas.length} filas.</p>}
-              <button type="button" disabled={ocupado} onClick={() => enviar(archivo, true)}>Confirmar importación de {resultado.filas} filas</button>
+              {visibles.length > MAX_FILAS && <p className="nota">Se muestran {MAX_FILAS} de {visibles.length} filas; use los filtros para ver el resto.</p>}
+              {listo && aCargar > 0 && (
+                <button type="button" disabled={ocupado} onClick={() => enviar(archivo, true)}>Cargar {n('nueva')} nuevas y {n('cambio')} con cambios</button>
+              )}
             </>
           )}
         </>
