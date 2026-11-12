@@ -21,3 +21,8 @@ respaldos/
 
 # Certificados del proxy (la clave privada nunca va al repositorio)
 proxy/ssl/
+proxy/Certs/
+*.key
+*.p7b
+*.csr
+*.pem
