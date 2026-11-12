@@ -1,2 +1,5 @@
-# Los scripts de bash deben quedar con LF también en Windows (bash falla con CRLF).
+# Scripts y plantillas que se ejecutan en Linux (contenedores, servidor): siempre con fin de línea LF,
+# aunque se clonen en Windows (con CRLF, «#!/bin/sh» falla al arrancar el contenedor).
 *.sh text eol=lf
+*.template text eol=lf
+proxy/Dockerfile text eol=lf

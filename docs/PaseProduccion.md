@@ -31,7 +31,7 @@ Destino: **servidor propio con Docker** (fase 1) y luego **Docker Swarm** (fase 
 10. Migraciones de la base de SIGI
 11. Función `usuarios`
 12. Frontend (imagen, variables, contenedor)
-13. Proxy inverso HTTPS
+13. Proxy HTTPS (contenedor `sigi-proxy`)
 14. Puesta en marcha funcional (primer Administrador, empresas, catálogos)
 15. Pruebas de humo (aceptación técnica)
 16. Respaldos y recuperación
@@ -68,9 +68,10 @@ Usuarios (navegador, red interna o VPN)
         │  HTTPS 443
         ▼
 ┌──────────────────────────────── Servidor SIGI (Linux) ────────────────────────────────┐
-│  Proxy inverso nginx (TLS)                                                             │
-│    sigi.<dominio>      ──► 127.0.0.1:8080  Contenedor web SIGI (nginx + app compilada) │
-│    api.sigi.<dominio>  ──► 127.0.0.1:8000  Pasarela de Supabase (Envoy, "api-gw")      │
+│  Contenedor proxy sigi-proxy (nginx, TLS, puertos 80 y 443), un solo nombre:           │
+│    https://sigi.elcatador.local/            ──► web:80   Frontend SIGI (nginx + app)    │
+│    https://sigi.elcatador.local/{auth,rest,storage,functions,realtime}/v1/              │
+│                                             ──► api-gw:8000  Pasarela de Supabase       │
 │                                              │                                         │
 │              ┌───────────────┬───────────────┼───────────────┬──────────────┐          │
 │              ▼               ▼               ▼               ▼              ▼          │
@@ -87,8 +88,8 @@ Usuarios (navegador, red interna o VPN)
         ▼  respaldo (base.dump + evidencias.tar + sha256.txt) a un destino elegido por el usuario
 ```
 
-- El navegador habla con **dos nombres**: `sigi.<dominio>` (la aplicación) y `api.sigi.<dominio>` (Supabase). La URL de la API queda **fija dentro del frontend al compilar**.
-- Solo el proxy publica puertos al exterior (80 y 443). La pasarela (8000), la web (8080) y el pooler (5432/6543) escuchan **solo en 127.0.0.1**.
+- El navegador usa **un solo nombre**: `sigi.elcatador.local`. La aplicación y la API van por el mismo origen (sin CORS); el proxy reparte por ruta. La URL de la API (`https://sigi.elcatador.local`) queda **fija dentro del frontend al compilar**.
+- Solo el contenedor `proxy` publica puertos (80 y 443). La web no publica ninguno (el proxy la alcanza por la red de Docker); la pasarela (8000) y el pooler (5432/6543) escuchan **solo en 127.0.0.1**.
 - SIGI **no usa Realtime**. Se deja encendido para no apartarse de la plantilla oficial; se puede quitar (sección 8.4).
 
 ---
@@ -103,7 +104,7 @@ Usuarios (navegador, red interna o VPN)
 | Configuración de autenticación | `supabase/config.toml` | Variables de entorno de GoTrue (`.env` + `docker-compose.sigi.yml`) |
 | Contenedores | `supabase_db_SIGI`, `supabase_storage_SIGI` | `supabase-db`, `supabase-storage` (Docker) · `sigi_db…` (Swarm) |
 | Archivos de evidencias | `/mnt` dentro de Storage | `/var/lib/storage` dentro de Storage = `volumes/storage` en el disco |
-| Migraciones | Se aplican solas al crear la base | Se aplican a mano con `supabase migration up --db-url` **después** de arrancar |
+| Migraciones | Se aplican solas al crear la base | Se aplican a mano con `supabase migration up --remote` **después** de arrancar |
 | Función `usuarios` | La sirve la CLI desde `supabase/functions` | Se copia a `volumes/functions/usuarios/` |
 | Correo | Inbucket local (de prueba) | Ninguno (SMTP ficticio): no se envían correos |
 
@@ -129,8 +130,9 @@ Carga esperada: decenas de usuarios internos, cientos de miles de filas como má
 
 | Nombre | Apunta a | Uso |
 |---|---|---|
-| `sigi.<dominio>` | IP del servidor | Aplicación |
-| `api.sigi.<dominio>` | IP del servidor | Supabase (lo llama el navegador) |
+| `sigi.elcatador.local` | IP del servidor | Aplicación y API (registro A en el DNS interno) |
+
+> Mientras no exista el registro DNS, para probar se puede agregar `<IP del servidor> sigi.elcatador.local` al archivo `C:\Windows\System32\drivers\etc\hosts` del equipo (como administrador). Los nombres `.local` también los usa mDNS en macOS y Linux: en esos equipos, si no resuelve, use el archivo hosts o un nombre como `sigi.elcatador.lan`.
 
 Puertos:
 
@@ -145,8 +147,9 @@ Puertos:
 
 ### 4.3 Certificados
 
-- Interno: certificado de la CA de la empresa para `sigi.<dominio>` y `api.sigi.<dominio>` (o un comodín). Los navegadores de los usuarios deben confiar en esa CA.
-- Si los nombres son públicos: Let's Encrypt con `certbot` (necesita el puerto 80 abierto desde internet durante la validación).
+- `.local` no es un dominio público: **no** se puede usar Let's Encrypt.
+- Opción recomendada: certificado de la **CA interna** de la empresa para `sigi.elcatador.local` (con el nombre en *subjectAltName*). Los equipos del dominio ya confían en esa CA.
+- Opción inmediata: si no se monta ningún certificado, el proxy **genera uno autofirmado** al arrancar (825 días). Funciona, pero cada navegador mostrará una advertencia hasta que el certificado se instale como confiable (sección 13.4).
 
 ### 4.4 Personas y responsabilidades
 
@@ -187,7 +190,10 @@ sudo mkdir -p /opt/sigi && sudo chown sigi:sigi /opt/sigi
 
 # 5.4 Node.js 24 (para la CLI de Supabase al aplicar migraciones y para crear el primer Administrador)
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
-sudo apt -y install nodejs && node --version
+sudo apt -y install nodejs && hash -r && node --version   # debe ser v20 o mayor (v24.x)
+# Si muestra v12 u otra vieja (el nodejs de Ubuntu), quitarla y repetir:
+#   sudo apt -y remove nodejs libnode-dev libnode72 npm; sudo apt -y autoremove; y los dos comandos de arriba
+# Síntoma de Node viejo: "SyntaxError: Unexpected token '?'" al ejecutar npx supabase
 
 # 5.5 Firewall
 sudo ufw default deny incoming
@@ -257,7 +263,8 @@ Después, revisar `.env` a mano. **Ningún valor de ejemplo puede quedar** (la g
 | `S3_PROTOCOL_ACCESS_KEY_SECRET` | — | `openssl rand -hex 32` |
 | `MINIO_ROOT_PASSWORD` | ≥ 8 (no se usa MinIO, pero no dejar el ejemplo) | `openssl rand -hex 16` |
 | `DASHBOARD_PASSWORD` | Con al menos una letra; sin caracteres especiales | `openssl rand -hex 16` |
-| `POOLER_TENANT_ID` | Identificador del inquilino del pooler | `sigi` |
+| `POOLER_TENANT_ID` | Identificador del inquilino del pooler. Si ya arrancó con el valor de ejemplo `your-tenant-id`, **déjelo así**: no es secreto y cambiarlo obliga a recrear el pooler | `sigi` (antes del primer arranque) |
+| `STORAGE_TENANT_ID` | Parte de la ruta donde se guardan las evidencias. **No cambiarlo** después del primer arranque | dejar `stub` |
 
 **Dónde guardar los secretos**: el archivo `.env` queda solo en el servidor (`chmod 600`, dueño `sigi`). Copia cifrada en el gestor de contraseñas de la empresa o en un sobre sellado, según la política. **Nunca** en el repositorio, en correo ni en chat.
 
@@ -265,10 +272,10 @@ Después, revisar `.env` a mano. **Ningún valor de ejemplo puede quedar** (la g
 
 | Variable | Valor en producción | Por qué |
 |---|---|---|
-| `SUPABASE_PUBLIC_URL` | `https://api.sigi.<dominio>` | URL pública de la API (Storage la usa para enlaces) |
-| `API_EXTERNAL_URL` | `https://api.sigi.<dominio>/auth/v1` | Emisor de los tokens de autenticación |
-| `SITE_URL` | `https://sigi.<dominio>` | URL de la aplicación |
-| `ADDITIONAL_REDIRECT_URLS` | `https://sigi.<dominio>` | Única URL permitida |
+| `SUPABASE_PUBLIC_URL` | `https://sigi.elcatador.local` | URL pública de la API (el proxy la reparte por ruta) |
+| `API_EXTERNAL_URL` | `https://sigi.elcatador.local/auth/v1` | Emisor de los tokens de autenticación |
+| `SITE_URL` | `https://sigi.elcatador.local` | URL de la aplicación |
+| `ADDITIONAL_REDIRECT_URLS` | `https://sigi.elcatador.local` | Única URL permitida |
 | `JWT_EXPIRY` | `3600` | Igual que en desarrollo (1 hora; la sesión se renueva sola) |
 | `DISABLE_SIGNUP` | `true` | Solo el Administrador crea usuarios |
 | `ENABLE_EMAIL_SIGNUP` | `true` | **Debe quedar en `true`**: habilita el inicio con correo y contraseña. El registro lo bloquea `DISABLE_SIGNUP` |
@@ -377,8 +384,9 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/rest/v1/ -H "apik
 ### 9.3 Comprobar que nada interno quedó expuesto
 
 ```bash
-sudo ss -tlnp | grep -E ':(8000|8080|5432|6543)\b'
+sudo ss -tlnp | grep -E ':(8000|5432|6543)\b'
 # Todas las líneas deben decir 127.0.0.1:…  — si alguna dice 0.0.0.0 o *, revisar la sección 8
+# (80 y 443 los publica el proxy en todas las interfaces: es lo esperado)
 ```
 
 ---
@@ -393,14 +401,17 @@ Son 18 archivos en `app/supabase/migrations/`, de `20261104000100_esquema.sql` a
 cd /opt/sigi/app
 npm ci                                   # instala la CLI de Supabase del proyecto (solo se usa para migrar)
 set -a; . /opt/sigi/supabase/.env; set +a
-export SIGI_DB_URL="postgresql://postgres.${POOLER_TENANT_ID}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/postgres"
+# sslmode=disable: el pooler escucha solo en 127.0.0.1 y sin TLS (la conexión no sale del servidor)
+export SIGI_DB_URL="postgresql://postgres.${POOLER_TENANT_ID}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/postgres?sslmode=disable"
 
-npx supabase migration list --db-url "$SIGI_DB_URL"   # muestra las 18, sin aplicar
-npx supabase migration up   --db-url "$SIGI_DB_URL"   # las aplica en orden, en transacción cada una
-npx supabase migration list --db-url "$SIGI_DB_URL"   # ahora todas marcadas como aplicadas
+npx supabase migration list --remote="$SIGI_DB_URL"   # muestra las 18, sin aplicar
+npx supabase migration up   --remote="$SIGI_DB_URL"   # las aplica en orden, en transacción cada una
+npx supabase migration list --remote="$SIGI_DB_URL"   # ahora todas marcadas como aplicadas
 ```
 
-> **VERIFICAR**: el usuario del pooler Supavisor tiene la forma `postgres.<POOLER_TENANT_ID>`. Si la conexión falla, hay otra vía: publicar temporalmente el puerto 5432 del servicio `db` en `127.0.0.1` y conectar como `postgres` sin sufijo. **No** aplicar los archivos a mano con `psql`: la CLI registra lo aplicado en `supabase_migrations.schema_migrations`, y de eso dependen las actualizaciones futuras.
+- El usuario del pooler Supavisor tiene la forma `postgres.<POOLER_TENANT_ID>` (comprobado en la instalación).
+- Errores conocidos: `tls error (The server does not support SSL connections)` → falta `?sslmode=disable`; `Unexpected token '?'` → Node viejo (5.4). Las CLI recientes avisan que `--db-url` está obsoleto: usar `--remote=`.
+- **No** aplicar los archivos a mano con `psql`: la CLI registra lo aplicado en `supabase_migrations.schema_migrations`, y de eso dependen las actualizaciones futuras.
 
 ### 10.1 Comprobar la base
 
@@ -443,7 +454,7 @@ cd /opt/sigi/supabase && sh run.sh restart functions
 
 - La plantilla ya le pasa `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`, que es lo que la función usa.
 - La primera llamada descarga `npm:@supabase/supabase-js@2` (necesita salida a `registry.npmjs.org`) y la guarda en el volumen `deno-cache`.
-- La función queda en `https://api.sigi.<dominio>/functions/v1/usuarios`. Se prueba en 15.3.
+- La función queda en `https://sigi.elcatador.local/functions/v1/usuarios`. Se prueba en 15.3.
 
 ---
 
@@ -453,36 +464,43 @@ La URL de la API y la clave pública **se fijan al compilar** (son variables `VI
 
 ### 12.1 Variables
 
-Archivo `/opt/sigi/app/.env`, con permisos 600. El `docker-compose.yml` del repositorio lo lee:
+Archivo `/opt/sigi/app/.env`, con permisos 600. Docker Compose lo lee:
 
 ```bash
-VITE_SUPABASE_URL=https://api.sigi.<dominio>
+COMPOSE_FILE=docker-compose.yml:docker-compose.produccion.yml   # agrega el proxy (sección 13)
+SIGI_DOMINIO=sigi.elcatador.local
+VITE_SUPABASE_URL=https://sigi.elcatador.local                   # la API va por el mismo nombre
 VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_PUBLISHABLE_KEY de /opt/sigi/supabase/.env>
 # Si SUPABASE_PUBLISHABLE_KEY quedó vacío, use ANON_KEY. Nunca SERVICE_ROLE_KEY ni SUPABASE_SECRET_KEY.
 ```
 
-**No** poner aquí las variables `SIGI_PRUEBA_*`: son solo para pruebas en desarrollo.
+Para escribir las dos variables del frontend sin errores de copia:
 
-### 12.2 Publicar solo en 127.0.0.1
-
-El `docker-compose.yml` del repositorio publica `8080:80` en todas las interfaces. En el servidor, crear `/opt/sigi/app/docker-compose.override.yml`. Compose lo carga solo y no se sube al repositorio, porque es propio del servidor:
-
-```yaml
-services:
-  web:
-    ports: !override
-      - "127.0.0.1:8080:80"
-    image: sigi-web:${SIGI_VERSION:-local}
+```bash
+cd /opt/sigi/app
+set -a; . /opt/sigi/supabase/.env; set +a
+CLAVE="${SUPABASE_PUBLISHABLE_KEY:-$ANON_KEY}"
+{ grep -v '^VITE_SUPABASE_' .env 2>/dev/null; echo "VITE_SUPABASE_URL=https://sigi.elcatador.local"; echo "VITE_SUPABASE_PUBLISHABLE_KEY=$CLAVE"; } > .env.nuevo && mv .env.nuevo .env && chmod 600 .env
 ```
 
-### 12.3 Construir y arrancar
+**No** poner aquí las variables `SIGI_PRUEBA_*`: son solo para pruebas en desarrollo.
+
+> **Error típico**: si se compila con el `.env` de ejemplo, el frontend apunta a `http://127.0.0.1:54321` (desarrollo). En el navegador se ve como «Correo o contraseña incorrectos» y, en la consola (F12), `127.0.0.1:54321 … ERR_CONNECTION_REFUSED`. Corregir el `.env` y reconstruir **sin caché** (12.3).
+
+### 12.2 Publicación
+
+Con `docker-compose.produccion.yml`, el servicio `web` **no publica puertos**: solo lo alcanza el proxy por la red de Docker. Si existía un `docker-compose.override.yml` de una versión anterior de este documento, borrarlo (con `COMPOSE_FILE` definido, Compose ya no lo carga).
+
+### 12.3 Construir y arrancar (frontend y proxy)
 
 ```bash
 cd /opt/sigi/app
 export SIGI_VERSION=$(git rev-parse --short HEAD)
-docker compose up -d --build
-docker compose ps                                    # web Up
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8080/   # 200
+docker compose build --no-cache web proxy
+docker compose up -d --force-recreate
+docker compose ps                                    # web y proxy Up
+# La URL quedó dentro de la imagen: debe salir https://sigi.elcatador.local y NO 127.0.0.1:54321
+docker compose exec web sh -c 'grep -rhoE "https?://[a-zA-Z0-9.:-]+" /usr/share/nginx/html/assets | sort -u'
 ```
 
 La imagen compila con `node:24-alpine` y sirve con `nginx:1.29-alpine`. `web/nginx.conf` ya incluye:
@@ -492,79 +510,70 @@ La imagen compila con `node:24-alpine` y sirve con `nginx:1.29-alpine`. `web/ngi
 
 ---
 
-## 13. Proxy inverso HTTPS
+## 13. Proxy HTTPS (contenedor `sigi-proxy`)
 
-nginx en el servidor (fuera de Docker) termina TLS y reparte por nombre.
+Todo entra por **https://sigi.elcatador.local** (puertos 80 y 443). El proxy es una imagen propia de SIGI (`proxy/` en el repositorio), basada en `nginx:1.29-alpine`:
 
-```bash
-sudo apt -y install nginx
-sudo install -d -m 700 /etc/nginx/ssl
-# Copiar el certificado y la clave:  /etc/nginx/ssl/sigi.crt  /etc/nginx/ssl/sigi.key  (cadena completa en el .crt)
-```
+| Ruta | Destino |
+|---|---|
+| `http://…` (puerto 80) | Redirección 301 a `https://sigi.elcatador.local` |
+| `/auth/v1/`, `/rest/v1/`, `/storage/v1/`, `/functions/v1/`, `/realtime/v1/` | Pasarela de Supabase (`api-gw:8000`, red `supabase_default`) |
+| Todo lo demás (`/`) | Frontend de SIGI (`web:80`) |
+| Studio | **No** se publica (solo por túnel SSH, 8.2) |
 
-`/etc/nginx/sites-available/sigi`:
+Archivos:
 
-```nginx
-# Redirigir todo a HTTPS
-server {
-  listen 80;
-  server_name sigi.<dominio> api.sigi.<dominio>;
-  return 301 https://$host$request_uri;
-}
+| Archivo | Qué hace |
+|---|---|
+| `proxy/Dockerfile` | Imagen: nginx + openssl; expone 80 y 443 |
+| `proxy/sigi.conf.template` | Configuración; la imagen reemplaza `${SIGI_DOMINIO}`, `${SIGI_WEB_UPSTREAM}` (`web:80`) y `${SIGI_API_UPSTREAM}` (`api-gw:8000`) al arrancar. Límite de subida 12 MB, tiempos de 300 s para importaciones, websocket para Realtime, TLS 1.2 y 1.3 |
+| `proxy/25-sigi-certificado.sh` | Al arrancar: usa `/etc/nginx/ssl/sigi.crt` y `sigi.key`; si faltan, genera un certificado autofirmado para `SIGI_DOMINIO` |
+| `docker-compose.produccion.yml` | Agrega el servicio `proxy` (80 y 443, redes `default` y `supabase_default`) y quita la publicación directa de `web` |
+| `proxy/ssl/` (en el servidor, **fuera del repositorio**) | `sigi.crt` y `sigi.key` |
 
-# Aplicación
-server {
-  listen 443 ssl;
-  http2 on;
-  server_name sigi.<dominio>;
-  ssl_certificate     /etc/nginx/ssl/sigi.crt;
-  ssl_certificate_key /etc/nginx/ssl/sigi.key;
-  ssl_protocols TLSv1.2 TLSv1.3;
-  add_header Strict-Transport-Security "max-age=31536000" always;
+El proxy resuelve los servicios al usarse (DNS interno de Docker), así que arranca aunque Supabase todavía no esté listo; mientras tanto, las rutas de la API responden 502.
 
-  location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  }
-}
+### 13.1 Requisitos
 
-# API de Supabase
-server {
-  listen 443 ssl;
-  http2 on;
-  server_name api.sigi.<dominio>;
-  ssl_certificate     /etc/nginx/ssl/sigi.crt;
-  ssl_certificate_key /etc/nginx/ssl/sigi.key;
-  ssl_protocols TLSv1.2 TLSv1.3;
-  add_header Strict-Transport-Security "max-age=31536000" always;
+- La pila de Supabase arrancada (crea la red `supabase_default`; compruébelo con `docker network ls`). Si la red tiene otro nombre, defínalo en `/opt/sigi/app/.env`: `SUPABASE_RED=<nombre>`.
+- Puertos 80 y 443 libres en el servidor (`sudo ss -tlnp | grep -E ':(80|443)\b'` no debe mostrar nada). Si se había instalado nginx en el sistema siguiendo una versión anterior de este documento: `sudo systemctl disable --now nginx`.
+- Las URL de Supabase de la sección 7.2 apuntando a `https://sigi.elcatador.local`. Si se cambiaron después de arrancar: `cd /opt/sigi/supabase && sh run.sh recreate`. Las sesiones abiertas se cierran (cambia el emisor de los tokens).
 
-  client_max_body_size 12m;          # evidencias de hasta 10 MB + margen
+### 13.2 Certificado
 
-  location / {
-    proxy_pass http://127.0.0.1:8000;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Upgrade $http_upgrade;     # Realtime (websocket), por si se usa en el futuro
-    proxy_set_header Connection "upgrade";
-    proxy_read_timeout 300s;                    # importaciones CSV grandes
-  }
-}
-```
+- **CA interna (recomendado)**: copiar el certificado (con la cadena intermedia) y la clave a `/opt/sigi/app/proxy/ssl/sigi.crt` y `/opt/sigi/app/proxy/ssl/sigi.key`; `chmod 600 proxy/ssl/sigi.key`.
+- **Autofirmado (inmediato)**: no copiar nada. Al primer arranque el proxy crea los dos archivos en `proxy/ssl/` y quedan ahí para los reinicios.
+- Para cambiar de certificado: reemplazar los archivos y `docker compose restart proxy`.
+
+### 13.3 Arrancar y comprobar
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/sigi /etc/nginx/sites-enabled/sigi
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-curl -s -o /dev/null -w "%{http_code}\n" https://sigi.<dominio>/                     # 200
-curl -s https://api.sigi.<dominio>/auth/v1/health -H "apikey: <clave pública>"      # JSON de GoTrue
+cd /opt/sigi/app
+docker compose up -d --build proxy
+docker compose logs proxy | grep SIGI          # "usando el certificado…" o "se genera uno autofirmado…"
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://sigi.elcatador.local/          # 301 https://sigi.elcatador.local/
+curl -sk -o /dev/null -w "%{http_code}\n" https://sigi.elcatador.local/                        # 200
+curl -sk https://sigi.elcatador.local/auth/v1/health -H "apikey: <clave pública>"               # JSON de GoTrue
 ```
 
-Con Let's Encrypt: `sudo apt -y install certbot python3-certbot-nginx && sudo certbot --nginx -d sigi.<dominio> -d api.sigi.<dominio>`. La renovación queda programada sola.
+(Si el servidor no resuelve el nombre: agregar `--resolve sigi.elcatador.local:443:127.0.0.1` a los `curl`.)
+
+### 13.4 Confiar en un certificado autofirmado (solo si no se usa la CA interna)
+
+1. Copiar `/opt/sigi/app/proxy/ssl/sigi.crt` a un equipo (**nunca** `sigi.key`).
+2. Windows: doble clic en `sigi.crt` → Instalar certificado → Equipo local → «Entidades de certificación raíz de confianza». Para todos los equipos, distribuirlo por directiva de grupo (GPO).
+3. Firefox usa su propio almacén: Configuración → Privacidad y seguridad → Certificados → Importar (o activar `security.enterprise_roots.enabled`).
+4. No activar HSTS con un certificado autofirmado: impediría entrar si el certificado cambia.
+
+### 13.5 Prueba sin DNS (túnel SSH)
+
+Para probar desde un equipo antes de tener DNS o firewall abiertos:
+
+```powershell
+ssh -N -L 18443:127.0.0.1:443 sigi@<servidor>
+```
+
+Agregar `127.0.0.1 sigi.elcatador.local` al archivo hosts del equipo y abrir `https://sigi.elcatador.local:18443`. La API también pasa por el túnel, porque va por el mismo nombre.
 
 ---
 
@@ -581,7 +590,7 @@ history -d $(history 1)   # que la contraseña no quede en el historial
 unset SERVICE_ROLE_KEY
 ```
 
-El Gerente entra en `https://sigi.<dominio>` y cambia la contraseña en **Cuenta → Cambiar contraseña**.
+El Gerente entra en `https://sigi.elcatador.local` y cambia la contraseña en **Cuenta → Cambiar contraseña**.
 
 ### 14.2 Configuración inicial, en este orden (desde la aplicación, como Administrador)
 
@@ -614,7 +623,7 @@ Marcar cada una. Todas deben pasar antes de abrir el sistema a los usuarios.
 
 | # | Prueba | Resultado esperado |
 |---|---|---|
-| 15.1 | Abrir `https://sigi.<dominio>` | Pantalla de inicio de sesión, certificado válido, sin errores en la consola del navegador |
+| 15.1 | Abrir `https://sigi.elcatador.local` | Pantalla de inicio de sesión, certificado válido, sin errores en la consola del navegador |
 | 15.2 | Crear usuario con contraseña `soloLetrasLargas` y con `123456789012` | Ambos rechazados |
 | 15.3 | Administrador crea un usuario de Captura desde **Usuarios y roles** | Usuario creado; la contraseña temporal se muestra una vez |
 | 15.4 | Un usuario de Consulta intenta crear un registro | La base lo rechaza (sin permiso) |
@@ -736,7 +745,7 @@ sh run.sh logs rest                               # consultas de la aplicación
 sh run.sh logs storage                            # evidencias
 sh run.sh logs functions                          # creación de usuarios
 cd /opt/sigi/app && docker compose logs web       # frontend
-sudo tail -f /var/log/nginx/error.log             # proxy
+cd /opt/sigi/app && docker compose logs proxy  # proxy
 ```
 
 La auditoría de negocio está en la propia base: tabla `bitacora`, pantalla **Herramientas → Bitácora**.
@@ -763,8 +772,8 @@ SIGI_DB_CONTAINER=supabase-db SIGI_STORAGE_CONTAINER=supabase-storage SIGI_STORA
 git pull --ff-only
 # 3. Migraciones nuevas (solo agrega; los datos se conservan)
 set -a; . /opt/sigi/supabase/.env; set +a
-export SIGI_DB_URL="postgresql://postgres.${POOLER_TENANT_ID}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/postgres"
-npm ci && npx supabase migration up --db-url "$SIGI_DB_URL"
+export SIGI_DB_URL="postgresql://postgres.${POOLER_TENANT_ID}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/postgres?sslmode=disable"
+npm ci && npx supabase migration up --remote="$SIGI_DB_URL"
 # 4. Función (si cambió supabase/functions/usuarios)
 cp supabase/functions/usuarios/index.ts /opt/sigi/supabase/volumes/functions/usuarios/index.ts
 (cd /opt/sigi/supabase && sh run.sh restart functions)
@@ -822,11 +831,11 @@ Desde **Usuarios y roles**: poner «Sin acceso» en cada empresa y quitar la cas
 | ☐ | Ningún valor de ejemplo en `/opt/sigi/supabase/.env` (secretos, `DASHBOARD_PASSWORD`, claves) |
 | ☐ | `.env` de Supabase y de la app con permisos 600, dueño `sigi`; fuera del repositorio |
 | ☐ | El frontend usa solo la clave pública. `SERVICE_ROLE_KEY` y `SUPABASE_SECRET_KEY` no aparecen en ningún archivo de `web/` ni en la imagen (`docker run --rm sigi-web:<versión> grep -r "service_role" /usr/share/nginx/html` no debe encontrar nada) |
-| ☐ | `DISABLE_SIGNUP=true`; registro libre probado: `curl -X POST https://api.sigi.<dominio>/auth/v1/signup -H "apikey: <pública>" -d '{"email":"x@y.z","password":"abcdefgh1234"}'` devuelve error |
+| ☐ | `DISABLE_SIGNUP=true`; registro libre probado: `curl -X POST https://sigi.elcatador.local/auth/v1/signup -H "apikey: <pública>" -d '{"email":"x@y.z","password":"abcdefgh1234"}'` devuelve error |
 | ☐ | Política de contraseñas probada (15.2) |
 | ☐ | Solo 22 (restringido), 80 y 443 abiertos (15.14). Pooler, pasarela y web en 127.0.0.1 |
 | ☐ | Studio sin publicar; acceso solo por túnel SSH |
-| ☐ | HTTPS con certificado válido y HSTS |
+| ☐ | HTTPS con certificado de la CA interna (o autofirmado instalado como confiable en los equipos) |
 | ☐ | Respaldos programados, copiados fuera del servidor y restauración probada |
 | ☐ | Actualizaciones de seguridad del sistema operativo programadas (`unattended-upgrades`) |
 | ☐ | Acceso SSH solo con llave; sin contraseña (`PasswordAuthentication no`); sin `root` directo |
@@ -861,7 +870,7 @@ La guía oficial de Supabase **no documenta Swarm**. Esta sección traduce la in
 
 - **Nodo de datos** (manager, etiqueta `sigi.datos=true`): toda la pila de Supabase (una réplica de cada servicio), sus volúmenes y los respaldos.
 - **Frontend `web`**: 2 réplicas, en cualquier nodo.
-- **Proxy de entrada**: nginx como servicio publicado en 80/443 (modo `host` o malla de enrutamiento), o se mantiene el nginx del sistema en el nodo de datos.
+- **Proxy de entrada**: la misma imagen `sigi-proxy` como servicio publicado en 80/443 (modo `host`).
 - **Red**: overlay `sigi` (cifrada: `--opt encrypted`).
 
 Empezar con **un solo nodo** (manager) y agregar trabajadores después.
@@ -895,9 +904,11 @@ docker service create --name registry --publish published=5000,target=5000 \
 cd /opt/sigi/app
 export SIGI_VERSION=$(git rev-parse --short HEAD)
 docker build -t 127.0.0.1:5000/sigi-web:$SIGI_VERSION \
-  --build-arg VITE_SUPABASE_URL=https://api.sigi.<dominio> \
+  --build-arg VITE_SUPABASE_URL=https://sigi.elcatador.local \
   --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=<clave pública> ./web
 docker push 127.0.0.1:5000/sigi-web:$SIGI_VERSION
+docker build -t 127.0.0.1:5000/sigi-proxy:$SIGI_VERSION ./proxy
+docker push 127.0.0.1:5000/sigi-proxy:$SIGI_VERSION
 ```
 
 Un registro en `127.0.0.1:5000` sin TLS solo sirve en el mismo nodo. Si hay varios nodos, el registro debe tener TLS (certificado interno) o cada nodo debe declararlo en `insecure-registries` de `daemon.json` (menos seguro).
@@ -951,7 +962,7 @@ docker service ps sigi_db --no-trunc
 
 - Las imágenes de Supabase leen secretos de **variables de entorno**, no de archivos. Por eso el archivo resuelto lleva los secretos en texto: debe quedar con `chmod 600`, solo en el manager, y nunca subirse al repositorio.
 - `docker secret` solo sirve para lo que acepte `_FILE`: por ejemplo, la imagen de Postgres acepta `POSTGRES_PASSWORD_FILE`, pero los demás servicios de Supabase necesitan la misma contraseña por variable.
-- Para los certificados del proxy sí conviene `docker secret create sigi_crt /etc/nginx/ssl/sigi.crt` (y la clave), montados en el servicio del proxy.
+- Para los certificados del proxy sí conviene `docker secret create sigi_crt /opt/sigi/app/proxy/ssl/sigi.crt` (y la clave), montados en el servicio del proxy.
 
 ### 20.7 Pila del frontend y del proxy
 
@@ -977,14 +988,15 @@ services:
         limits: { memory: 128M }
 
   proxy:
-    image: nginx:1.29-alpine
+    image: 127.0.0.1:5000/sigi-proxy:${SIGI_VERSION}
     networks: [sigi]
+    environment:
+      SIGI_DOMINIO: sigi.elcatador.local
+      SIGI_WEB_UPSTREAM: web:80
+      SIGI_API_UPSTREAM: api-gw:8000
     ports:
       - { target: 80,  published: 80,  mode: host }
       - { target: 443, published: 443, mode: host }
-    configs:
-      - source: sigi_proxy_conf
-        target: /etc/nginx/conf.d/default.conf
     secrets:
       - source: sigi_crt
         target: /etc/nginx/ssl/sigi.crt
@@ -1000,9 +1012,6 @@ networks:
   sigi:
     external: true
 
-configs:
-  sigi_proxy_conf:
-    file: ./proxy.conf
 secrets:
   sigi_crt:
     external: true
@@ -1010,16 +1019,16 @@ secrets:
     external: true
 ```
 
-`/opt/sigi/swarm/proxy.conf` es el de la sección 13 con dos cambios: `proxy_pass http://web:80;` para la aplicación y `proxy_pass http://api-gw:8000;` para la API (nombres de servicio en la red `sigi`), y sin el bloque de redirección si se prefiere manejarlo aparte.
+La configuración del proxy va dentro de la imagen `sigi-proxy` (sección 13); en Swarm solo cambian los secretos del certificado. Los nombres `web` y `api-gw` se resuelven en la red `sigi` (la pila se llama `sigi`, así que los servicios son `sigi_web` y `sigi_api-gw`, pero dentro de la red también responden por su nombre corto).
 
 ```bash
-docker secret create sigi_crt /etc/nginx/ssl/sigi.crt
-docker secret create sigi_key /etc/nginx/ssl/sigi.key
-sudo systemctl disable --now nginx          # el proxy pasa a la pila
+docker secret create sigi_crt /opt/sigi/app/proxy/ssl/sigi.crt
+docker secret create sigi_key /opt/sigi/app/proxy/ssl/sigi.key
+(cd /opt/sigi/app && docker compose stop proxy)   # el proxy pasa a la pila
 cd /opt/sigi/swarm && SIGI_VERSION=<versión> docker stack deploy -c sigi-web.yml sigi
 ```
 
-Las configs de Swarm no se editan: para cambiar `proxy.conf`, crear una con nombre nuevo (`sigi_proxy_conf_v2`) y volver a desplegar.
+Los secretos de Swarm no se editan: para cambiar el certificado, crear secretos con nombre nuevo (`sigi_crt_v2`, `sigi_key_v2`), cambiarlos en la pila y volver a desplegar.
 
 ### 20.8 Operación en Swarm
 
@@ -1038,7 +1047,7 @@ SIGI_DB_CONTAINER=$DB SIGI_STORAGE_CONTAINER=$ST SIGI_STORAGE_DIR=/var/lib/stora
 ```
 
 - **Migraciones en Swarm**: el pooler ya no publica puerto en 127.0.0.1. Hay dos opciones:
-  - correr la CLI desde un contenedor en la red `sigi`: `docker run --rm --network sigi -v /opt/sigi/app:/app -w /app node:24 npx supabase migration up --db-url postgresql://postgres.<tenant>:<clave>@supavisor:5432/postgres`;
+  - correr la CLI desde un contenedor en la red `sigi`: `docker run --rm --network sigi -v /opt/sigi/app:/app -w /app node:24 npx supabase migration up --remote="postgresql://postgres.<tenant>:<clave>@supavisor:5432/postgres?sslmode=disable"`;
   - publicar temporalmente el puerto del pooler y quitarlo al terminar.
 - **Función `usuarios`**: la carpeta `volumes/functions` sigue en el nodo de datos; copiar el archivo y forzar la actualización del servicio `sigi_functions`.
 - **Agregar un nodo trabajador**: `docker swarm join-token worker` en el manager y ejecutar la orden en el nodo nuevo. Abrir 2377/tcp, 7946/tcp+udp y 4789/udp **solo** entre nodos.
@@ -1115,15 +1124,14 @@ SIGI_DB_CONTAINER=$DB SIGI_STORAGE_CONTAINER=$ST SIGI_STORAGE_DIR=/var/lib/stora
 | Ruta | Contenido | ¿En respaldo? |
 |---|---|---|
 | `/opt/sigi/app` | Repositorio de SIGI (código, migraciones, scripts) | No (está en GitHub; anotar el commit) |
-| `/opt/sigi/app/.env` | URL y clave pública del frontend | Guardar aparte (no es secreto crítico) |
-| `/opt/sigi/app/docker-compose.override.yml` | Publicación de la web en 127.0.0.1 | Guardar aparte |
+| `/opt/sigi/app/.env` | `COMPOSE_FILE`, dominio, URL y clave pública del frontend | Guardar aparte (no es secreto crítico) |
+| `/opt/sigi/app/proxy/ssl/` | Certificado y **clave privada** del proxy | **Sí, aparte y protegido** |
 | `/opt/sigi/supabase` | Plantilla de Supabase | No (se reinstala) |
 | `/opt/sigi/supabase/.env` | **Todos los secretos** | **Sí, aparte y cifrado** (7.1) |
 | `/opt/sigi/supabase/docker-compose.sigi.yml` | Ajustes de SIGI | Guardar aparte |
 | `/opt/sigi/supabase/volumes/db/data` | **Base de datos** | Sí (`base.dump`) |
 | `/opt/sigi/supabase/volumes/storage` | **Evidencias** | Sí (`evidencias.tar`) |
 | `/opt/sigi/supabase/volumes/functions/usuarios` | Función de creación de usuarios | No (está en el repositorio) |
-| `/etc/nginx/sites-available/sigi`, `/etc/nginx/ssl/` | Proxy y certificados | Guardar aparte |
 | `/etc/cron.d/sigi-respaldo` | Respaldo programado | Guardar aparte |
 | `/opt/sigi/swarm/` | Pilas de Swarm (fase 2); el archivo resuelto lleva secretos | **Sí, aparte y cifrado** |
 
@@ -1143,6 +1151,7 @@ SIGI_DB_CONTAINER=$DB SIGI_STORAGE_CONTAINER=$ST SIGI_STORAGE_DIR=/var/lib/stora
 | api-gw | `envoyproxy/envoy:v1.39.6` |
 | supavisor | `supabase/supavisor:2.9.13` |
 | web (SIGI) | `node:24-alpine` (compilación) → `nginx:1.29-alpine` |
+| proxy (SIGI) | `nginx:1.29-alpine` + openssl (`proxy/Dockerfile`) |
 
 Confirmar contra el `docker-compose.yml` descargado el día de la instalación: es ese archivo el que manda.
 
@@ -1177,7 +1186,7 @@ cd /opt/sigi/supabase && docker compose ps ; cd /opt/sigi/app && docker compose 
 # Respaldo
 SIGI_DB_CONTAINER=supabase-db SIGI_STORAGE_CONTAINER=supabase-storage SIGI_STORAGE_DIR=/var/lib/storage bash /opt/sigi/app/scripts/respaldar.sh <destino>
 # Migraciones pendientes
-npx supabase migration list --db-url "$SIGI_DB_URL"
+npx supabase migration list --remote="$SIGI_DB_URL"
 # Registros
 cd /opt/sigi/supabase && sh run.sh logs <servicio>
 # Prohibido sobre la instalación con datos

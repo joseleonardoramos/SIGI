@@ -1,0 +1,30 @@
+# Producción: proxy HTTPS de entrada (puertos 80 y 443) delante del frontend y de Supabase,
+# con un solo nombre: https://sigi.elcatador.local  (docs/PaseProduccion.md, sección 13).
+# En el servidor, en /opt/sigi/app/.env:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.produccion.yml
+#   SIGI_DOMINIO=sigi.elcatador.local
+#   VITE_SUPABASE_URL=https://sigi.elcatador.local   (la API va por el mismo nombre)
+# Requiere Docker Compose 2.24+ (!reset) y la pila de Supabase arrancada (red supabase_default).
+services:
+  web:
+    ports: !reset []                 # el frontend ya no se publica: solo lo alcanza el proxy
+    image: sigi-web:${SIGI_VERSION:-local}
+
+  proxy:
+    build: ./proxy
+    image: sigi-proxy:${SIGI_VERSION:-local}
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SIGI_DOMINIO: ${SIGI_DOMINIO:-sigi.elcatador.local}
+    volumes:
+      - ./proxy/ssl:/etc/nginx/ssl   # sigi.crt y sigi.key (si faltan, se genera uno autofirmado aquí)
+    networks: [default, supabase]
+    depends_on: [web]
+    restart: unless-stopped
+
+networks:
+  supabase:
+    external: true
+    name: ${SUPABASE_RED:-supabase_default}   # red de la pila de Supabase (docker network ls)

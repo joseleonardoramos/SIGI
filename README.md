@@ -3,6 +3,7 @@
 - `docs/` — diseño funcional (v3.1) y pase a producción en Docker y Docker Swarm (`docs/PaseProduccion.md`).
 - `design/` — prototipo de pantallas (lienzo de Claude Design).
 - `supabase/` — base de datos: migraciones, seguridad y pruebas.
+- `proxy/` y `docker-compose.produccion.yml` — proxy HTTPS de producción (80 y 443, un solo nombre: `sigi.elcatador.local`).
 
 ## Desarrollo local
 

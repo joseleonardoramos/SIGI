@@ -18,3 +18,6 @@ Thumbs.db
 
 # Respaldos: contienen datos personales
 respaldos/
+
+# Certificados del proxy (la clave privada nunca va al repositorio)
+proxy/ssl/
