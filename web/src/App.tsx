@@ -27,31 +27,36 @@ const sello = (nombre?: string) => (nombre ?? 'SIGI').split(/\s+/).filter((p) =>
 type Permisos = { esAdmin: boolean; escribe: boolean; personal: boolean }
 type Entrada = { id: string; titulo: string; ver: (p: Permisos) => boolean }
 
+// Íconos de trazo (24×24) del menú, como en el diseño del menú en acordeón.
+const Icono = ({ d, tam = 18, className }: { d: string; tam?: number; className?: string }) => (
+  <svg aria-hidden="true" className={className} width={tam} height={tam} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
+)
+
 const todos = () => true
-// Menú por secciones. La interfaz solo oculta opciones; los permisos reales los aplica la base.
-const MENU: { seccion: string; entradas: Entrada[] }[] = [
-  { seccion: '', entradas: [{ id: 'inicio', titulo: 'Inicio', ver: todos }] },
-  { seccion: 'Presupuesto', entradas: [
+// Menú por secciones en acordeón. La interfaz solo oculta opciones; los permisos reales los aplica la base.
+const MENU: { seccion: string; icono: string; entradas: Entrada[] }[] = [
+  { seccion: '', icono: 'M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z', entradas: [{ id: 'inicio', titulo: 'Inicio', ver: todos }] },
+  { seccion: 'Presupuesto', icono: 'M4 20V10M10 20V4M16 20v-7M22 20H2', entradas: [
     { id: 'versiones', titulo: 'Versiones', ver: todos },
     { id: 'partidas', titulo: 'Presupuesto y ejecución', ver: todos },
     { id: 'ahorros', titulo: 'Ahorros', ver: todos },
     { id: 'comparar', titulo: 'Comparar versiones', ver: todos },
     { id: 'gastos', titulo: 'Gastos y evidencias', ver: todos },
   ] },
-  { seccion: 'Operación', entradas: [
+  { seccion: 'Operación', icono: 'M12 20v-8M8.5 8.5a5 5 0 0 1 7 0M5.5 5.5a9 9 0 0 1 13 0M12 12h.01', entradas: [
     { id: 'telecom', titulo: 'Telecomunicaciones', ver: todos },
     { id: 'flotas', titulo: 'Flotas', ver: todos },
     { id: 'software', titulo: 'Software', ver: todos },
   ] },
-  { seccion: 'Activos y proyectos', entradas: [
+  { seccion: 'Activos y proyectos', icono: 'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8', entradas: [
     { id: 'activos', titulo: 'Activos', ver: todos },
     { id: 'reposiciones', titulo: 'Plan de reposición', ver: todos },
     { id: 'proyectos', titulo: 'Proyectos y aperturas', ver: todos },
   ] },
-  { seccion: 'Personal', entradas: [
+  { seccion: 'Personal', icono: 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8', entradas: [
     { id: 'personas', titulo: 'Personal y ausencias', ver: (p) => p.personal },
   ] },
-  { seccion: 'Catálogos', entradas: [
+  { seccion: 'Catálogos', icono: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5', entradas: [
     { id: 'proveedores', titulo: 'Proveedores y cuentas', ver: todos },
     { id: 'centros_costo', titulo: 'Centros de costo', ver: todos },
     { id: 'areas', titulo: 'Áreas', ver: todos },
@@ -59,15 +64,15 @@ const MENU: { seccion: string; entradas: Entrada[] }[] = [
     { id: 'tasas', titulo: 'Tasas de cambio', ver: todos },
     { id: 'feriados', titulo: 'Feriados', ver: todos },
   ] },
-  { seccion: 'Herramientas', entradas: [
+  { seccion: 'Herramientas', icono: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z', entradas: [
     { id: 'importar', titulo: 'Importar CSV', ver: (p) => p.escribe },
     { id: 'bitacora', titulo: 'Bitácora', ver: (p) => p.personal },
   ] },
-  { seccion: 'Administración', entradas: [
+  { seccion: 'Administración', icono: 'M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z', entradas: [
     { id: 'empresas', titulo: 'Empresas', ver: (p) => p.esAdmin },
     { id: 'usuarios', titulo: 'Usuarios y roles', ver: (p) => p.esAdmin },
   ] },
-  { seccion: 'Cuenta', entradas: [{ id: 'clave', titulo: 'Cambiar contraseña', ver: todos }] },
+  { seccion: 'Cuenta', icono: 'M20 21v-1a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v1M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', entradas: [{ id: 'clave', titulo: 'Cambiar contraseña', ver: todos }] },
 ]
 
 function leerEmpresaGuardada(): string {
@@ -81,6 +86,14 @@ export default function App() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [empresa, setEmpresa] = useState(leerEmpresaGuardada)
   const [vista, setVista] = useState('inicio')
+  const [abiertas, setAbiertas] = useState<Set<string>>(new Set()) // secciones del menú abiertas (varias a la vez)
+
+  // Al cambiar de pantalla (menú o enlaces de las pantallas): se abre su sección y se va al inicio de la página.
+  useEffect(() => {
+    const s = MENU.find((m) => m.entradas.some((x) => x.id === vista))?.seccion
+    if (s) setAbiertas((prev) => (prev.has(s) ? prev : new Set(prev).add(s)))
+    window.scrollTo({ top: 0 })
+  }, [vista])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setSession(data.session); setListo(true) })
@@ -131,15 +144,30 @@ export default function App() {
           <div><strong>SIGI</strong><span>{actual?.nombre ?? 'Sin empresa'}</span></div>
         </div>
         <nav aria-label="Módulos de SIGI">
-          {MENU.map(({ seccion, entradas }) => {
+          {MENU.map(({ seccion, icono, entradas }) => {
             const visibles = entradas.filter((x) => x.ver(permisos))
             if (visibles.length === 0) return null
-            return [
-              seccion && <p key={`s-${seccion}`} className="seccion">{seccion}</p>,
-              ...visibles.map((x) => (
-                <button key={x.id} className={vista === x.id ? 'activo' : ''} aria-current={vista === x.id ? 'page' : undefined} onClick={() => setVista(x.id)}>{x.titulo}</button>
-              )),
-            ]
+            const opcion = (x: Entrada, conIcono = false) => (
+              <button key={x.id} className={`${conIcono ? 'suelta ' : ''}${vista === x.id ? 'activo' : ''}`} aria-current={vista === x.id ? 'page' : undefined}
+                onClick={() => { setVista(x.id); window.scrollTo({ top: 0 }) }}>
+                {conIcono && <Icono d={icono} />}{x.titulo}
+              </button>
+            )
+            if (!seccion) return visibles.map((x) => opcion(x, true)) // Inicio: suelta, sin acordeón
+            const abierta = abiertas.has(seccion)
+            const contiene = visibles.some((x) => x.id === vista)
+            return (
+              <div key={seccion} className="grupo">
+                <button className={`seccion${contiene ? ' contiene' : ''}`} aria-expanded={abierta}
+                  onClick={() => setAbiertas((prev) => { const n = new Set(prev); if (n.has(seccion)) n.delete(seccion); else n.add(seccion); return n })}>
+                  <Icono d={icono} />
+                  <span className="titulo">{seccion}</span>
+                  {!abierta && contiene && <span className="punto" title="Aquí está la pantalla actual"><span className="oculto">(pantalla actual)</span></span>}
+                  <Icono d="m9 6 6 6-6 6" tam={16} className="flecha" />
+                </button>
+                {abierta && <div className="opciones">{visibles.map((x) => opcion(x))}</div>}
+              </div>
+            )
           })}
         </nav>
         <div className="pie">

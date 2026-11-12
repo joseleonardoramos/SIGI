@@ -149,10 +149,23 @@ label.casilla { display: flex; align-items: center; gap: 6px; }
 .sello { width: 36px; height: 36px; border-radius: 8px; background: var(--logo); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .marca strong { display: block; font-size: 17px; letter-spacing: 0.04em; }
 .marca span { font-size: 12px; color: var(--nav-tenue); }
-.lateral .seccion { margin: 0; padding: 16px 12px 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nav-tenue); }
 .lateral nav { display: flex; flex-direction: column; gap: 2px; }
 .lateral nav button { min-height: 40px; text-align: left; background: transparent; border-color: transparent; color: var(--nav-texto); font-weight: 400; padding: 0 12px; }
 .lateral nav button.activo { background: var(--nav-activo); font-weight: 600; }
+/* Menú en acordeón: la sección (ícono, mayúsculas, color tenue, flecha) se distingue de sus opciones
+   (texto normal, con sangría y una línea que las agrupa). Inicio va suelto, con ícono. */
+.lateral nav button.suelta { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.lateral .grupo { display: flex; flex-direction: column; margin-top: 4px; }
+.lateral nav button.seccion { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 8px;
+  color: var(--nav-tenue); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.lateral nav button.seccion:hover { background: rgba(255, 255, 255, 0.06); }
+.lateral nav button.seccion.contiene { background: rgba(255, 255, 255, 0.07); }
+.lateral .seccion .titulo { flex: 1; }
+.lateral .seccion .flecha { transition: transform 150ms; }
+.lateral .seccion[aria-expanded="true"] .flecha { transform: rotate(90deg); }
+.lateral .seccion .punto { width: 7px; height: 7px; border-radius: 50%; background: var(--logo); }
+.lateral .opciones { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 6px 21px; padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, 0.16); }
+.lateral .opciones button { font-size: 14px; }
 .lateral .pie { margin-top: auto; padding: 16px 8px 0; display: grid; gap: 8px; font-size: 12px; color: var(--nav-tenue); border-top: 1px solid rgba(255, 255, 255, 0.12); }
 .lateral .pie button { background: transparent; border-color: var(--nav-tenue); color: var(--nav-texto); }
 .contenido { flex: 1 1 560px; min-width: 0; padding: 28px 32px 48px; }
@@ -198,8 +211,6 @@ main h3 { margin-top: 20px; }
 @media (max-width: 860px) {
   .app { flex-direction: column; }
   .lateral { flex: none; padding: 16px; }
-  .lateral nav { flex-direction: row; flex-wrap: wrap; }
-  .lateral .seccion { width: 100%; padding: 8px 4px 2px; }
   .contenido { padding: 20px 16px 40px; }
   .fila .ancho { grid-column: auto; }
 }
