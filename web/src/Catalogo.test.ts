@@ -10,6 +10,25 @@ describe('agruparPor', () => {
   })
 })
 const { MODULOS } = await import('./modulos')
+const { opcionesRef } = await import('./Catalogo')
+
+describe('opcionesRef (cuenta contable)', () => {
+  const campo = MODULOS.telecom.campos.find((c) => c.k === 'cuenta_contable')!
+  const cuentas = [
+    { id: '1', activo: true, codigo: '6105-021', descripcion: 'Metro Ethernet', estado: 'Activa' },
+    { id: '2', activo: true, codigo: '6105-020', descripcion: 'Internet', estado: 'Nueva' },
+    { id: '3', activo: true, codigo: '6105-099', descripcion: 'Vieja', estado: 'Inactiva' },
+  ]
+  const opciones = (actual: string) => opcionesRef(campo, cuentas, { cuenta_contable: actual }).map((o) => [o.props.value, o.props.children])
+
+  it('ofrece las cuentas por su código, en orden, sin las inactivas', () => {
+    expect(opciones('')).toEqual([['6105-020', '6105-020 · Internet'], ['6105-021', '6105-021 · Metro Ethernet']])
+  })
+  it('conserva el valor guardado aunque no esté disponible', () => {
+    expect(opciones('6105-099')[0]).toEqual(['6105-099', '6105-099 · Vieja (no disponible)'])
+    expect(opciones('11-999-63-0115')[0]).toEqual(['11-999-63-0115', '11-999-63-0115 (no está en el catálogo)'])
+  })
+})
 
 describe('aDatos', () => {
   it('convierte montos con comas, vacíos a nulo y casillas a booleano', () => {

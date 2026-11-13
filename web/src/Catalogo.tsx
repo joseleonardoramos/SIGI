@@ -13,7 +13,12 @@ export type Campo = {
   tipo?: 'texto' | 'numero' | 'fecha' | 'si_no' | 'opciones' | 'ref' | 'lista'
   opciones?: string[]
   // filtrarPor: lista dependiente (p. ej. departamentos del área elegida en el campo area_id).
-  ref?: { tabla: string; select?: string; etiqueta: (f: Fila) => string; global?: boolean; filtrarPor?: { campo: string; columna: string } }
+  // valor: columna que se guarda (por defecto el id; la cuenta contable guarda su código).
+  // filtro: qué filas de la tabla se ofrecen (p. ej. sin las cuentas inactivas).
+  ref?: {
+    tabla: string; select?: string; etiqueta: (f: Fila) => string; global?: boolean; filtrarPor?: { campo: string; columna: string }
+    valor?: string; filtro?: (f: Fila) => boolean
+  }
   obligatorio?: boolean
   oculto?: boolean // no se muestra en la lista
   defecto?: string | boolean
@@ -84,6 +89,23 @@ export function aDatos(m: Modulo, v: Valores): { datos?: Record<string, unknown>
   return { datos }
 }
 
+// Opciones de una lista con referencia, en orden alfabético. Un valor guardado que no está en el catálogo
+// (p. ej. un código de cuenta importado o una cuenta que pasó a inactiva) se conserva como opción para no perderlo.
+export function opcionesRef(c: Campo, filas: Fila[], form: Valores) {
+  const ref = c.ref!
+  const col = ref.valor ?? 'id'
+  const ofrecidas = filas
+    .filter((r) => (!ref.filtrarPor || r[ref.filtrarPor.columna] === form[ref.filtrarPor.campo]) && (!ref.filtro || ref.filtro(r)))
+    .map((r) => ({ valor: String(r[col]), etiqueta: ref.etiqueta(r) }))
+    .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, 'es', { numeric: true }))
+  const actual = String(form[c.k] ?? '')
+  if (actual && !ofrecidas.some((o) => o.valor === actual)) {
+    const r = filas.find((x) => String(x[col]) === actual)
+    ofrecidas.unshift({ valor: actual, etiqueta: r ? `${ref.etiqueta(r)} (no disponible)` : ref.valor ? `${actual} (no está en el catálogo)` : '(dado de baja)' })
+  }
+  return ofrecidas.map((o) => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)
+}
+
 // Listas para los campos con referencia (proveedor, cuenta, área…), activas y de la empresa.
 export async function cargarRefs(m: Modulo, empresa: string): Promise<Record<string, Fila[]>> {
   const listas = await Promise.all(m.campos.filter((c) => c.ref).map(async (c) => {
@@ -142,9 +164,7 @@ export function Formulario({ m, empresa, fila, titulo, onGuardado, onCancelar }:
               {c.tipo === 'opciones'
                 // Un valor guardado que no está en la lista (p. ej. importado) se conserva como opción.
                 ? [...new Set([...c.opciones!, ...(form[c.k] ? [String(form[c.k])] : [])])].map((o) => <option key={o}>{o}</option>)
-                : (refs[c.k] ?? [])
-                    .filter((r) => !c.ref!.filtrarPor || r[c.ref!.filtrarPor.columna] === form[c.ref!.filtrarPor.campo])
-                    .map((r) => <option key={r.id} value={r.id}>{c.ref!.etiqueta(r)}</option>)}
+                : opcionesRef(c, refs[c.k] ?? [], form)}
             </select>
           ) : (
             <input
@@ -207,8 +227,9 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
     if (c.tipo === 'lista') return (v as string[]).join('; ')
     if (c.tipo === 'numero') return dinero(v)
     if (c.tipo === 'ref') {
-      const r = refs[c.k]?.find((x) => x.id === v)
-      return r ? c.ref!.etiqueta(r) : '(dado de baja)'
+      const r = refs[c.k]?.find((x) => x[c.ref!.valor ?? 'id'] === v)
+      // Por código (cuenta contable): se muestra el código aunque ya no esté en el catálogo.
+      return r ? c.ref!.etiqueta(r) : c.ref!.valor ? String(v) : '(dado de baja)'
     }
     return String(v)
   }

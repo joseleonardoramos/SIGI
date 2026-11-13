@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import { supabase, mensajeError, fechaLocal, leerTodo, dinero } from './supabase'
 import { fechaCorta } from './comun'
-import { Cabecera, Mensajes, botonAcento, botonBorde, control, entero, etiqueta, h2, pastilla, tarjeta, tenue, type Empresa } from './diseno'
+import { Cabecera, Mensajes, botonAcento, botonBorde, control, entero, etiqueta, h2, Multi, pasa, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Gastos y evidencias, reconstruida a partir de design/Gastos.dc.html con datos reales.
 // Todo pasa por las funciones de la base (registrar_compromiso, registrar_movimiento, reversar_movimiento),
@@ -66,7 +66,7 @@ export default function Gastos({ empresas, empresa, setEmpresa, puedeEscribir, e
   const [accion, setAccion] = useState<Accion | null>(null) // el formulario del movimiento solo aparece al elegir una acción
   const [mov, setMov] = useState(MOV)
   const [kf, setKf] = useState('') // filtro desde un indicador
-  const [f, setF] = useState({ q: '', origen: '', estado: '' })
+  const [f, setF] = useState({ q: '', origen: [] as string[], estado: [] as string[] })
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
 
@@ -196,7 +196,7 @@ export default function Gastos({ empresas, empresa, setEmpresa, puedeEscribir, e
   ]
   const pasaKpi = (x: FilaGasto) => !kf || (kf === 'com' && x.t.com > x.t.inv) || (kf === 'inv' && x.t.inv > 0) || (kf === 'paid' && x.t.paid > 0) || (kf === 'due' && x.t.inv > x.t.paid) || (kf === 'flag' && x.al.length > 0)
   const termino = f.q.trim().toLowerCase()
-  const lista = filas.filter((x) => pasaKpi(x) && (!f.origen || x.g.origen === f.origen) && (!f.estado || x.est === f.estado) &&
+  const lista = filas.filter((x) => pasaKpi(x) && pasa(f.origen, x.g.origen) && pasa(f.estado, x.est) &&
     (!termino || [x.g.codigo, x.g.descripcion, nombre(proveedores, x.g.proveedor_id), ...x.ps.flatMap((p) => [p.documento, p.ncf, p.referencia_bancaria])].join(' ').toLowerCase().includes(termino)))
 
   const partidasEmpresa = partidas.filter((p) => p.abierta && p.empresa_id === co)
@@ -271,8 +271,8 @@ export default function Gastos({ empresas, empresa, setEmpresa, puedeEscribir, e
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end' }}>
             <label style={etiqueta}>Buscar<input type="search" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="Descripción, documento, NCF…" style={{ ...control, width: 220 }} /></label>
-            <label style={etiqueta}>Módulo<select value={f.origen} onChange={(e) => setF({ ...f, origen: e.target.value })} style={{ ...control, minWidth: 130 }}><option value="">Todos</option>{ORIGENES.map((o) => <option key={o}>{o}</option>)}</select></label>
-            <label style={etiqueta}>Estado<select value={f.estado} onChange={(e) => setF({ ...f, estado: e.target.value })} style={{ ...control, minWidth: 170 }}><option value="">Todos</option>{ESTADOS.map((o) => <option key={o}>{o}</option>)}</select></label>
+            <Multi label="Módulo" opciones={ORIGENES} valor={f.origen} cambiar={(v) => setF({ ...f, origen: v })} todos="Todos" ancho={130} />
+            <Multi label="Estado" opciones={ESTADOS} valor={f.estado} cambiar={(v) => setF({ ...f, estado: v })} todos="Todos" ancho={170} />
           </div>
         </div>
         <div style={{ overflowX: 'auto' }}>

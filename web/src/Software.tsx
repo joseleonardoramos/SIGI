@@ -4,7 +4,7 @@ import { aCsv, descargar } from './csv'
 import { Formulario, type Fila } from './Catalogo'
 import { MODULOS } from './modulos'
 import { cuentasVigentes, diasEntre, enRD, fechaCorta, sumarDias, tasaVigenteUSD } from './comun'
-import { Barra, Cabecera, Indicadores, Mensajes, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, pastilla, tarjeta, tenue, type Empresa } from './diseno'
+import { Barra, Cabecera, Indicadores, Mensajes, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, monto, Multi, pasa, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Software y suscripciones, reconstruida a partir de design/Software.dc.html con datos reales.
 // El precio unitario es mensual: costo anual = contratadas × precio × 12, convertido a RD$.
@@ -19,8 +19,8 @@ const TIPOS: [string, string][] = [['SaaS', 'software como servicio'], ['PaaS', 
 const TONO_TIPO: Record<string, [string, string]> = { SaaS: ['#1D3557', '#FFFFFF'], PaaS: ['#5B84B1', '#FFFFFF'], IaaS: ['#A9C1DA', '#131A22'], Licencia: ['#807451', '#FFFFFF'], Certificado: ['#d6cda5', '#262727'] }
 const AVISO: [string, string] = ['#FFF4D6', '#6B4A00']
 const EN_PLAZO: [string, string] = ['#E7F5EF', '#075B3F']
-const SITUACIONES = [['ren', 'Renueva en 90 días'], ['libres', 'Más de 10 % sin asignar'], ['sincuenta', 'Sin cuenta contable']]
-const SIN_FILTRO = { q: '', tipo: '', proveedor: '', sit: '' }
+const SITUACIONES = [['ren', 'Renueva en 90 días'], ['libres', 'Más de 10 % sin asignar'], ['sincuenta', 'Sin cuenta contable']] as const
+const SIN_FILTRO: { q: string; tipo: string[]; proveedor: string[]; sit: string[] } = { q: '', tipo: [], proveedor: [], sit: [] }
 const columnas = '32px minmax(200px, 2fr) 100px minmax(150px, 1.2fr) 90px 60px 60px 60px 120px 130px 120px 130px'
 
 // Renovación: plazo para cancelar = vencimiento − preaviso del contrato, y el aviso que corresponde hoy.
@@ -120,7 +120,7 @@ export default function Software({ empresas, empresa, setEmpresa, puedeEscribir,
   const ren90 = activos.filter((p) => { const r = renovacion(p, hoy); return r && r.dVence >= 0 && r.dVence <= 90 })
   const sinCuenta = activos.filter((p) => !cuentaValida(p)).length
   const kpis = [
-    { label: 'Costo anual (RD$)', value: `${(total / 1e6).toFixed(2)} M`, sub: `US$ ${entero(suma(enDolares, (p) => mensual(p) * 12))} · ${activos.length} productos${enDolares.length && !usd ? ' · sin tasa US$' : ''}`, color: 'var(--primario)' },
+    { label: 'Costo anual (RD$)', value: monto(total), sub: `US$ ${entero(suma(enDolares, (p) => mensual(p) * 12))} · ${activos.length} productos${enDolares.length && !usd ? ' · sin tasa US$' : ''}`, color: 'var(--primario)' },
     { label: 'Licencias contratadas', value: contratadas.toLocaleString('en-US'), sub: 'Usuarios, equipos, certificados y dominios' },
     { label: 'Asignadas', value: asignadas.toLocaleString('en-US'), sub: contratadas ? `${((asignadas / contratadas) * 100).toFixed(1)} % de uso` : '—' },
     { label: 'Sin asignar', value: String(contratadas - asignadas), sub: `RD$ ${entero(costoLibres)} al año`, color: 'var(--riesgo)' },
@@ -143,8 +143,8 @@ export default function Software({ empresas, empresa, setEmpresa, puedeEscribir,
     return [r && r.dVence <= 90 && 'ren', muchasLibres(p) && 'libres', !cuentaValida(p) && 'sincuenta'].filter(Boolean)
   }
   const termino = f.q.trim().toLowerCase()
-  const lista = productos.filter((p) => (verBajas || p.activo) && (!f.tipo || p.tipo === f.tipo) && (!f.proveedor || proveedor(p) === f.proveedor) &&
-    (!f.sit || situaciones(p).includes(f.sit)) &&
+  const lista = productos.filter((p) => (verBajas || p.activo) && pasa(f.tipo, p.tipo) && pasa(f.proveedor, proveedor(p)) &&
+    (!f.sit.length || situaciones(p).some((x) => f.sit.includes(x as string))) &&
     (!termino || [p.nombre, proveedor(p), p.cuentas_proveedor?.numero, p.tipo, p.cuenta_contable].join(' ').toLowerCase().includes(termino)))
     .sort((a, b) => anualRD(b) - anualRD(a))
 
@@ -177,10 +177,10 @@ export default function Software({ empresas, empresa, setEmpresa, puedeEscribir,
         <section aria-labelledby="h-tipo" style={{ ...tarjeta, flex: '1 1 420px', minWidth: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2 id="h-tipo" style={h2}>Costo anual por tipo</h2>
-            <span style={tenue}>RD$ M · clic para filtrar el inventario</span>
+            <span style={tenue}>RD$ por año · clic para filtrar el inventario</span>
           </div>
-          {porTipo.map((g) => <Barra key={g.tipo} nombre={g.tipo} detalle={`${g.n} productos · ${g.pista}`} valor={(g.costo / 1e6).toFixed(2)} ancho={(g.costo / maxTipo) * 100}
-            onClick={() => setF({ ...SIN_FILTRO, tipo: f.tipo === g.tipo ? '' : g.tipo })} />)}
+          {porTipo.map((g) => <Barra key={g.tipo} nombre={g.tipo} detalle={`${g.n} productos · ${g.pista}`} valor={monto(g.costo)} ancho={(g.costo / maxTipo) * 100}
+            onClick={() => setF({ ...SIN_FILTRO, tipo: f.tipo.length === 1 && f.tipo[0] === g.tipo ? [] : [g.tipo] })} />)}
           {porTipo.length === 0 && <span style={tenue}>Sin productos activos.</span>}
         </section>
         <section aria-labelledby="h-ren" style={{ ...tarjeta, flex: '1 1 380px', minWidth: 0, gap: 10 }}>
@@ -214,21 +214,9 @@ export default function Software({ empresas, empresa, setEmpresa, puedeEscribir,
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end' }}>
           <label style={etiqueta}>Buscar<input type="search" value={f.q} onChange={(e) => setF({ ...f, q: e.target.value })} placeholder="Producto, proveedor, cuenta…" style={{ ...control, width: 220, padding: '0 12px' }} /></label>
-          <label style={etiqueta}>Tipo
-            <select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })} style={{ ...control, minWidth: 140 }}>
-              <option value="">Todos</option>{TIPOS.map(([t]) => <option key={t}>{t}</option>)}
-            </select>
-          </label>
-          <label style={etiqueta}>Proveedor
-            <select value={f.proveedor} onChange={(e) => setF({ ...f, proveedor: e.target.value })} style={{ ...control, minWidth: 200 }}>
-              <option value="">Todos</option>{[...new Set(productos.map(proveedor).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es')).map((o) => <option key={o}>{o}</option>)}
-            </select>
-          </label>
-          <label style={etiqueta}>Situación
-            <select value={f.sit} onChange={(e) => setF({ ...f, sit: e.target.value })} style={{ ...control, minWidth: 200 }}>
-              <option value="">Todas</option>{SITUACIONES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          </label>
+          <Multi label="Tipo" opciones={TIPOS.map(([t]) => t)} valor={f.tipo} cambiar={(v) => setF({ ...f, tipo: v })} todos="Todos" ancho={140} />
+          <Multi label="Proveedor" opciones={[...new Set(productos.map(proveedor).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))} valor={f.proveedor} cambiar={(v) => setF({ ...f, proveedor: v })} todos="Todos" ancho={200} />
+          <Multi label="Situación" opciones={SITUACIONES} valor={f.sit} cambiar={(v) => setF({ ...f, sit: v })} todos="Todas" ancho={200} />
           <button style={botonBorde} onClick={() => setF(SIN_FILTRO)}>Limpiar filtros</button>
           <label className="casilla" style={{ fontSize: 13 }}><input type="checkbox" checked={verBajas} onChange={(e) => setVerBajas(e.target.checked)} /> Mostrar dados de baja</label>
           <button style={botonBorde} onClick={exportar} disabled={lista.length === 0}>Exportar CSV</button>

@@ -4,7 +4,7 @@ import { aCsv, descargar } from './csv'
 import { Formulario, type Fila } from './Catalogo'
 import { MODULOS, ESTATUS_TELECOM } from './modulos'
 import { cuentasVigentes, enRD, tasaVigenteUSD } from './comun'
-import { Barra, Cabecera, Indicadores, Mensajes, Paginador, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, miles, paginaValida, pastilla, tarjeta, tenue, type Empresa } from './diseno'
+import { Barra, Cabecera, Indicadores, Mensajes, Paginador, RIESGO, botonAcento, botonBorde, control, entero, etiqueta, h2, monto, Multi, paginaValida, pasa, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Telecomunicaciones, reconstruida a partir de design/Telecom.dc.html con datos reales.
 // Alta y edición usan el formulario genérico del módulo (modulos.ts); la base valida y guarda la bitácora.
@@ -23,7 +23,8 @@ const TONO: Record<string, [string, string]> = {
 }
 const tono = (estatus: string): [string, string] => TONO[estatus] ?? ['#EEF1F4', '#3A4552']
 const POR_PAGINA = 20
-const SIN_FILTRO = { q: '', sucursal: '', tipo: '', proveedor: '', cuenta: '', moneda: '', estatus: '' }
+const SIN_FILTRO: { q: string; sucursal: string[]; tipo: string[]; proveedor: string[]; cuenta: string[]; moneda: string[]; estatus: string[] } =
+  { q: '', sucursal: [], tipo: [], proveedor: [], cuenta: [], moneda: [], estatus: [] }
 const nombreProveedor = (s: Servicio) => s.proveedores?.nombre ?? ''
 
 // Una sucursal tiene respaldo si cuenta con dos o más accesos a internet (fijo o móvil).
@@ -43,6 +44,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
   const [cuentas, setCuentas] = useState<Set<string>>(new Set()) // empresa|código de cuentas contables vigentes
   const [tasa, setTasa] = useState<{ tasa: number; desde: string } | null>(null)
   const [abiertas, setAbiertas] = useState<Set<string>>(new Set())
+  const [fs, setFs] = useState({ sucursal: [] as string[], tipo: [] as string[] }) // filtro del dashboard por sucursal
   const [f, setF] = useState(SIN_FILTRO)
   const [verBajas, setVerBajas] = useState(false)
   const [pagina, setPagina] = useState(0)
@@ -73,7 +75,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
   useEffect(() => { cargar() }, [co]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const elegir = (id: string) => {
-    setCo(id); setF(SIN_FILTRO); setPagina(0); setAbiertas(new Set()); setFormulario(null); setMsg('')
+    setCo(id); setF(SIN_FILTRO); setFs({ sucursal: [], tipo: [] }); setPagina(0); setAbiertas(new Set()); setFormulario(null); setMsg('')
     if (id !== 'all') setEmpresa(id)
   }
   const filtrar = (cambio: Partial<typeof SIN_FILTRO>) => { setF({ ...SIN_FILTRO, ...cambio }); setPagina(0) }
@@ -118,10 +120,10 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
 
   const kpis = [
     { label: 'Servicios', value: String(activos.length), sub: `${sucursales.length} ubicaciones · ${proveedores.size} proveedores` },
-    { label: 'Costo mensual (RD$)', value: `${(total / 1e6).toFixed(2)} M`, sub: usd ? `US$ a ${usd.toFixed(2)} (vigente desde ${tasa!.desde})` : enDolares.length ? 'Sin tasa US$: los US$ no se suman' : 'Todo en RD$', color: 'var(--primario)' },
+    { label: 'Costo mensual (RD$)', value: monto(total), sub: usd ? `US$ a ${usd.toFixed(2)} (vigente desde ${tasa!.desde})` : enDolares.length ? 'Sin tasa US$: los US$ no se suman' : 'Todo en RD$', color: 'var(--primario)' },
     { label: 'Contratos en US$', value: String(enDolares.length), sub: `US$ ${dinero(enDolares.reduce((a, s) => a + Number(s.monto), 0))} / mes` },
     { label: 'Sucursales con respaldo', value: `${conRespaldo} / ${sucursales.length}`, sub: `${sucursales.length - conRespaldo} con enlace único` },
-    { label: 'Servicios en gestión', value: String(enGestion.length), sub: `${miles(enGestion.reduce((a, s) => a + rd(s), 0))} K RD$ / mes` },
+    { label: 'Servicios en gestión', value: String(enGestion.length), sub: `RD$ ${monto(enGestion.reduce((a, s) => a + rd(s), 0))} / mes` },
     { label: 'Vencen en 90 días', value: String(vencen.length), sub: `Hasta ${limite}`, color: 'var(--riesgo)' },
     { label: 'Sin cuenta contable válida', value: String(sinCuenta.length), sub: sinCuenta.length ? 'No se imputan hasta corregir' : 'Todo clasificado', color: sinCuenta.length ? 'var(--riesgo)' : 'var(--ahorro-tinta)' },
   ]
@@ -134,17 +136,23 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
 
   const porEstatus = [...new Set(enGestion.map((s) => s.estatus))].map((st) => {
     const del = enGestion.filter((s) => s.estatus === st)
-    return { nombre: st, n: del.length, costo: del.reduce((a, s) => a + rd(s), 0), color: tono(st), elegir: () => filtrar({ estatus: st }) }
+    return { nombre: st, n: del.length, costo: del.reduce((a, s) => a + rd(s), 0), color: tono(st), elegir: () => filtrar({ estatus: [st] }) }
   })
-  if (sinCuenta.length) porEstatus.push({ nombre: 'Sin cuenta contable válida', n: sinCuenta.length, costo: sinCuenta.reduce((a, s) => a + rd(s), 0), color: RIESGO, elegir: () => filtrar({ cuenta: '__ninguna' }) })
-  const maxSucursal = Math.max(1, ...sucursales.map((x) => x.costo))
+  if (sinCuenta.length) porEstatus.push({ nombre: 'Sin cuenta contable válida', n: sinCuenta.length, costo: sinCuenta.reduce((a, s) => a + rd(s), 0), color: RIESGO, elegir: () => filtrar({ cuenta: ['__ninguna'] }) })
+  // Dashboard por sucursal: solo los servicios de las sucursales y tipos elegidos; el respaldo se mide con todos.
+  const vistaSuc = sucursales.filter((x) => pasa(fs.sucursal, x.nombre)).map((x) => {
+    const svcs = x.svcs.filter((s) => pasa(fs.tipo, s.tipo))
+    return { ...x, svcs, costo: svcs.reduce((a, s) => a + rd(s), 0) }
+  }).filter((x) => x.svcs.length).sort((a, b) => b.costo - a.costo)
+  const totalSuc = vistaSuc.reduce((a, x) => a + x.costo, 0)
+  const maxSucursal = Math.max(1, ...vistaSuc.map((x) => x.costo))
 
   // Listado completo con filtros.
   const termino = f.q.trim().toLowerCase()
   const listado = servicios.filter((s) => (verBajas || s.activo) &&
-    (!f.sucursal || s.sucursal === f.sucursal) && (!f.tipo || s.tipo === f.tipo) && (!f.proveedor || nombreProveedor(s) === f.proveedor) &&
-    (!f.cuenta || (f.cuenta === '__ninguna' ? !cuentaValida(s) : s.cuenta_contable === f.cuenta)) &&
-    (!f.moneda || s.moneda === f.moneda) && (!f.estatus || s.estatus === f.estatus) &&
+    pasa(f.sucursal, s.sucursal) && pasa(f.tipo, s.tipo) && pasa(f.proveedor, nombreProveedor(s)) &&
+    (!f.cuenta.length || f.cuenta.some((c) => (c === '__ninguna' ? !cuentaValida(s) : s.cuenta_contable === c))) &&
+    pasa(f.moneda, s.moneda) && pasa(f.estatus, s.estatus) &&
     (!termino || [s.sucursal, s.ciudad, nombreProveedor(s), s.cuentas_proveedor?.numero, s.cuenta_contable, s.circuito, s.detalle, s.tipo, s.comentarios]
       .join(' ').toLowerCase().includes(termino)))
     .sort((a, b) => a.sucursal.localeCompare(b.sucursal, 'es') || a.tipo.localeCompare(b.tipo, 'es'))
@@ -208,9 +216,9 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
         <section aria-labelledby="h-tipo" style={{ ...tarjeta, flex: '1 1 420px', minWidth: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2 id="h-tipo" style={h2}>Costo mensual por tipo de servicio</h2>
-            <span style={tenue}>RD$ miles · cantidad de servicios · clic para filtrar</span>
+            <span style={tenue}>RD$ por mes · cantidad de servicios · clic para filtrar</span>
           </div>
-          {porTipo.map((g) => <Barra key={g.tipo} nombre={g.tipo} detalle={String(g.n)} valor={miles(g.costo)} ancho={(g.costo / maxTipo) * 100} onClick={() => filtrar({ tipo: g.tipo })} />)}
+          {porTipo.map((g) => <Barra key={g.tipo} nombre={g.tipo} detalle={String(g.n)} valor={monto(g.costo)} ancho={(g.costo / maxTipo) * 100} onClick={() => filtrar({ tipo: [g.tipo] })} />)}
           {porTipo.length === 0 && <span style={tenue}>Sin servicios activos.</span>}
         </section>
         <section aria-labelledby="h-ges" style={{ ...tarjeta, flex: '1 1 340px', minWidth: 0, gap: 12 }}>
@@ -231,9 +239,11 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
       <section aria-labelledby="h-suc" style={tarjeta}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
           <h2 id="h-suc" style={h2}>Dashboard por sucursal</h2>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={tenue}>{sucursales.length} ubicaciones · total RD$ {entero(total)} / mes</span>
-            <button style={botonBorde} onClick={() => setAbiertas(new Set(sucursales.map((x) => x.clave)))}>Expandir todo</button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
+            <Multi label="Sucursal" opciones={[...new Set(sucursales.map((x) => x.nombre))].sort((a, b) => a.localeCompare(b, 'es'))} valor={fs.sucursal} cambiar={(v) => setFs({ ...fs, sucursal: v })} todos="Todas" ancho={170} />
+            <Multi label="Tipo de servicio" opciones={TIPOS} valor={fs.tipo} cambiar={(v) => setFs({ ...fs, tipo: v })} todos="Todos" ancho={170} />
+            <span style={{ ...tenue, alignSelf: 'center' }}>{vistaSuc.length} ubicaciones · total RD$ {entero(totalSuc)} / mes</span>
+            <button style={botonBorde} onClick={() => setAbiertas(new Set(vistaSuc.map((x) => x.clave)))}>Expandir todo</button>
             <button style={botonBorde} onClick={() => setAbiertas(new Set())}>Contraer</button>
           </div>
         </div>
@@ -242,7 +252,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
             <div style={{ display: 'grid', gridTemplateColumns: columnasSucursal, gap: 8, padding: '10px 12px', fontSize: 12, fontWeight: 600, color: 'var(--tenue)', borderBottom: '1px solid var(--borde)' }}>
               <span /><span>Sucursal</span><span>Empresa</span><span>Ubicación</span><span style={{ textAlign: 'right' }}>Servicios</span><span style={{ textAlign: 'right' }}>Costo mensual RD$</span><span>Peso en el costo</span><span>Respaldo</span>
             </div>
-            {sucursales.map((x) => {
+            {vistaSuc.map((x) => {
               const abierta = abiertas.has(x.clave)
               const nGestion = x.svcs.filter((s) => s.estatus !== 'Activo').length
               const nSinCuenta = x.svcs.filter((s) => !cuentaValida(s)).length
@@ -259,7 +269,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
                     <span className="mono" style={{ textAlign: 'right', fontWeight: 600 }}>{dinero(x.costo)}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ flex: 1, height: 8, background: 'var(--pista)', borderRadius: 4, overflow: 'hidden' }}><span style={{ display: 'block', height: '100%', width: `${(x.costo / maxSucursal) * 100}%`, background: 'var(--primario2)' }} /></span>
-                      <span className="mono" style={{ fontSize: 12, width: 44, textAlign: 'right' }}>{total ? `${((x.costo / total) * 100).toFixed(1)}%` : '—'}</span>
+                      <span className="mono" style={{ fontSize: 12, width: 44, textAlign: 'right' }}>{totalSuc ? `${((x.costo / totalSuc) * 100).toFixed(1)}%` : '—'}</span>
                     </span>
                     <span style={{ fontSize: 13, color: x.respaldo ? 'var(--tenue)' : 'var(--riesgo)' }}>{x.respaldo ? 'Sí' : 'Enlace único'}</span>
                   </button>
@@ -272,7 +282,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
                         </table>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        <button className="enlace" onClick={() => filtrar({ sucursal: x.nombre })} style={{ color: 'var(--enlace)', fontSize: 13, fontWeight: 600 }}>Ver esta sucursal en el listado completo →</button>
+                        <button className="enlace" onClick={() => filtrar({ sucursal: [x.nombre] })} style={{ color: 'var(--enlace)', fontSize: 13, fontWeight: 600 }}>Ver esta sucursal en el listado completo →</button>
                         <button onClick={() => ir('gastos')} style={botonAcento}>Registrar gasto →</button>
                       </div>
                     </div>
@@ -280,7 +290,7 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
                 </div>
               )
             })}
-            {sucursales.length === 0 && <p style={{ ...tenue, padding: 16, textAlign: 'center', margin: 0 }}>Sin servicios activos.</p>}
+            {vistaSuc.length === 0 && <p style={{ ...tenue, padding: 16, textAlign: 'center', margin: 0 }}>{sucursales.length ? 'Ningún servicio coincide con el filtro.' : 'Sin servicios activos.'}</p>}
           </div>
         </div>
       </section>
@@ -299,19 +309,10 @@ export default function Telecom({ empresas, empresa, setEmpresa, puedeEscribir, 
             ['Moneda', 'moneda', ['RD$', 'US$'], 'Todas', 100],
             ['Estatus', 'estatus', unicos([...ESTATUS_TELECOM, ...servicios.map((s) => s.estatus)]), 'Todos', 160],
           ] as const).map(([label, k, opciones, todos, ancho]) => (
-            <label key={k} style={etiqueta}>{label}
-              <select value={f[k]} onChange={(e) => { setF({ ...f, [k]: e.target.value }); setPagina(0) }} style={{ ...control, minWidth: ancho }}>
-                <option value="">{todos}</option>{opciones.map((o) => <option key={o}>{o}</option>)}
-              </select>
-            </label>
+            <Multi key={k} label={label} opciones={opciones} valor={f[k]} cambiar={(v) => { setF({ ...f, [k]: v }); setPagina(0) }} todos={todos} ancho={ancho} />
           ))}
-          <label style={etiqueta}>Cuenta contable
-            <select value={f.cuenta} onChange={(e) => { setF({ ...f, cuenta: e.target.value }); setPagina(0) }} style={{ ...control, minWidth: 150 }}>
-              <option value="">Todas</option>
-              {unicos(servicios.filter(cuentaValida).map((s) => s.cuenta_contable)).map((o) => <option key={o}>{o}</option>)}
-              <option value="__ninguna">Sin cuenta válida</option>
-            </select>
-          </label>
+          <Multi label="Cuenta contable" opciones={[...unicos(servicios.filter(cuentaValida).map((s) => s.cuenta_contable)), ['__ninguna', 'Sin cuenta válida'] as const]}
+            valor={f.cuenta} cambiar={(v) => { setF({ ...f, cuenta: v }); setPagina(0) }} todos="Todas" />
           <button style={botonBorde} onClick={() => filtrar({})}>Limpiar filtros</button>
           <label className="casilla" style={{ fontSize: 13 }}><input type="checkbox" checked={verBajas} onChange={(e) => { setVerBajas(e.target.checked); setPagina(0) }} /> Mostrar dados de baja</label>
           <button style={botonBorde} onClick={exportar} disabled={listado.length === 0}>Exportar CSV</button>

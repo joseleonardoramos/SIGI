@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState, type CSSProperties } from 'react'
 import { supabase, mensajeError, leerTodo } from './supabase'
 import { Formulario, type Fila, type Modulo } from './Catalogo'
 import { MODULOS } from './modulos'
-import { Cabecera, DadosDeBaja, Mensajes, botonAcento, control, etiqueta, h2, pastilla, tarjeta, tenue, type Empresa } from './diseno'
+import { Cabecera, DadosDeBaja, Mensajes, botonAcento, control, etiqueta, h2, Multi, pasa, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Proveedores y cuentas contables, reconstruida a partir de design/Catalogos.dc.html con datos reales.
 // Reúne el catálogo contable de cada empresa, el maestro de proveedores (común) y sus cuentas por empresa.
@@ -38,11 +38,11 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
   const [catalogo, setCatalogo] = useState(empresa) // empresa del catálogo contable que se muestra
   const [estadoF, setEstadoF] = useState('')
   const [gq, setGq] = useState('')
-  const [conceptoF, setConceptoF] = useState('')
+  const [conceptoF, setConceptoF] = useState<string[]>([])
   const [vista, setVista] = useState<'lista' | 'matriz'>('lista')
   const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
   const [q, setQ] = useState('')
-  const [categoriaF, setCategoriaF] = useState('')
+  const [categoriaF, setCategoriaF] = useState<string[]>([])
   const [elegido, setElegido] = useState<string | null>(null)
   const [formulario, setFormulario] = useState<{ m: Modulo; fila: Fila | null; empresa: string; titulo: string; donde: 'cuentas' | 'proveedores' } | null>(null)
   const [msg, setMsg] = useState('')
@@ -104,7 +104,7 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
   const nombreCentro = (codigo: string) => centrosDe.find((c) => c.codigo === codigo)?.nombre ?? ''
   const conceptos = [...new Set(delCatalogo.map((c) => partes(c).concepto))].sort()
   const termino = gq.trim().toLowerCase()
-  const filtradas = delCatalogo.filter((c) => (!estadoF || c.estado === estadoF) && (!conceptoF || partes(c).concepto === conceptoF) &&
+  const filtradas = delCatalogo.filter((c) => (!estadoF || c.estado === estadoF) && pasa(conceptoF, partes(c).concepto) &&
     (!termino || [c.codigo, c.descripcion, c.categoria, partes(c).centro, nombreCentro(partes(c).centro)].join(' ').toLowerCase().includes(termino)))
   const grupos = conceptos.map((concepto) => {
     const todasDelConcepto = delCatalogo.filter((c) => partes(c).concepto === concepto)
@@ -124,7 +124,7 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
   const cuentasDe = (p: Proveedor, empresaId: string) => cuentasProv.filter((c) => c.activo && c.proveedor_id === p.id && c.empresa_id === empresaId)
   const categoriasProv = [...new Set(proveedores.flatMap((p) => p.categorias ?? []))].sort((a, b) => a.localeCompare(b, 'es'))
   const tq = q.trim().toLowerCase()
-  const listaProv = proveedores.filter((p) => (p.activo || esAdmin) && (!categoriaF || (p.categorias ?? []).includes(categoriaF)) &&
+  const listaProv = proveedores.filter((p) => (p.activo || esAdmin) && (!categoriaF.length || (p.categorias ?? []).some((c) => categoriaF.includes(c))) &&
     (!tq || [p.nombre, p.rnc, ...(p.categorias ?? []), ...cuentasProv.filter((c) => c.proveedor_id === p.id).map((c) => c.numero)].join(' ').toLowerCase().includes(tq)))
     .sort((a, b) => Number(b.activo) - Number(a.activo) || a.nombre.localeCompare(b.nombre, 'es'))
   const sel = proveedores.find((p) => p.id === elegido) ?? listaProv[0]
@@ -151,7 +151,7 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
             {visibles.length > 1 && (
               <div role="group" aria-label="Catálogo de la empresa" style={{ display: 'flex', border: '1px solid var(--borde)', borderRadius: 8, overflow: 'hidden' }}>
                 {visibles.map((e) => (
-                  <button key={e.id} aria-pressed={catalogo === e.id} onClick={() => { setCatalogo(e.id); setAbiertos(new Set()); setConceptoF('') }}
+                  <button key={e.id} aria-pressed={catalogo === e.id} onClick={() => { setCatalogo(e.id); setAbiertos(new Set()); setConceptoF([]) }}
                     style={{ height: 40, padding: '0 14px', border: 'none', borderRadius: 0, fontSize: 13, fontWeight: 600, background: catalogo === e.id ? 'var(--boton-activo)' : '#FFFFFF', color: catalogo === e.id ? '#FFFFFF' : 'var(--tinta)' }}>{e.nombre}</button>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
             <label style={etiqueta}>Buscar<input type="search" value={gq} onChange={(e) => setGq(e.target.value)} placeholder="Cuenta, centro de costo…" style={{ ...control, width: 220 }} /></label>
-            <label style={etiqueta}>Concepto<select value={conceptoF} onChange={(e) => setConceptoF(e.target.value)} style={{ ...control, minWidth: 160 }}><option value="">Todos</option>{conceptos.map((c) => <option key={c}>{c}</option>)}</select></label>
+            <Multi label="Concepto" opciones={conceptos} valor={conceptoF} cambiar={setConceptoF} todos="Todos" ancho={160} />
           </div>
           <div role="group" aria-label="Vista del catálogo" style={{ display: 'flex', border: '1px solid var(--borde)', borderRadius: 8, overflow: 'hidden' }}>
             {([['lista', 'Por concepto'], ['matriz', 'Matriz CC × concepto']] as const).map(([k, label]) => (
@@ -272,7 +272,7 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end' }}>
               <label style={etiqueta}>Buscar<input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nombre, RNC, cuenta…" style={{ ...control, width: 200 }} /></label>
-              <label style={etiqueta}>Categoría<select value={categoriaF} onChange={(e) => setCategoriaF(e.target.value)} style={{ ...control, minWidth: 150 }}><option value="">Todas</option>{categoriasProv.map((c) => <option key={c}>{c}</option>)}</select></label>
+              <Multi label="Categoría" opciones={categoriasProv} valor={categoriaF} cambiar={setCategoriaF} todos="Todas" ancho={150} />
               {esAdmin && formulario?.donde !== 'proveedores' && <button style={botonAcento} onClick={() => abrir('proveedores', MODULOS.proveedores, null, '', 'Nuevo proveedor')}>+ Nuevo proveedor</button>}
             </div>
           </div>

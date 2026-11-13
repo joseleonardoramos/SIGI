@@ -17,6 +17,12 @@ const cuentaProveedor = {
   etiqueta: (f: Fila) => `${s((f.proveedores as { nombre?: string } | null)?.nombre)} · ${s(f.numero)}`,
 }
 
+// Cuenta contable de la empresa: se guarda su código; no se ofrecen las inactivas.
+const cuentaContable = {
+  tabla: 'cuentas_contables', valor: 'codigo', filtro: (f: Fila) => f.estado !== 'Inactiva',
+  etiqueta: (f: Fila) => `${s(f.codigo)} · ${s(f.descripcion)}`,
+}
+
 // Maestro de áreas y departamentos (listas desplegables). El departamento depende del área elegida.
 const area = { tabla: 'areas', etiqueta: (f: Fila) => s(f.nombre) }
 const departamentoDelArea = { tabla: 'departamentos', etiqueta: (f: Fila) => s(f.nombre), filtrarPor: { campo: 'area_id', columna: 'area_id' } }
@@ -37,7 +43,7 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'moneda', label: 'Moneda', tipo: 'opciones', opciones: MONEDAS, defecto: 'RD$', obligatorio: true },
       { k: 'monto', label: 'Monto', tipo: 'numero', obligatorio: true },
       { k: 'circuito', label: 'No. circuito' },
-      { k: 'cuenta_contable', label: 'Cuenta contable' },
+      { k: 'cuenta_contable', label: 'Cuenta contable', tipo: 'ref', ref: cuentaContable },
       { k: 'estatus', label: 'Estatus', tipo: 'opciones', opciones: ESTATUS_TELECOM, defecto: 'Activo', obligatorio: true },
       { k: 'vence', label: 'Vence', tipo: 'fecha', oculto: true },
       { k: 'comentarios', label: 'Comentarios', oculto: true },
@@ -80,7 +86,7 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'vence', label: 'Vence', tipo: 'fecha' },
       { k: 'renovacion', label: 'Renovación', tipo: 'opciones', opciones: ['Automática', 'Manual', 'Por consumo'], obligatorio: true },
       { k: 'preaviso_dias', label: 'Preaviso (días)', tipo: 'numero', defecto: '0', obligatorio: true, oculto: true },
-      { k: 'cuenta_contable', label: 'Cuenta contable', oculto: true },
+      { k: 'cuenta_contable', label: 'Cuenta contable', tipo: 'ref', ref: cuentaContable, oculto: true },
     ],
   },
   versiones: {
@@ -102,7 +108,7 @@ export const MODULOS: Record<string, Modulo> = {
       { k: 'nombre', label: 'Nombre', obligatorio: true },
       { k: 'categoria', label: 'Categoría', obligatorio: true },
       { k: 'centro_costo_codigo', label: 'Centro de costo' },
-      { k: 'cuenta_contable', label: 'Cuenta contable' },
+      { k: 'cuenta_contable', label: 'Cuenta contable', tipo: 'ref', ref: cuentaContable },
       { k: 'distribucion', label: 'Distribución', tipo: 'opciones', opciones: ['Uniforme', 'Trimestral', ...MESES.map((m) => `Puntual · ${m}`)], defecto: 'Uniforme', obligatorio: true },
       { k: 'monto', label: 'Presupuesto', tipo: 'numero', obligatorio: true },
     ],

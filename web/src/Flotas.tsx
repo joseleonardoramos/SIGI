@@ -3,7 +3,7 @@ import { supabase, mensajeError, leerTodo, fechaLocal, dinero } from './supabase
 import { aCsv, descargar } from './csv'
 import { Formulario, type Fila } from './Catalogo'
 import { MODULOS } from './modulos'
-import { Barra, Cabecera, Indicadores, Mensajes, Paginador, botonAcento, botonBorde, control, entero, etiqueta, h2, miles, paginaValida, pastilla, tarjeta, tenue, type Empresa } from './diseno'
+import { Barra, Cabecera, Indicadores, Mensajes, Paginador, botonAcento, botonBorde, control, entero, etiqueta, h2, monto, Multi, pasa, paginaValida, pastilla, tarjeta, tenue, type Empresa } from './diseno'
 
 // Flotas móviles, reconstruida a partir de design/Flotas.dc.html con datos reales.
 // La base guarda un solo «estado»; de él salen el Status del proveedor y la Alerta SIGI del diseño.
@@ -24,7 +24,8 @@ const COLORES_PLAN = ['var(--primario)', 'var(--primario2)', 'var(--primario3)',
 const MESES_CAMBIAZO = 33
 const POR_PAGINA = 20
 const POR_DEPARTAMENTO = 12
-const SIN_FILTRO = { q: '', area: '', dept: '', datos: '', proveedor: '', ps: '', alerta: '' }
+const SIN_FILTRO: { q: string; area: string[]; dept: string[]; datos: string[]; proveedor: string[]; ps: string[]; alerta: string[] } =
+  { q: '', area: [], dept: [], datos: [], proveedor: [], ps: [], alerta: [] }
 
 // Meses completos entre dos fechas AAAA-MM-DD.
 export function mesesEntre(desde: string, hasta: string): number {
@@ -115,7 +116,7 @@ export default function Flotas({ empresas, empresa, setEmpresa, puedeEscribir, e
   const sinUso = conAlerta(vigentes, 'Sin uso 90 días')
   const kpis = [
     { label: 'Líneas en flota', value: String(vigentes.length), sub: `${vigentes.length - suspendidas} ACTIVE · ${suspendidas} SUSPENDED` },
-    { label: 'Costo mensual (RD$)', value: `${(total / 1e6).toFixed(2)} M`, sub: `${entero(vigentes.length ? total / vigentes.length : 0)} promedio por línea`, color: 'var(--primario)' },
+    { label: 'Costo mensual (RD$)', value: monto(total), sub: `${entero(vigentes.length ? total / vigentes.length : 0)} promedio por línea`, color: 'var(--primario)' },
     { label: 'Sin uso 90 días', value: String(sinUso.length), sub: `Potencial ${entero(suma(sinUso) * 12)} anuales`, color: 'var(--riesgo)' },
     { label: 'Cambiazos elegibles', value: String(conAlerta(vigentes, 'Cambiazo elegible').length), sub: `${MESES_CAMBIAZO} meses o más desde el último cambiazo` },
   ]
@@ -132,8 +133,8 @@ export default function Flotas({ empresas, empresa, setEmpresa, puedeEscribir, e
   // Listado completo con filtros.
   const termino = f.q.trim().toLowerCase()
   const listado = lineas.filter((l) => (verBajas || l.activo) &&
-    (!f.area || area(l) === f.area) && (!f.dept || depto(l) === f.dept) && (!f.datos || (l.datos ? 'SI' : 'NO') === f.datos) &&
-    (!f.proveedor || proveedor(l) === f.proveedor) && (!f.ps || statusProveedor(l.estado) === f.ps) && (!f.alerta || alerta(l, hoy) === f.alerta) &&
+    pasa(f.area, area(l)) && pasa(f.dept, depto(l)) && pasa(f.datos, l.datos ? 'SI' : 'NO') &&
+    pasa(f.proveedor, proveedor(l)) && pasa(f.ps, statusProveedor(l.estado)) && pasa(f.alerta, alerta(l, hoy)) &&
     (!termino || [l.numero, l.usuario, l.sim, l.cuentas_proveedor?.numero, proveedor(l), area(l), depto(l)].join(' ').toLowerCase().includes(termino)))
     .sort((a, b) => area(a).localeCompare(area(b), 'es') || depto(a).localeCompare(depto(b), 'es') || a.numero.localeCompare(b.numero))
   const pag = paginaValida(pagina, listado.length, POR_PAGINA)
@@ -209,9 +210,9 @@ export default function Flotas({ empresas, empresa, setEmpresa, puedeEscribir, e
         <section aria-labelledby="h-area" style={{ ...tarjeta, flex: '1 1 420px', minWidth: 0 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h2 id="h-area" style={h2}>Costo mensual por área</h2>
-            <span style={tenue}>RD$ miles · líneas asignadas</span>
+            <span style={tenue}>RD$ por mes · líneas asignadas</span>
           </div>
-          {porArea.map((a) => <Barra key={a.clave} nombre={`${area(a.ls[0])}${todas ? ` · ${nombreEmpresa(a.ls[0].empresa_id)}` : ''}`} detalle={`${a.ls.length} líneas`} valor={miles(a.costo)} ancho={(a.costo / maxArea) * 100} />)}
+          {porArea.map((a) => <Barra key={a.clave} nombre={`${area(a.ls[0])}${todas ? ` · ${nombreEmpresa(a.ls[0].empresa_id)}` : ''}`} detalle={`${a.ls.length} líneas`} valor={monto(a.costo)} ancho={(a.costo / maxArea) * 100} />)}
           {porArea.length === 0 && <span style={tenue}>Sin líneas vigentes.</span>}
         </section>
         <section aria-labelledby="h-plan" style={{ ...tarjeta, flex: '1 1 380px', minWidth: 0 }}>
@@ -289,7 +290,7 @@ export default function Flotas({ empresas, empresa, setEmpresa, puedeEscribir, e
                                   </table>
                                 </div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                                  <button className="enlace" onClick={() => filtrar({ area: area(a.ls[0]), dept: nombre })} style={{ color: 'var(--enlace)', fontSize: 13, fontWeight: 600 }}>
+                                  <button className="enlace" onClick={() => filtrar({ area: [area(a.ls[0])], dept: [nombre] })} style={{ color: 'var(--enlace)', fontSize: 13, fontWeight: 600 }}>
                                     {dl.length > POR_DEPARTAMENTO ? `Ver las ${dl.length} líneas en el listado completo →` : 'Ver en el listado completo →'}
                                   </button>
                                   <button onClick={() => ir('gastos')} style={botonAcento}>Registrar gasto →</button>
@@ -318,17 +319,14 @@ export default function Flotas({ empresas, empresa, setEmpresa, puedeEscribir, e
           <label style={etiqueta}>Buscar<input type="search" value={f.q} onChange={(e) => { setF({ ...f, q: e.target.value }); setPagina(0) }} placeholder="Número, nombre, SIM, cuenta…" style={{ ...control, width: 220, padding: '0 12px' }} /></label>
           {([
             ['Área', 'area', unicos(lineas.map(area)), 'Todas', 150],
-            ['Departamento', 'dept', unicos(lineas.filter((l) => !f.area || area(l) === f.area).map(depto)), 'Todos', 180],
+            ['Departamento', 'dept', unicos(lineas.filter((l) => pasa(f.area, area(l))).map(depto)), 'Todos', 180],
             ['Datos', 'datos', ['SI', 'NO'], 'Todos', 100],
             ['Proveedor', 'proveedor', unicos(lineas.map(proveedor)), 'Todos', 120],
             ['Status', 'ps', ['ACTIVE', 'SUSPENDED', 'CANCELLED'], 'Todos', 130],
             ['Alerta SIGI', 'alerta', ALERTAS, 'Todas', 170],
           ] as const).map(([label, k, opciones, todos, ancho]) => (
-            <label key={k} style={etiqueta}>{label}
-              <select value={f[k]} onChange={(e) => { setF({ ...f, [k]: e.target.value, ...(k === 'area' ? { dept: '' } : {}) }); setPagina(0) }} style={{ ...control, minWidth: ancho }}>
-                <option value="">{todos}</option>{opciones.map((o) => <option key={o}>{o}</option>)}
-              </select>
-            </label>
+            <Multi key={k} label={label} opciones={opciones} valor={f[k]} todos={todos} ancho={ancho}
+              cambiar={(v) => { setF({ ...f, [k]: v, ...(k === 'area' ? { dept: [] } : {}) }); setPagina(0) }} />
           ))}
           <button style={botonBorde} onClick={() => filtrar({})}>Limpiar filtros</button>
           <label className="casilla" style={{ fontSize: 13 }}><input type="checkbox" checked={verBajas} onChange={(e) => { setVerBajas(e.target.checked); setPagina(0) }} /> Mostrar dados de baja</label>

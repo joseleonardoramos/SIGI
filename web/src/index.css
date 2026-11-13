@@ -214,3 +214,5 @@ main h3 { margin-top: 20px; }
   .contenido { padding: 20px 16px 40px; }
   .fila .ancho { grid-column: auto; }
 }
+details.multi > summary { list-style: none; }
+details.multi > summary::-webkit-details-marker { display: none; }

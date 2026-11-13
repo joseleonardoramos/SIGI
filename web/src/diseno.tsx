@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 
 // Piezas comunes de las pantallas reconstruidas desde design/*.dc.html (Telecom, Flotas…).
 
@@ -13,8 +13,48 @@ export const botonBorde: CSSProperties = { height: 40, padding: '0 12px', border
 export const botonAcento: CSSProperties = { height: 40, padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--acento)', color: '#FFFFFF', fontSize: 13, fontWeight: 600 }
 export const pastilla = ([bg, fg]: readonly [string, string]): CSSProperties => ({ fontSize: 12, fontWeight: 600, padding: '4px 8px', borderRadius: 999, background: bg, color: fg, whiteSpace: 'nowrap' })
 export const RIESGO: [string, string] = ['#FBE9DF', '#8A3A12']
-export const miles = (v: number) => (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })
-export const entero = (v: number) => Math.round(v).toLocaleString('en-US')
+export const entero = (v: number) => (Math.round(v) || 0).toLocaleString('en-US') // || 0 evita «-0»
+// Monto completo; desde un millón se abrevia (1.25 M).
+export const monto = (v: number) => (Math.abs(v) >= 1e6 ? `${(v / 1e6).toFixed(2)} M` : entero(v))
+// Filtro de varias opciones: vacío = todas.
+export const pasa = (elegidos: readonly string[], v: string | null | undefined) => !elegidos.length || elegidos.includes(v ?? '')
+
+// Lista desplegable con casillas para elegir una o varias opciones de un filtro.
+export function Multi({ label, opciones, valor, cambiar, todos, ancho = 150 }: {
+  label: string
+  opciones: readonly (string | readonly [string, string])[] // texto, o [valor, texto]
+  valor: string[]
+  cambiar: (v: string[]) => void
+  todos: string
+  ancho?: number
+}) {
+  const ref = useRef<HTMLDetailsElement>(null)
+  useEffect(() => { // se cierra al hacer clic fuera
+    const cerrar = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) ref.current.open = false }
+    document.addEventListener('click', cerrar)
+    return () => document.removeEventListener('click', cerrar)
+  }, [])
+  const ops = opciones.map((o) => (typeof o === 'string' ? [o, o] as const : o))
+  const resumen = !valor.length ? todos : valor.length === 1 ? ops.find(([v]) => v === valor[0])?.[1] ?? valor[0] : `${valor.length} elegidos`
+  return (
+    <div style={etiqueta}>
+      <span>{label}</span>
+      <details ref={ref} className="multi" style={{ position: 'relative' }} onKeyDown={(e) => { if (e.key === 'Escape') e.currentTarget.open = false }}>
+        <summary aria-label={`${label}: ${resumen}`} style={{ ...control, minWidth: ancho, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer', fontWeight: 400, whiteSpace: 'nowrap' }}>
+          {resumen}<span aria-hidden="true" style={{ color: 'var(--tenue)' }}>▾</span>
+        </summary>
+        <div role="group" aria-label={label} style={{ position: 'absolute', zIndex: 20, top: 44, left: 0, minWidth: '100%', maxHeight: 300, overflowY: 'auto', background: '#FFFFFF', border: '1px solid var(--borde)', borderRadius: 8, padding: 6, boxShadow: '0 6px 18px rgba(0,0,0,.12)', display: 'flex', flexDirection: 'column' }}>
+          {ops.map(([v, l]) => (
+            <label key={v} className="casilla" style={{ fontSize: 14, fontWeight: 400, color: 'var(--tinta)', padding: '6px 8px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+              <input type="checkbox" checked={valor.includes(v)} onChange={(e) => cambiar(e.target.checked ? [...valor, v] : valor.filter((x) => x !== v))} /> {l}
+            </label>
+          ))}
+          {valor.length > 0 && <button type="button" className="enlace" onClick={() => cambiar([])} style={{ color: 'var(--enlace)', fontSize: 13, padding: '6px 8px', textAlign: 'left' }}>Quitar selección</button>}
+        </div>
+      </details>
+    </div>
+  )
+}
 
 // Cabecera del módulo: ruta, título, subtítulo, Consolidado / empresas y el botón de crear.
 export function Cabecera({ modulo, titulo, subtitulo, empresas, co, elegir, ir, crear, consolidado = true }: {

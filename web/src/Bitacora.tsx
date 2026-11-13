@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, mensajeError, fechaLocal } from './supabase'
+import { Multi } from './diseno'
 
 type Registro = {
   id: number
@@ -35,7 +36,7 @@ function cambios(r: Registro): string {
 export default function Bitacora({ empresa, esAdmin }: { empresa: string; esAdmin: boolean }) {
   const [registros, setRegistros] = useState<Registro[]>([])
   const [usuarios, setUsuarios] = useState<Record<string, string>>({})
-  const [tabla, setTabla] = useState('')
+  const [tablas, setTablas] = useState<string[]>([])
   const [global, setGlobal] = useState(false)
   const [error, setError] = useState('')
 
@@ -43,12 +44,12 @@ export default function Bitacora({ empresa, esAdmin }: { empresa: string; esAdmi
     let q = supabase.from('bitacora').select('*').order('ocurrido_en', { ascending: false }).limit(300)
     // Proveedores, tasas y el rol de Administrador no tienen empresa: solo el Administrador los ve.
     q = global ? q.is('empresa_id', null) : q.eq('empresa_id', empresa)
-    if (tabla) q = q.eq('tabla', tabla)
+    if (tablas.length) q = q.in('tabla', tablas)
     q.then(async ({ data, error }) => {
       if (error) setError(await mensajeError(error))
       else setRegistros(data as Registro[])
     })
-  }, [empresa, tabla, global])
+  }, [empresa, tablas, global])
 
   useEffect(() => {
     if (!esAdmin) return
@@ -62,12 +63,7 @@ export default function Bitacora({ empresa, esAdmin }: { empresa: string; esAdmi
       <h2>Bitácora</h2>
       <p className="nota">Cada alta y edición queda aquí con el valor anterior y el nuevo. Nada se borra. Se muestran los últimos 300 cambios.</p>
       <div className="fila-controles">
-        <label>Qué
-          <select value={tabla} onChange={(e) => setTabla(e.target.value)}>
-            <option value="">Todo</option>
-            {Object.entries(TABLAS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </label>
+        <Multi label="Qué" opciones={Object.entries(TABLAS)} valor={tablas} cambiar={setTablas} todos="Todo" ancho={200} />
         {esAdmin && <label className="casilla"><input type="checkbox" checked={global} onChange={(e) => setGlobal(e.target.checked)} /> Registros globales (proveedores, tasas, Administradores)</label>}
       </div>
       {error && <p className="error" role="alert">{error}</p>}
