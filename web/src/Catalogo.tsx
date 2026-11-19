@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { supabase, mensajeError, leerTodo, fechaLocal, dinero } from './supabase'
 import { aCsv, descargar } from './csv'
+import { Cabecera, Mensajes, tarjeta, type Empresa } from './diseno'
 
 // Pantalla genérica de un catálogo: lista con búsqueda, alta, edición y baja con motivo.
 // Cada módulo la configura en modulos.ts. Los permisos reales los aplica la base (RLS).
@@ -184,9 +185,13 @@ export function Formulario({ m, empresa, fila, titulo, onGuardado, onCancelar }:
   )
 }
 
-export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }: {
+export default function Catalogo({ modulo: m, seccion, empresas, empresa, setEmpresa, ir, puedeEscribir, esAdmin }: {
   modulo: Modulo
+  seccion: string
+  empresas: Empresa[]
   empresa: string
+  setEmpresa: (id: string) => void
+  ir: (vista: string) => void
   puedeEscribir: boolean
   esAdmin: boolean
 }) {
@@ -319,21 +324,17 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
   }
 
   return (
-    <section>
-      <h2>{m.titulo}</h2>
-      {m.nota && <p className="nota">{m.nota}</p>}
-
-      {escribe && !abierto && (
-        <button type="button" onClick={() => { setEditando(null); setMsg(''); setError(''); setAbierto(true) }}>Crear</button>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, color: 'var(--tinta)' }}>
+      <Cabecera modulo={seccion} titulo={m.titulo} subtitulo={m.nota ?? ''} empresas={empresas} co={empresa} elegir={setEmpresa} ir={ir} consolidado={false}
+        crear={escribe && !abierto ? { texto: 'Crear', onClick: () => { setEditando(null); setMsg(''); setError(''); setAbierto(true) } } : undefined} />
+      <Mensajes msg={msg} error={error} />
       {escribe && abierto && (
         <Formulario key={editando?.id ?? 'nuevo'} m={m} empresa={empresa} fila={editando}
           onGuardado={(texto) => { setMsg(texto); cerrar(); cargar() }} onCancelar={cerrar} />
       )}
-      {error && <p className="error" role="alert">{error}</p>}
-      {msg && !error && <p className="ok" role="status">{msg}</p>}
 
-      <div className="fila-controles">
+      <section aria-label={m.titulo} style={tarjeta}>
+      <div className="fila-controles" style={{ margin: 0 }}>
         <label className="buscar">Buscar<input type="search" value={buscar} onChange={(e) => setBuscar(e.target.value)} /></label>
         <label className="casilla"><input type="checkbox" checked={verBajas} onChange={(e) => setVerBajas(e.target.checked)} /> Mostrar dados de baja</label>
         <span className="nota">{lista.length} registro(s){m.total && ` · ${m.total.label}: ${total}`}</span>
@@ -355,6 +356,7 @@ export default function Catalogo({ modulo: m, empresa, puedeEscribir, esAdmin }:
           </tbody>
         </table>
       </div>
-    </section>
+      </section>
+    </div>
   )
 }

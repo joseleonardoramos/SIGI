@@ -130,7 +130,7 @@ export default function App() {
   // Pantallas propias (diseño); su formulario sigue saliendo de MODULOS.
   const propias = ['inicio', 'telecom', 'flotas', 'software', 'personas', 'ausencias', 'gastos', 'proveedores', 'cuentas_proveedor', 'cuentas_contables', 'partidas', 'ahorros']
   const modulo = propias.includes(vista) ? undefined : MODULOS[vista]
-  const conCabeceraPropia = propias.includes(vista)
+  const conCabeceraPropia = propias.includes(vista) || !!modulo
   const sinEmpresa = !empresa && !['inicio', 'clave', 'empresas', 'usuarios'].includes(vista)
 
   const seccion = MENU.find((s) => s.entradas.some((x) => x.id === vista))
@@ -201,7 +201,7 @@ export default function App() {
               {vista === 'flotas' && <Flotas empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'software' && <Software empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {(vista === 'personas' || vista === 'ausencias') && permisos.personal && <Personal empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} esAdmin={esAdmin} ir={setVista} />}
-              {modulo && <Catalogo key={modulo.id} modulo={modulo} empresa={empresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
+              {modulo && <Catalogo key={modulo.id} modulo={modulo} seccion={seccion?.seccion || 'Catálogos'} empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} ir={setVista} puedeEscribir={permisos.escribe} esAdmin={esAdmin} />}
               {vista === 'comparar' && <Comparar key={empresa} empresa={empresa} moneda={actual?.moneda_reporte ?? 'RD$'} />}
               {vista === 'gastos' && <Gastos empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
               {vista === 'partidas' && <Presupuestos empresas={empresas} empresa={empresa} setEmpresa={setEmpresa} puedeEscribir={permisos.escribe} esAdmin={esAdmin} ir={setVista} />}
