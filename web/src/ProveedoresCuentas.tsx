@@ -16,11 +16,16 @@ type CuentaProveedor = Fila & { empresa_id: string; proveedor_id: string; numero
 const ESTADO: Record<string, [string, string]> = { Activa: ['#E7F5EF', '#075B3F'], Nueva: ['#E6EEF7', '#1D3557'], Inactiva: ['#EEF1F4', '#3E4A58'] }
 const celda: CSSProperties = { whiteSpace: 'nowrap' }
 
-// Estructura empresa-centro de costo-concepto (11-112-63-0110): concepto 63-0110, centro 112.
-// Otros formatos (Bona: 6210-050) son su propio concepto y toman el centro del campo.
+// El Catador, empresa-centro-concepto (11-112-63-0110): concepto 63-0110, centro 112.
+// Bona, cuenta-departamento-local (62251-03-101): concepto 62251-03, centro (local) 101.
+// Otros formatos son su propio concepto y toman el centro del campo.
 export function partes(c: Pick<Cuenta, 'codigo' | 'centro_costo_codigo'>): { concepto: string; centro: string } {
-  const m = c.codigo.trim().match(/^\d{2}-(\d{3})-(\d{2}-\d{4})$/)
-  return m ? { concepto: m[2], centro: c.centro_costo_codigo || m[1] } : { concepto: c.codigo.trim(), centro: c.centro_costo_codigo ?? '' }
+  const codigo = c.codigo.trim()
+  const catador = codigo.match(/^\d{2}-(\d{3})-(\d{2}-\d{4})$/)
+  if (catador) return { concepto: catador[2], centro: c.centro_costo_codigo || catador[1] }
+  const bona = codigo.match(/^(\d{5}-\d{2})-(\d{3})$/)
+  if (bona) return { concepto: bona[1], centro: c.centro_costo_codigo || bona[2] }
+  return { concepto: codigo, centro: c.centro_costo_codigo ?? '' }
 }
 
 export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAdmin, ir }: {
