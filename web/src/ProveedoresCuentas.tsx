@@ -171,8 +171,14 @@ export default function ProveedoresCuentas({ empresas, empresa, setEmpresa, esAd
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '10px 14px', border: '1px solid var(--pista)', borderRadius: 10, background: 'var(--suave)', flex: '1 1 300px' }}>
             <b style={{ fontSize: 13 }}>Estructura</b>
-            <span className="mono" style={{ fontSize: 18 }}><span style={{ color: 'var(--primario2)' }}>11</span>-<span style={{ color: 'var(--riesgo)' }}>112</span>-<span>63-0110</span></span>
-            <span style={{ fontSize: 12, color: 'var(--tenue)' }}><b>11</b> empresa · <b>112</b> centro de costo · <b>63-0110</b> cuenta del concepto. Los códigos con otro formato son su propio concepto.</span>
+            {/* shortcut: elige el ejemplo por el nombre de la empresa; con una tercera empresa, guardar el formato en la tabla empresas */}
+            {/bona/i.test(nombreEmpresa(catalogo)) ? <>
+              <span className="mono" style={{ fontSize: 18 }}><span>62251-03</span>-<span style={{ color: 'var(--riesgo)' }}>101</span></span>
+              <span style={{ fontSize: 12, color: 'var(--tenue)' }}><b>62251</b> cuenta · <b>03</b> departamento (juntos, el concepto) · <b>101</b> local, que es el centro de costo. Los códigos con otro formato son su propio concepto.</span>
+            </> : <>
+              <span className="mono" style={{ fontSize: 18 }}><span style={{ color: 'var(--primario2)' }}>11</span>-<span style={{ color: 'var(--riesgo)' }}>112</span>-<span>63-0110</span></span>
+              <span style={{ fontSize: 12, color: 'var(--tenue)' }}><b>11</b> empresa · <b>112</b> centro de costo · <b>63-0110</b> cuenta del concepto. Los códigos con otro formato son su propio concepto.</span>
+            </>}
           </div>
           {indicadores.map(([k, label, n, color]) => (
             <button key={label} onClick={() => setEstadoF(estadoF === k ? '' : k)} aria-pressed={estadoF === k && k !== ''}
